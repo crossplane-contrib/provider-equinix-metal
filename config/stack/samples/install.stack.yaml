@@ -1,0 +1,7 @@
+---
+apiVersion: stacks.crossplane.io/v1alpha1
+kind: ClusterStackInstall
+metadata:
+  name: "crossplane-stack-packet-demo"
+spec:
+  package: "crossplane/stack-packet-demo"
