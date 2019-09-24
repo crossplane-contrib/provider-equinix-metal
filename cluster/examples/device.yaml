@@ -1,0 +1,15 @@
+apiVersion: server.packet.crossplane.io/v1alpha1
+kind: Device
+metadata:
+  name: mydevice
+  namespace: app-project1-dev
+spec:
+  projectID: ${PROJECT_ID}
+  hostname: packet.crossplane.io
+  plan: t1.small.x86
+  facility: sjc1
+  operatingSystem: coreos_stable
+  billingCycle: hourly
+  providerRef:
+    name: example
+    namespace: packet-infra-dev

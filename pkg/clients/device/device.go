@@ -19,16 +19,33 @@ package device
 import (
 	"context"
 
+	"github.com/hasheddan/stack-packet-demo/api/server/v1alpha1"
 	"github.com/hasheddan/stack-packet-demo/pkg/clients"
 	"github.com/packethost/packngo"
 )
 
 // NewClient ... TODO
 func NewClient(ctx context.Context, credentials []byte) (packngo.DeviceService, error) {
-	client, err := clients.NewClient(ctx, credentials)
-	if err != nil {
-		return nil, err
-	}
+	client := clients.NewClient(ctx, credentials)
 
 	return client.Devices, nil
+}
+
+// CreateFromDevice ... TODO
+func CreateFromDevice(d *v1alpha1.Device) *packngo.DeviceCreateRequest {
+	return &packngo.DeviceCreateRequest{
+		HostName:     d.Spec.Hostname,
+		Plan:         d.Spec.Plan,
+		Facility:     d.Spec.Facility,
+		OS:           d.Spec.OS,
+		BillingCycle: d.Spec.BillingCycle,
+		ProjectID:    d.Spec.ProjectID,
+		UserData:     d.Spec.UserData,
+		Tags:         d.Spec.Tags,
+	}
+}
+
+// NeedsUpdate ... TODO
+func NeedsUpdate(d *v1alpha1.Device, p *packngo.Device) bool {
+	return false
 }

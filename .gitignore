@@ -6,3 +6,5 @@ cover.out
 /.vendor-new
 
 /stack-package
+
+credentials.*

@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-provider-packet
+  namespace: packet-infra-dev
+type: Opaque
+data:
+  credentials: BASE64ENCODED_PACKET_PROVIDER_CREDS
+---
+apiVersion: packet.crossplane.io/v1alpha1
+kind: Provider
+metadata:
+  name: example
+  namespace: packet-infra-dev
+spec:
+  credentialsSecretRef:
+    name: example-provider-packet
+    key: credentials

@@ -25,14 +25,15 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/hasheddan/stack-packet-demo/api/server/v1alpha1"
 	packetv1alpha1 "github.com/hasheddan/stack-packet-demo/api/v1alpha1"
-	devicesclient "github.com/hasheddan/stack-packet-demo/pkg/clients/device"
 	packetclient "github.com/hasheddan/stack-packet-demo/pkg/clients"
+	devicesclient "github.com/hasheddan/stack-packet-demo/pkg/clients/device"
 
 	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplaneio/crossplane-runtime/pkg/meta"
@@ -109,7 +110,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 		return resource.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	device, res, err := e.client.Get(d.Status.ID)
+	device, _, err := e.client.Get(d.Status.ID)
 	if err != nil {
 		return resource.ExternalObservation{}, errors.Wrap(err, errGetDevice)
 	}
@@ -119,7 +120,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	d.Status.Hostname = device.Hostname
 	d.Status.Href = device.Href
 	d.Status.State = device.State
-	d.Status.ProvisionPer = device.ProvisionPer
+	// TODO: investigate better way to do this
+	d.Status.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
 
 	// Set Device status and bindable
 	// TODO: identify deleting state
@@ -128,7 +130,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 		d.Status.SetConditions(runtimev1alpha1.Available())
 		resource.SetBindable(d)
 	case v1alpha1.StateProvisioning:
-		g.Status.SetConditions(runtimev1alpha1.Creating())
+		d.Status.SetConditions(runtimev1alpha1.Creating())
 	}
 
 	o := resource.ExternalObservation{
@@ -149,12 +151,13 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.Ex
 
 	d.Status.SetConditions(runtimev1alpha1.Creating())
 
-
-	// TODO: CreateDeviceRequest from Spec
-	device, res, err := e.client.Create()
-	if  err != nil {
+	create := devicesclient.CreateFromDevice(d)
+	device, _, err := e.client.Create(create)
+	if err != nil {
 		return resource.ExternalCreation{}, errors.Wrap(err, errCreateDevice)
 	}
+
+	d.Status.ID = device.ID
 
 	// TODO: connection details
 
@@ -167,7 +170,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (resource.Ex
 		return resource.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	device, res, err := e.client.Get(d.Status.ID)
+	_, _, err := e.client.Get(d.Status.ID)
 	if err != nil {
 		return resource.ExternalUpdate{}, errors.Wrap(err, errGetDevice)
 	}

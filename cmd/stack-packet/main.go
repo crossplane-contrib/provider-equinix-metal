@@ -77,7 +77,7 @@ func main() {
 	log.Info("Sync period", "duration", syncPeriod.String())
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{SyncPeriod: syncPeriod})
+	mgr, err := manager.New(cfg, manager.Options{SyncPeriod: syncPeriod, MetricsBindAddress: "0"})
 	kingpin.FatalIfError(err, "Cannot create manager")
 
 	log.Info("Adding schemes")

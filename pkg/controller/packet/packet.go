@@ -16,7 +16,10 @@ limitations under the License.
 
 package packet
 
-import "github.com/hasheddan/stack-packet-demo/pkg/controller/packet/server/device"
+import (
+	"github.com/hasheddan/stack-packet-demo/pkg/controller/packet/server/device"
+	ctrl "sigs.k8s.io/controller-runtime"
+)
 
 // Controllers passes down config and adds individual controllers to the manager.
 type Controllers struct{}

@@ -13,6 +13,8 @@ spec:
     plural: devices
     singular: device
   scope: ""
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Device is the Schema for the devices API
@@ -31,9 +33,228 @@ spec:
           type: object
         spec:
           description: DeviceSpec defines the desired state of Device
+          properties:
+            billingCycle:
+              type: string
+            claimRef:
+              description: ClaimReference specifies the resource claim to which this
+                managed resource will be bound. ClaimReference is set automatically
+                during dynamic provisioning. Crossplane does not currently support
+                setting this field manually, per https://github.com/crossplaneio/crossplane-runtime/issues/19
+              properties:
+                apiVersion:
+                  description: API version of the referent.
+                  type: string
+                fieldPath:
+                  description: 'If referring to a piece of an object instead of an
+                    entire object, this string should contain a valid JSON/Go field
+                    access statement, such as desiredState.manifest.containers[2].
+                    For example, if the object reference is to a container within
+                    a pod, this would take on a value like: "spec.containers{name}"
+                    (where "name" refers to the name of the container that triggered
+                    the event) or if no container name is specified "spec.containers[2]"
+                    (container with index 2 in this pod). This syntax is chosen only
+                    to have some well-defined way of referencing a part of an object.
+                    TODO: this design is not final and this field is subject to change
+                    in the future.'
+                  type: string
+                kind:
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  type: string
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                  type: string
+                namespace:
+                  description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                  type: string
+                resourceVersion:
+                  description: 'Specific resourceVersion to which this reference is
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                  type: string
+                uid:
+                  description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                  type: string
+              type: object
+            classRef:
+              description: NonPortableClassReference specifies the non-portable resource
+                class that was used to dynamically provision this managed resource,
+                if any. Crossplane does not currently support setting this field manually,
+                per https://github.com/crossplaneio/crossplane-runtime/issues/20
+              properties:
+                apiVersion:
+                  description: API version of the referent.
+                  type: string
+                fieldPath:
+                  description: 'If referring to a piece of an object instead of an
+                    entire object, this string should contain a valid JSON/Go field
+                    access statement, such as desiredState.manifest.containers[2].
+                    For example, if the object reference is to a container within
+                    a pod, this would take on a value like: "spec.containers{name}"
+                    (where "name" refers to the name of the container that triggered
+                    the event) or if no container name is specified "spec.containers[2]"
+                    (container with index 2 in this pod). This syntax is chosen only
+                    to have some well-defined way of referencing a part of an object.
+                    TODO: this design is not final and this field is subject to change
+                    in the future.'
+                  type: string
+                kind:
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  type: string
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                  type: string
+                namespace:
+                  description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                  type: string
+                resourceVersion:
+                  description: 'Specific resourceVersion to which this reference is
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                  type: string
+                uid:
+                  description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                  type: string
+              type: object
+            facility:
+              type: string
+            hostname:
+              type: string
+            operatingSystem:
+              type: string
+            plan:
+              type: string
+            projectID:
+              type: string
+            providerRef:
+              description: ProviderReference specifies the provider that will be used
+                to create, observe, update, and delete this managed resource.
+              properties:
+                apiVersion:
+                  description: API version of the referent.
+                  type: string
+                fieldPath:
+                  description: 'If referring to a piece of an object instead of an
+                    entire object, this string should contain a valid JSON/Go field
+                    access statement, such as desiredState.manifest.containers[2].
+                    For example, if the object reference is to a container within
+                    a pod, this would take on a value like: "spec.containers{name}"
+                    (where "name" refers to the name of the container that triggered
+                    the event) or if no container name is specified "spec.containers[2]"
+                    (container with index 2 in this pod). This syntax is chosen only
+                    to have some well-defined way of referencing a part of an object.
+                    TODO: this design is not final and this field is subject to change
+                    in the future.'
+                  type: string
+                kind:
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  type: string
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                  type: string
+                namespace:
+                  description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                  type: string
+                resourceVersion:
+                  description: 'Specific resourceVersion to which this reference is
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                  type: string
+                uid:
+                  description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                  type: string
+              type: object
+            reclaimPolicy:
+              description: ReclaimPolicy specifies what will happen to the external
+                resource this managed resource manages when the managed resource is
+                deleted. "Delete" deletes the external resource, while "Retain" (the
+                default) does not. Note this behaviour is subtly different from other
+                uses of the ReclaimPolicy concept within the Kubernetes ecosystem
+                per https://github.com/crossplaneio/crossplane-runtime/issues/21
+              type: string
+            tags:
+              items:
+                type: string
+              type: array
+            userdata:
+              type: string
+            writeConnectionSecretToRef:
+              description: WriteConnectionSecretToReference specifies the name of
+                a Secret, in the same namespace as this managed resource, to which
+                any connection details for this managed resource should be written.
+                Connection details frequently include the endpoint, username, and
+                password required to connect to the managed resource.
+              properties:
+                name:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  type: string
+              type: object
+          required:
+          - billingCycle
+          - facility
+          - hostname
+          - operatingSystem
+          - plan
+          - projectID
+          - providerRef
           type: object
         status:
           description: DeviceStatus defines the observed state of Device
+          properties:
+            bindingPhase:
+              description: Phase represents the binding phase of a managed resource
+                or claim. Unbindable resources cannot be bound, typically because
+                they are currently unavailable, or still being created. Unbound resource
+                are available for binding, and Bound resources have successfully bound
+                to another resource.
+              enum:
+              - Unbindable
+              - Unbound
+              - Bound
+              type: string
+            conditions:
+              description: Conditions of the resource.
+              items:
+                description: A Condition that may apply to a managed resource.
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime is the last time this condition
+                      transitioned from one status to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A Message containing details about this condition's
+                      last transition from one status to another, if any.
+                    type: string
+                  reason:
+                    description: A Reason for this condition's last transition from
+                      one status to another.
+                    type: string
+                  status:
+                    description: Status of this condition; is it currently True, False,
+                      or Unknown?
+                    type: string
+                  type:
+                    description: Type of this condition. At most one of each condition
+                      type may apply to a resource at any point in time.
+                    type: string
+                required:
+                - lastTransitionTime
+                - reason
+                - status
+                - type
+                type: object
+              type: array
+            hostname:
+              type: string
+            href:
+              type: string
+            id:
+              type: string
+            provisionPer:
+              type: string
+            state:
+              type: string
+          required:
+          - id
           type: object
       type: object
   version: v1alpha1

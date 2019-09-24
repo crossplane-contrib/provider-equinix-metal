@@ -21,40 +21,6 @@
   revision = "680d30ca31172657fa50e996eb82d790d1d8b96e"
 
 [[projects]]
-  digest = "1:d592bddc77d2d64a6e7071e8b99a852453ba556f4853f3d0061677d199b178a4"
-  name = "github.com/aws/aws-sdk-go-v2"
-  packages = [
-    "aws",
-    "aws/awserr",
-    "aws/defaults",
-    "aws/ec2metadata",
-    "aws/ec2rolecreds",
-    "aws/endpointcreds",
-    "aws/endpoints",
-    "aws/external",
-    "aws/signer/v4",
-    "aws/stscreds",
-    "internal/awsutil",
-    "internal/ini",
-    "internal/sdk",
-    "internal/sdkmath",
-    "private/protocol",
-    "private/protocol/query",
-    "private/protocol/query/queryutil",
-    "private/protocol/rest",
-    "private/protocol/restxml",
-    "private/protocol/xml",
-    "private/protocol/xml/xmlutil",
-    "service/elasticache",
-    "service/elasticache/elasticacheiface",
-    "service/s3",
-    "service/sts",
-  ]
-  pruneopts = "UT"
-  revision = "9d23340c6faa83de6f72d814bdb3b15667ca220e"
-  version = "v0.12.0"
-
-[[projects]]
   digest = "1:d6afaeed1502aa28e80a4ed0981d570ad91b2579193404256ce672ed0a609e0d"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
@@ -86,30 +52,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5123dbb598261a0ea00397815f54204f5a7c32bf13bbc17825ec449cdd82b80c"
+  digest = "1:d299464fe6ed6c2ce542ad3d6bcfb16c393b4bc805a5e05bb6c6c246653e9551"
   name = "github.com/crossplaneio/crossplane-runtime"
   packages = [
     "apis/core/v1alpha1",
     "pkg/logging",
     "pkg/meta",
     "pkg/resource",
-    "pkg/util",
   ]
   pruneopts = "UT"
   revision = "d8050430d1b62bcced56f345427d9bfba1ec57db"
-
-[[projects]]
-  digest = "1:1b0f1ff5d6d2baceee6503af6ddb3dac40e4908bf24adbd6e95530266de6a13a"
-  name = "github.com/crossplaneio/stack-aws"
-  packages = [
-    "aws/apis/cache/v1alpha2",
-    "aws/apis/v1alpha2",
-    "pkg/clients/aws",
-    "pkg/clients/aws/elasticache",
-  ]
-  pruneopts = "UT"
-  revision = "ee41234711b43f88e95126e320fff3eb4002ed7b"
-  version = "v0.1.0"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -134,14 +86,6 @@
   pruneopts = "UT"
   revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
   version = "v1.7.0"
-
-[[projects]]
-  digest = "1:263b4f99f126dedabdd391177359aeff3c558d91f0faae4dcada0eeec338fa05"
-  name = "github.com/go-ini/ini"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "6ba806069d657e6db7bc2a835639a0395c930c5a"
-  version = "v1.47.0"
 
 [[projects]]
   digest = "1:edd2fa4578eb086265db78a9201d15e76b298dfd0d5c379da83e9c61712cf6df"
@@ -254,13 +198,6 @@
   pruneopts = "UT"
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
-
-[[projects]]
-  digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
-  name = "github.com/jmespath/go-jmespath"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c2b33e84"
 
 [[projects]]
   digest = "1:709cd2a2c29cc9b89732f6c24846bbb9d6270f28ef5ef2128cc73bd0d6d7bff9"
@@ -648,7 +585,7 @@
   version = "kubernetes-1.14.1"
 
 [[projects]]
-  digest = "1:14ddb0c1047a8e09027b428322aed5c4b665460be6bd77c9dbaeadd6ad8cf747"
+  digest = "1:ee2d3ac5131143bfc197d4418b2bc9ab31e4def5c4056142897b1c63d916e611"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -683,7 +620,6 @@
     "pkg/util/mergepatch",
     "pkg/util/naming",
     "pkg/util/net",
-    "pkg/util/rand",
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/strategicpatch",
@@ -919,16 +855,13 @@
     "github.com/crossplaneio/crossplane-runtime/pkg/logging",
     "github.com/crossplaneio/crossplane-runtime/pkg/meta",
     "github.com/crossplaneio/crossplane-runtime/pkg/resource",
-    "github.com/crossplaneio/crossplane-runtime/pkg/util",
     "github.com/crossplaneio/crossplane/apis",
-    "github.com/crossplaneio/stack-aws/aws/apis/cache/v1alpha2",
-    "github.com/crossplaneio/stack-aws/pkg/clients/aws",
-    "github.com/crossplaneio/stack-aws/pkg/clients/aws/elasticache",
     "github.com/packethost/packngo",
     "github.com/pkg/errors",
     "golang.org/x/tools/cmd/stringer",
     "gopkg.in/alecthomas/kingpin.v2",
     "k8s.io/api/core/v1",
+    "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",

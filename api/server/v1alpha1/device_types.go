@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,31 +33,31 @@ const (
 
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	runtimev1alpha1.ResourceSpec
+	runtimev1alpha1.ResourceSpec `json:",inline"`
 
 	Hostname     string   `json:"hostname"`
 	Plan         string   `json:"plan"`
-	Facility     []string `json:"facility"`
-	OS           string   `json:"operating_system"`
-	BillingCycle string   `json:"billing_cycle"`
-	ProjectID    string   `json:"project_id"`
-	UserData     string   `json:"userdata"`
-	Storage      string   `json:"storage,omitempty"`
-	Tags         []string `json:"tags"`
+	Facility     string   `json:"facility"`
+	OS           string   `json:"operatingSystem"`
+	BillingCycle string   `json:"billingCycle"`
+	ProjectID    string   `json:"projectID"`
+	UserData     string   `json:"userdata,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
 }
 
 // DeviceStatus defines the observed state of Device
 type DeviceStatus struct {
-	runtimev1alpha1.ResourceStatus
+	runtimev1alpha1.ResourceStatus `json:",inline"`
 
-	ID           string  `json:"id"`
-	Href         string  `json:"href,omitempty"`
-	Hostname     string  `json:"hostname,omitempty"`
-	State        string  `json:"state,omitempty"`
-	ProvisionPer float32 `json:"provisionPer,omitempty"`
+	ID           string            `json:"id"`
+	Href         string            `json:"href,omitempty"`
+	Hostname     string            `json:"hostname,omitempty"`
+	State        string            `json:"state,omitempty"`
+	ProvisionPer resource.Quantity `json:"provisionPer,omitempty"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Device is the Schema for the devices API
 type Device struct {
