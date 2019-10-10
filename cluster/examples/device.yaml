@@ -13,3 +13,4 @@ spec:
   providerRef:
     name: example
     namespace: packet-infra-dev
+  reclaimPolicy: Delete

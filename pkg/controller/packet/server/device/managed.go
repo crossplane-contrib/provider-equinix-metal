@@ -112,7 +112,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 
 	device, _, err := e.client.Get(d.Status.ID)
 	if err != nil {
-		return resource.ExternalObservation{}, errors.Wrap(err, errGetDevice)
+		return resource.ExternalObservation{}, errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errGetDevice)
 	}
 
 	// Update device status
