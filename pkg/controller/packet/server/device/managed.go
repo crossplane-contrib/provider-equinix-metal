@@ -131,6 +131,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 		resource.SetBindable(d)
 	case v1alpha1.StateProvisioning:
 		d.Status.SetConditions(runtimev1alpha1.Creating())
+	case v1alpha1.StateQueued:
+		d.Status.SetConditions(runtimev1alpha1.Unavailable())
 	}
 
 	o := resource.ExternalObservation{

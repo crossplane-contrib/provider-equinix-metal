@@ -29,6 +29,9 @@ const (
 
 	// StateProvisioning indicates device is in provisioning state
 	StateProvisioning = "provisioning"
+
+	// StateQueued indicates device is in queued state
+	StateQueued = "queued"
 )
 
 // DeviceSpec defines the desired state of Device
