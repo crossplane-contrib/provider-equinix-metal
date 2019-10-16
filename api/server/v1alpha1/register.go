@@ -46,4 +46,6 @@ var (
 
 func init() {
 	SchemeBuilder.Register(&Device{}, &DeviceList{})
+	SchemeBuilder.Register(&DeviceClass{}, &DeviceClassList{})
+
 }

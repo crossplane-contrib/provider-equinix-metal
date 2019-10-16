@@ -1,0 +1,112 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: deviceclasses.server.packet.crossplane.io
+spec:
+  group: server.packet.crossplane.io
+  names:
+    kind: DeviceClass
+    listKind: DeviceClassList
+    plural: deviceclasses
+    singular: deviceclass
+  scope: ""
+  validation:
+    openAPIV3Schema:
+      description: DeviceClass ...
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        specTemplate:
+          description: SpecTemplate is a template for the spec of a dynamically provisioned
+            DeviceSpec.
+          properties:
+            always_pxe:
+              type: boolean
+            billingCycle:
+              type: string
+            customdata:
+              type: string
+            facility:
+              type: string
+            features:
+              additionalProperties:
+                type: string
+              type: object
+            hardware_reservation_id:
+              type: string
+            hostname:
+              type: string
+            ip_addresses:
+              items:
+                properties:
+                  address_family:
+                    type: integer
+                  public:
+                    type: boolean
+                required:
+                - address_family
+                - public
+                type: object
+              type: array
+            ipxe_script_url:
+              type: string
+            locked:
+              type: boolean
+            operatingSystem:
+              type: string
+            plan:
+              type: string
+            project_ssh_keys:
+              items:
+                type: string
+              type: array
+            projectID:
+              type: string
+            public_ipv4_subnet_size:
+              type: integer
+            tags:
+              items:
+                type: string
+              type: array
+            user_ssh_keys:
+              items:
+                type: string
+              type: array
+            userdata:
+              type: string
+          required:
+          - billingCycle
+          - facility
+          - hostname
+          - locked
+          - operatingSystem
+          - plan
+          - projectID
+          type: object
+      required:
+      - specTemplate
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

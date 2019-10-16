@@ -34,6 +34,8 @@ spec:
         spec:
           description: DeviceSpec defines the desired state of Device
           properties:
+            always_pxe:
+              type: boolean
             billingCycle:
               type: string
             claimRef:
@@ -114,14 +116,42 @@ spec:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
+            customdata:
+              type: string
             facility:
+              type: string
+            features:
+              additionalProperties:
+                type: string
+              type: object
+            hardware_reservation_id:
               type: string
             hostname:
               type: string
+            ip_addresses:
+              items:
+                properties:
+                  address_family:
+                    type: integer
+                  public:
+                    type: boolean
+                required:
+                - address_family
+                - public
+                type: object
+              type: array
+            ipxe_script_url:
+              type: string
+            locked:
+              type: boolean
             operatingSystem:
               type: string
             plan:
               type: string
+            project_ssh_keys:
+              items:
+                type: string
+              type: array
             projectID:
               type: string
             providerRef:
@@ -161,6 +191,8 @@ spec:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
+            public_ipv4_subnet_size:
+              type: integer
             reclaimPolicy:
               description: ReclaimPolicy specifies what will happen to the external
                 resource this managed resource manages when the managed resource is
@@ -170,6 +202,10 @@ spec:
                 per https://github.com/crossplaneio/crossplane-runtime/issues/21
               type: string
             tags:
+              items:
+                type: string
+              type: array
+            user_ssh_keys:
               items:
                 type: string
               type: array
@@ -191,6 +227,7 @@ spec:
           - billingCycle
           - facility
           - hostname
+          - locked
           - operatingSystem
           - plan
           - projectID
@@ -248,6 +285,8 @@ spec:
             href:
               type: string
             id:
+              type: string
+            ipv4:
               type: string
             provisionPer:
               type: string
