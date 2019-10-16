@@ -14,8 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Generate deepcopy for apis
-//go:generate go run ../vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go object:headerFile=../hack/boilerplate.go.txt paths=./...
+// Generate deepcopy methodsets
+//go:generate ${CONTROLLERGEN} object:headerFile=../hack/boilerplate.go.txt paths=./...
+
+// Generate crossplane-runtime methodsets (resource.Claim, etc)
+//go:generate ${CROSSPLANETOOLS_ANGRYJET} generate-methodsets --header-file=../hack/boilerplate.go.txt ./...
 
 // Package api contains Kubernetes API groups for Packet cloud provider.
 package api
@@ -23,8 +26,8 @@ package api
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	serverv1alpha1 "github.com/hasheddan/stack-packet-demo/api/server/v1alpha1"
-	packetv1alpha1 "github.com/hasheddan/stack-packet-demo/api/v1alpha1"
+	serverv1alpha1 "github.com/hasheddan/stack-packet/apis/server/v1alpha1"
+	packetv1alpha1 "github.com/hasheddan/stack-packet/apis/v1alpha1"
 )
 
 func init() {

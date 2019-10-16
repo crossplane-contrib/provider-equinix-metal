@@ -1,7 +1,7 @@
 # ====================================================================================
 # Setup Project
 
-PROJECT_NAME := stack-packet-demo
+PROJECT_NAME := stack-packet
 PROJECT_REPO := github.com/hasheddan/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -14,7 +14,7 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # ====================================================================================
 # Setup Output
 
-S3_BUCKET ?= crossplane.releases
+S3_BUCKET ?= crossplane.releases # replace with Packet
 -include build/makelib/output.mk
 
 # ====================================================================================
@@ -29,13 +29,17 @@ NPROCS ?= 1
 # to half the number of CPU cores.
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
-GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/stack-packet
+GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/stack
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
-GO_SUBDIRS += cmd pkg api
+GO_SUBDIRS += cmd pkg apis
+GO111MODULE = on
 -include build/makelib/golang.mk
 
 # ====================================================================================
 # Setup Kubebuilder
+
+CRD_DIR=config/crd
+API_DIR=./apis/...
 
 -include build/makelib/kubebuilder.mk
 
@@ -53,7 +57,7 @@ STACK_PACKAGE_REGISTRY=$(STACK_PACKAGE)/.registry
 CRD_DIR=config/crd
 STACK_PACKAGE_REGISTRY_SOURCE=config/stack/manifests
 
-DOCKER_REGISTRY = crossplane
+DOCKER_REGISTRY = crossplane # replace with Packet
 IMAGES = stack-packet
 -include build/makelib/image.mk
 
@@ -71,23 +75,12 @@ fallthrough: submodules
 	@echo Initial setup complete. Running make again . . .
 	@make
 
-go.test.unit: $(KUBEBUILDER)
-
-# Generate manifests e.g. CRD, RBAC etc.
-manifests: vendor
-	@$(INFO) Generating CRD manifests
-	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go crd:trivialVersions=true paths=./api/... output:dir=$(CRD_DIR)
-	@$(OK) Generating CRD manifests
-
 # Generate a coverage report for cobertura applying exclusions on
 # - generated file
 cobertura:
 	@cat $(GO_TEST_OUTPUT)/coverage.txt | \
 		grep -v zz_generated.deepcopy | \
 		$(GOCOVER_COBERTURA) > $(GO_TEST_OUTPUT)/cobertura-coverage.xml
-
-# Ensure a PR is ready for review.
-reviewable: vendor generate manifests lint
 
 # integration tests
 e2e.run: test-integration
@@ -143,7 +136,7 @@ clean: clean-stack-package
 clean-stack-package:
 	@rm -rf $(STACK_PACKAGE)
 
-.PHONY: manifests cobertura reviewable submodules fallthrough test-integration run clean-stack-package build-stack-package
+.PHONY: manifests cobertura submodules fallthrough test-integration run clean-stack-package build-stack-package
 
 # ====================================================================================
 # Special Targets
@@ -152,7 +145,6 @@ define CROSSPLANE_MAKE_HELP
 Crossplane Targets:
     manifests             Generate manifests e.g. CRD, RBAC etc.
     cobertura             Generate a coverage report for cobertura applying exclusions on generated files.
-    reviewable            Ensure a PR is ready for review.
     submodules            Update the submodules, such as the common build scripts.
     run                   Run crossplane locally, out-of-cluster. Useful for development.
     build-stack-package   Builds the stack package contents in the stack package directory (./$(STACK_PACKAGE))
@@ -169,3 +161,17 @@ crossplane.help:
 help-special: crossplane.help
 
 .PHONY: crossplane.help help-special
+
+# target for resolving angryjet dependency
+# TODO(hasheddan): move this to golang.mk in build submodule
+CROSSPLANETOOLS_ANGRYJET := $(TOOLS_HOST_DIR)/angryjet
+export CROSSPLANETOOLS_ANGRYJET
+
+$(CROSSPLANETOOLS_ANGRYJET):
+	@$(INFO) installing Crossplane AngryJet
+	@mkdir -p $(TOOLS_HOST_DIR)/tmp-angryjet || $(FAIL)
+	@GO111MODULE=off GOPATH=$(TOOLS_HOST_DIR)/tmp-angryjet GOBIN=$(TOOLS_HOST_DIR) $(GOHOST) get github.com/crossplaneio/crossplane-tools/cmd/angryjet || rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet|| $(FAIL)
+	@rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet
+	@$(OK) installing Crossplane AngryJet
+
+go.generate: $(CROSSPLANETOOLS_ANGRYJET)

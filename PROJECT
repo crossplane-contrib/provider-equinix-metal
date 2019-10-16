@@ -1,6 +1,6 @@
 version: "2"
 domain: packet.crossplane.io
-repo: github.com/hasheddan/stack-packet-demo
+repo: github.com/hasheddan/stack-packet
 resources:
 - group: server
   version: v1alpha1

@@ -30,10 +30,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/hasheddan/stack-packet-demo/api/server/v1alpha1"
-	packetv1alpha1 "github.com/hasheddan/stack-packet-demo/api/v1alpha1"
-	packetclient "github.com/hasheddan/stack-packet-demo/pkg/clients"
-	devicesclient "github.com/hasheddan/stack-packet-demo/pkg/clients/device"
+	"github.com/hasheddan/stack-packet/apis/server/v1alpha1"
+	packetv1alpha1 "github.com/hasheddan/stack-packet/apis/v1alpha1"
+	packetclient "github.com/hasheddan/stack-packet/pkg/clients"
+	devicesclient "github.com/hasheddan/stack-packet/pkg/clients/device"
 
 	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplaneio/crossplane-runtime/pkg/meta"
