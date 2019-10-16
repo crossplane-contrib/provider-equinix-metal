@@ -27,8 +27,8 @@ import (
 	runtimelog "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
-	packetapi "github.com/hasheddan/stack-packet-demo/api"
-	"github.com/hasheddan/stack-packet-demo/pkg/controller/packet"
+	packetapi "github.com/hasheddan/stack-packet/apis"
+	"github.com/hasheddan/stack-packet/pkg/controller/packet"
 
 	"github.com/crossplaneio/crossplane-runtime/pkg/logging"
 	"github.com/crossplaneio/crossplane/apis"

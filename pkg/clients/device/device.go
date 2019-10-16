@@ -20,8 +20,8 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/hasheddan/stack-packet-demo/api/server/v1alpha1"
-	"github.com/hasheddan/stack-packet-demo/pkg/clients"
+	"github.com/hasheddan/stack-packet/apis/server/v1alpha1"
+	"github.com/hasheddan/stack-packet/pkg/clients"
 	"github.com/packethost/packngo"
 )
 
