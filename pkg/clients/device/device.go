@@ -18,6 +18,7 @@ package device
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/hasheddan/stack-packet-demo/api/server/v1alpha1"
 	"github.com/hasheddan/stack-packet-demo/pkg/clients"
@@ -31,12 +32,12 @@ func NewClient(ctx context.Context, credentials []byte) (packngo.DeviceService, 
 	return client.Devices, nil
 }
 
-// CreateFromDevice ... TODO
+// CreateFromDevice return packngo.DeviceCreateRequest created from Kubernetes
 func CreateFromDevice(d *v1alpha1.Device) *packngo.DeviceCreateRequest {
 	return &packngo.DeviceCreateRequest{
-		HostName:     d.Spec.Hostname,
+		Hostname:     d.Spec.Hostname,
 		Plan:         d.Spec.Plan,
-		Facility:     d.Spec.Facility,
+		Facility:     []string{d.Spec.Facility},
 		OS:           d.Spec.OS,
 		BillingCycle: d.Spec.BillingCycle,
 		ProjectID:    d.Spec.ProjectID,
@@ -45,7 +46,41 @@ func CreateFromDevice(d *v1alpha1.Device) *packngo.DeviceCreateRequest {
 	}
 }
 
-// NeedsUpdate ... TODO
+// NeedsUpdate returns true if the supplied Kubernetes resource differs from the
+// supplied Packet resource. It considers only fields that can be modified in
+// place without deleting and recreating the instance.
 func NeedsUpdate(d *v1alpha1.Device, p *packngo.Device) bool {
+	if d.Spec.Hostname != p.Hostname {
+		return true
+	}
+	if d.Spec.Locked != &p.Locked {
+		return true
+	}
+	if d.Spec.UserData != p.UserData {
+		return true
+	}
+	if d.Spec.IPXEScriptURL != p.IPXEScriptURL {
+		return true
+	}
+	if d.Spec.AlwaysPXE != p.AlwaysPXE {
+		return true
+	}
+	if !reflect.DeepEqual(d.Spec.Tags, p.Tags) {
+		return true
+	}
+
 	return false
+}
+
+// NewUpdateDeviceRequest creates a request to update an instance suitable for
+// use with the Packet API.
+func NewUpdateDeviceRequest(d *v1alpha1.Device) *packngo.DeviceUpdateRequest {
+	return &packngo.DeviceUpdateRequest{
+		Hostname:      &d.Spec.Hostname,
+		Locked:        d.Spec.Locked,
+		UserData:      &d.Spec.UserData,
+		IPXEScriptURL: &d.Spec.IPXEScriptURL,
+		AlwaysPXE:     &d.Spec.AlwaysPXE,
+		Tags:          &d.Spec.Tags,
+	}
 }

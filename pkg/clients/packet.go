@@ -25,7 +25,7 @@ import (
 
 // NewClient ... TODO
 func NewClient(ctx context.Context, credentials []byte) *packngo.Client {
-	return packngo.NewClient("crossplane", string(credentials), nil)
+	return packngo.NewClientWithAuth("crossplane", string(credentials), nil)
 }
 
 // IsNotFound returns true if error is not found

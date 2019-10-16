@@ -50,11 +50,14 @@ const (
 	errDeleteDevice = "cannot delete Device"
 )
 
-// Controller ... TODO
-type Controller struct{}
+// DeviceController is responsible for adding the Packet Device controller
+// and its corresponding reconciler to the manager with any runtime configuration.
+type DeviceController struct{}
 
-// SetupWithManager ... TODO
-func (c *Controller) SetupWithManager(mgr ctrl.Manager) error {
+// SetupWithManager creates a new Device Controller and adds it to the
+// Manager with default RBAC. The Manager will set fields on the Controller and
+// start it when the Manager is Started.
+func (c *DeviceController) SetupWithManager(mgr ctrl.Manager) error {
 	r := resource.NewManagedReconciler(mgr,
 		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
 		resource.WithExternalConnecter(&connecter{client: mgr.GetClient()}))
@@ -106,7 +109,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	}
 
 	// Observe device
-	device, _, err := e.client.Get(d.Status.ID)
+	device, _, err := e.client.Get(d.Status.ID, nil)
 	if packetclient.IsNotFound(err) {
 		return resource.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -119,6 +122,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	d.Status.Hostname = device.Hostname
 	d.Status.Href = device.Href
 	d.Status.State = device.State
+
+	for _, n := range device.Network {
+		if n.Public && n.AddressFamily == 4 {
+			d.Status.IPv4 = n.Address
+		}
+	}
 	// TODO: investigate better way to do this
 	d.Status.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
 
@@ -160,8 +169,6 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.Ex
 
 	d.Status.ID = device.ID
 
-	// TODO: connection details
-
 	return resource.ExternalCreation{}, nil
 }
 
@@ -171,13 +178,20 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (resource.Ex
 		return resource.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	_, _, err := e.client.Get(d.Status.ID)
+	actual, _, err := e.client.Get(d.Status.ID, nil)
 	if err != nil {
 		return resource.ExternalUpdate{}, errors.Wrap(err, errGetDevice)
 	}
 
-	// TODO: compare returned to desired state and update if necessary
+	if !devicesclient.NeedsUpdate(d, actual) {
+		return resource.ExternalUpdate{}, nil
+	}
 
+	_, _, err = e.client.Update(d.Status.ID, devicesclient.NewUpdateDeviceRequest(d))
+
+	if err != nil {
+		return resource.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
+	}
 	return resource.ExternalUpdate{}, nil
 }
 
@@ -187,6 +201,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotDevice)
 	}
 	d.SetConditions(runtimev1alpha1.Deleting())
+
 	_, err := e.client.Delete(d.Status.ID)
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteDevice)
 }

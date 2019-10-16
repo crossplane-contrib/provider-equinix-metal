@@ -27,7 +27,7 @@ type Controllers struct{}
 // SetupWithManager adds all Packet controllers to the manager.
 func (c *Controllers) SetupWithManager(mgr ctrl.Manager) error {
 
-	if err := (&device.Controller{}).SetupWithManager(mgr); err != nil {
+	if err := (&device.DeviceController{}).SetupWithManager(mgr); err != nil {
 		return err
 	}
 

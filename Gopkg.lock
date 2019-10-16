@@ -248,12 +248,12 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:9a296faf4f0866c3e5b3a7083c457089089e6648b8e39a3000894f4f1b468494"
+  digest = "1:4294e1911f1ea747ee11f6772a118c4b33efcf49e83837318c1123c18961dccf"
   name = "github.com/packethost/packngo"
   packages = ["."]
   pruneopts = "UT"
-  revision = "131798f2804a1b3e895ca98047d56f0d7e094e2a"
-  version = "v0.1.0"
+  revision = "02a3ebac54fcfe6297c72ddfb68f8144f31c47b4"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"
