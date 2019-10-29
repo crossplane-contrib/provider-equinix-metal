@@ -17,7 +17,7 @@ limitations under the License.
 package packet
 
 import (
-	"github.com/hasheddan/stack-packet/pkg/controller/packet/server/device"
+	"github.com/packethost/stack-packet/pkg/controller/packet/server/device"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 

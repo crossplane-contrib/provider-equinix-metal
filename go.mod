@@ -1,4 +1,4 @@
-module github.com/hasheddan/stack-packet
+module github.com/packethost/stack-packet
 
 go 1.12
 
