@@ -26,8 +26,8 @@ package api
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	serverv1alpha1 "github.com/hasheddan/stack-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/hasheddan/stack-packet/apis/v1alpha1"
+	serverv1alpha1 "github.com/packethost/stack-packet/apis/server/v1alpha1"
+	packetv1alpha1 "github.com/packethost/stack-packet/apis/v1alpha1"
 )
 
 func init() {

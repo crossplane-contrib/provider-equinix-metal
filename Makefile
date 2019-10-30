@@ -2,7 +2,7 @@
 # Setup Project
 
 PROJECT_NAME := stack-packet
-PROJECT_REPO := github.com/hasheddan/$(PROJECT_NAME)
+PROJECT_REPO := github.com/packethost/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
 # -include will silently skip missing files, which allows us

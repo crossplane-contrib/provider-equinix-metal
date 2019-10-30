@@ -20,9 +20,9 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/hasheddan/stack-packet/apis/server/v1alpha1"
-	"github.com/hasheddan/stack-packet/pkg/clients"
 	"github.com/packethost/packngo"
+	"github.com/packethost/stack-packet/apis/server/v1alpha1"
+	"github.com/packethost/stack-packet/pkg/clients"
 )
 
 // NewClient ... TODO
