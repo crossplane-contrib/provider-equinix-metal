@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 
 	packetapi "github.com/packethost/stack-packet/apis"
-	"github.com/packethost/stack-packet/pkg/controller/packet"
+	"github.com/packethost/stack-packet/pkg/controller"
 
 	"github.com/crossplaneio/crossplane-runtime/pkg/logging"
 	"github.com/crossplaneio/crossplane/apis"
@@ -101,7 +101,7 @@ func main() {
 }
 
 func controllerSetupWithManager(mgr manager.Manager) error {
-	if err := (&packet.Controllers{}).SetupWithManager(mgr); err != nil {
+	if err := (&controller.Controllers{}).SetupWithManager(mgr); err != nil {
 		return err
 	}
 

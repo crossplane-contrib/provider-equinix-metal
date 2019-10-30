@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package packet
+package controller
 
 import (
-	"github.com/packethost/stack-packet/pkg/controller/packet/server/device"
+	"github.com/packethost/stack-packet/pkg/controller/server/device"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
