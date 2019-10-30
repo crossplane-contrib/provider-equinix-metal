@@ -34,6 +34,8 @@ const (
 	StateQueued = "queued"
 )
 
+// TODO: make optional parameters pointers and add +optional
+
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
 	runtimev1alpha1.ResourceSpec `json:",inline"`
@@ -71,7 +73,6 @@ type DeviceList struct {
 // DeviceParameters define the desired state of a Packet device.
 // https://www.packet.com/developers/api/#devices
 type DeviceParameters struct {
-	// TODO: make optional parameters pointers and add +optional
 	Hostname              string                           `json:"hostname"`
 	Plan                  string                           `json:"plan"`
 	Facility              string                           `json:"facility"`
