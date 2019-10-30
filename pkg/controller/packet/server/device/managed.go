@@ -42,22 +42,24 @@ import (
 
 // Error strings.
 const (
-	errNewClient    = "cannot create new Device client"
-	errNotDevice    = "managed resource is not a Device"
-	errGetDevice    = "cannot get Device"
-	errCreateDevice = "cannot create Device"
-	errUpdateDevice = "cannot modify Device"
-	errDeleteDevice = "cannot delete Device"
+	errGetProvider       = "cannot get Provider"
+	errGetProviderSecret = "cannot get Provider Secret"
+	errNewClient         = "cannot create new Device client"
+	errNotDevice         = "managed resource is not a Device"
+	errGetDevice         = "cannot get Device"
+	errCreateDevice      = "cannot create Device"
+	errUpdateDevice      = "cannot modify Device"
+	errDeleteDevice      = "cannot delete Device"
 )
 
-// DeviceController is responsible for adding the Packet Device controller
+// Controller is responsible for adding the Packet Device controller
 // and its corresponding reconciler to the manager with any runtime configuration.
-type DeviceController struct{}
+type Controller struct{}
 
 // SetupWithManager creates a new Device Controller and adds it to the
 // Manager with default RBAC. The Manager will set fields on the Controller and
 // start it when the Manager is Started.
-func (c *DeviceController) SetupWithManager(mgr ctrl.Manager) error {
+func (c *Controller) SetupWithManager(mgr ctrl.Manager) error {
 	r := resource.NewManagedReconciler(mgr,
 		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
 		resource.WithExternalConnecter(&connecter{client: mgr.GetClient()}))
@@ -84,13 +86,13 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.
 	p := &packetv1alpha1.Provider{}
 	n := meta.NamespacedNameOf(g.Spec.ProviderReference)
 	if err := c.client.Get(ctx, n, p); err != nil {
-		return nil, errors.Wrapf(err, "cannot get provider %s", n)
+		return nil, errors.Wrap(err, errGetProvider)
 	}
 
 	s := &corev1.Secret{}
-	n = types.NamespacedName{Namespace: p.GetNamespace(), Name: p.Spec.Secret.Name}
+	n = types.NamespacedName{Namespace: p.Spec.Secret.Namespace, Name: p.Spec.Secret.Name}
 	if err := c.client.Get(ctx, n, s); err != nil {
-		return nil, errors.Wrapf(err, "cannot get provider secret %s", n)
+		return nil, errors.Wrap(err, errGetProviderSecret)
 	}
 	newClientFn := devicesclient.NewClient
 	if c.newClientFn != nil {
@@ -100,7 +102,10 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.
 	return &external{client: client}, errors.Wrap(err, errNewClient)
 }
 
-type external struct{ client packngo.DeviceService }
+type external struct {
+	// TODO: use kube client for any late initialization
+	client packngo.DeviceService
+}
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.ExternalObservation, error) {
 	d, ok := mg.(*v1alpha1.Device)
@@ -109,7 +114,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	}
 
 	// Observe device
-	device, _, err := e.client.Get(d.Status.ID, nil)
+	device, _, err := e.client.Get(d.Status.AtProvider.ID, nil)
 	if packetclient.IsNotFound(err) {
 		return resource.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -118,22 +123,22 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	}
 
 	// Update device status
-	d.Status.ID = device.ID
-	d.Status.Hostname = device.Hostname
-	d.Status.Href = device.Href
-	d.Status.State = device.State
+	d.Status.AtProvider.ID = device.ID
+	d.Status.AtProvider.Hostname = device.Hostname
+	d.Status.AtProvider.Href = device.Href
+	d.Status.AtProvider.State = device.State
 
 	for _, n := range device.Network {
 		if n.Public && n.AddressFamily == 4 {
-			d.Status.IPv4 = n.Address
+			d.Status.AtProvider.IPv4 = n.Address
 		}
 	}
 	// TODO: investigate better way to do this
-	d.Status.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
+	d.Status.AtProvider.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
 
 	// Set Device status and bindable
 	// TODO: identify deleting state
-	switch d.Status.State {
+	switch d.Status.AtProvider.State {
 	case v1alpha1.StateActive:
 		d.Status.SetConditions(runtimev1alpha1.Available())
 		resource.SetBindable(d)
@@ -145,6 +150,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 
 	o := resource.ExternalObservation{
 		ResourceExists:    true,
+		ResourceUpToDate:  devicesclient.IsUpToDate(d, device),
 		ConnectionDetails: resource.ConnectionDetails{},
 	}
 
@@ -167,7 +173,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.Ex
 		return resource.ExternalCreation{}, errors.Wrap(err, errCreateDevice)
 	}
 
-	d.Status.ID = device.ID
+	d.Status.AtProvider.ID = device.ID
 
 	return resource.ExternalCreation{}, nil
 }
@@ -178,20 +184,10 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (resource.Ex
 		return resource.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	actual, _, err := e.client.Get(d.Status.ID, nil)
-	if err != nil {
-		return resource.ExternalUpdate{}, errors.Wrap(err, errGetDevice)
-	}
-
-	if !devicesclient.NeedsUpdate(d, actual) {
-		return resource.ExternalUpdate{}, nil
-	}
-
-	_, _, err = e.client.Update(d.Status.ID, devicesclient.NewUpdateDeviceRequest(d))
-
-	if err != nil {
+	if _, _, err := e.client.Update(d.Status.AtProvider.ID, devicesclient.NewUpdateDeviceRequest(d)); err != nil {
 		return resource.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 	}
+
 	return resource.ExternalUpdate{}, nil
 }
 
@@ -202,6 +198,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 	d.SetConditions(runtimev1alpha1.Deleting())
 
-	_, err := e.client.Delete(d.Status.ID)
+	_, err := e.client.Delete(d.Status.AtProvider.ID)
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteDevice)
 }
