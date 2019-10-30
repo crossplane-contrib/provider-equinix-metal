@@ -12,7 +12,7 @@ spec:
     listKind: DeviceList
     plural: devices
     singular: device
-  scope: ""
+  scope: Cluster
   subresources:
     status: {}
   validation:
@@ -22,22 +22,18 @@ spec:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
         spec:
           description: DeviceSpec defines the desired state of Device
           properties:
-            always_pxe:
-              type: boolean
-            billingCycle:
-              type: string
             claimRef:
               description: ClaimReference specifies the resource claim to which this
                 managed resource will be bound. ClaimReference is set automatically
@@ -61,7 +57,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -71,17 +67,16 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
             classRef:
-              description: NonPortableClassReference specifies the non-portable resource
-                class that was used to dynamically provision this managed resource,
-                if any. Crossplane does not currently support setting this field manually,
-                per https://github.com/crossplaneio/crossplane-runtime/issues/20
+              description: ClassReference specifies the resource class that was used
+                to dynamically provision this managed resource, if any. Crossplane
+                does not currently support setting this field manually, per https://github.com/crossplaneio/crossplane-runtime/issues/20
               properties:
                 apiVersion:
                   description: API version of the referent.
@@ -100,7 +95,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -110,50 +105,79 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
-            customdata:
-              type: string
-            facility:
-              type: string
-            features:
-              additionalProperties:
-                type: string
+            forProvider:
+              description: DeviceParameters define the desired state of a Packet device.
+                https://www.packet.com/developers/api/#devices
+              properties:
+                always_pxe:
+                  type: boolean
+                billingCycle:
+                  type: string
+                customdata:
+                  type: string
+                facility:
+                  type: string
+                features:
+                  additionalProperties:
+                    type: string
+                  type: object
+                hardware_reservation_id:
+                  type: string
+                hostname:
+                  type: string
+                ip_addresses:
+                  items:
+                    properties:
+                      address_family:
+                        type: integer
+                      public:
+                        type: boolean
+                    required:
+                    - address_family
+                    - public
+                    type: object
+                  type: array
+                ipxe_script_url:
+                  type: string
+                locked:
+                  type: boolean
+                operatingSystem:
+                  type: string
+                plan:
+                  type: string
+                project_ssh_keys:
+                  items:
+                    type: string
+                  type: array
+                projectID:
+                  type: string
+                public_ipv4_subnet_size:
+                  type: integer
+                tags:
+                  items:
+                    type: string
+                  type: array
+                user_ssh_keys:
+                  items:
+                    type: string
+                  type: array
+                userdata:
+                  type: string
+              required:
+              - billingCycle
+              - facility
+              - hostname
+              - locked
+              - operatingSystem
+              - plan
+              - projectID
               type: object
-            hardware_reservation_id:
-              type: string
-            hostname:
-              type: string
-            ip_addresses:
-              items:
-                properties:
-                  address_family:
-                    type: integer
-                  public:
-                    type: boolean
-                required:
-                - address_family
-                - public
-                type: object
-              type: array
-            ipxe_script_url:
-              type: string
-            locked:
-              type: boolean
-            operatingSystem:
-              type: string
-            plan:
-              type: string
-            project_ssh_keys:
-              items:
-                type: string
-              type: array
-            projectID:
-              type: string
             providerRef:
               description: ProviderReference specifies the provider that will be used
                 to create, observe, update, and delete this managed resource.
@@ -175,7 +199,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -185,14 +209,12 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
-            public_ipv4_subnet_size:
-              type: integer
             reclaimPolicy:
               description: ReclaimPolicy specifies what will happen to the external
                 resource this managed resource manages when the managed resource is
@@ -201,41 +223,48 @@ spec:
                 uses of the ReclaimPolicy concept within the Kubernetes ecosystem
                 per https://github.com/crossplaneio/crossplane-runtime/issues/21
               type: string
-            tags:
-              items:
-                type: string
-              type: array
-            user_ssh_keys:
-              items:
-                type: string
-              type: array
-            userdata:
-              type: string
             writeConnectionSecretToRef:
-              description: WriteConnectionSecretToReference specifies the name of
-                a Secret, in the same namespace as this managed resource, to which
-                any connection details for this managed resource should be written.
-                Connection details frequently include the endpoint, username, and
-                password required to connect to the managed resource.
+              description: WriteConnectionSecretToReference specifies the namespace
+                and name of a Secret to which any connection details for this managed
+                resource should be written. Connection details frequently include
+                the endpoint, username, and password required to connect to the managed
+                resource.
               properties:
                 name:
-                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  description: Name of the secret.
                   type: string
+                namespace:
+                  description: Namespace of the secret.
+                  type: string
+              required:
+              - name
+              - namespace
               type: object
           required:
-          - billingCycle
-          - facility
-          - hostname
-          - locked
-          - operatingSystem
-          - plan
-          - projectID
           - providerRef
           type: object
         status:
           description: DeviceStatus defines the observed state of Device
           properties:
+            atProvider:
+              description: DeviceObservation is used to show the observed state of
+                the Device resource on Packet.
+              properties:
+                hostname:
+                  type: string
+                href:
+                  type: string
+                id:
+                  type: string
+                ipv4:
+                  type: string
+                provisionPer:
+                  type: string
+                state:
+                  type: string
+              required:
+              - id
+              type: object
             bindingPhase:
               description: Phase represents the binding phase of a managed resource
                 or claim. Unbindable resources cannot be bound, typically because
@@ -280,20 +309,6 @@ spec:
                 - type
                 type: object
               type: array
-            hostname:
-              type: string
-            href:
-              type: string
-            id:
-              type: string
-            ipv4:
-              type: string
-            provisionPer:
-              type: string
-            state:
-              type: string
-          required:
-          - id
           type: object
       type: object
   version: v1alpha1
