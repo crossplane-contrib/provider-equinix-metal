@@ -45,7 +45,7 @@ import (
 
 const (
 	namespace  = "cool-namespace"
-	deviceName = "claimns-claimname-8sdh3"
+	deviceName = "my-cool-device"
 	alwaysPXE  = true
 
 	providerName       = "cool-packet"
@@ -453,7 +453,7 @@ func TestCreate(t *testing.T) {
 				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
-							ID: "1234",
+							ID: deviceName,
 						},
 					}, nil, nil
 				}},
@@ -465,7 +465,7 @@ func TestCreate(t *testing.T) {
 			want: want{
 				mg: device(
 					withConditions(runtimev1alpha1.Creating()),
-					withID("1234")),
+					withID(deviceName)),
 			},
 		},
 		"NotDevice": {

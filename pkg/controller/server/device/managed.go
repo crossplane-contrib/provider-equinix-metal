@@ -62,7 +62,8 @@ type Controller struct{}
 func (c *Controller) SetupWithManager(mgr ctrl.Manager) error {
 	r := resource.NewManagedReconciler(mgr,
 		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
-		resource.WithExternalConnecter(&connecter{client: mgr.GetClient()}))
+		resource.WithExternalConnecter(&connecter{client: mgr.GetClient()}),
+		resource.WithManagedInitializers(resource.NewAPIManagedFinalizerAdder(mgr.GetClient())))
 
 	name := strings.ToLower(fmt.Sprintf("%s.%s", v1alpha1.DeviceKind, v1alpha1.Group))
 
@@ -114,7 +115,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	}
 
 	// Observe device
-	device, _, err := e.client.Get(d.Status.AtProvider.ID, nil)
+	device, _, err := e.client.Get(meta.GetExternalName(d), nil)
 	if packetclient.IsNotFound(err) {
 		return resource.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -174,6 +175,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.Ex
 	}
 
 	d.Status.AtProvider.ID = device.ID
+	meta.SetExternalName(d, device.ID)
 
 	return resource.ExternalCreation{}, nil
 }
@@ -184,7 +186,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (resource.Ex
 		return resource.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	if _, _, err := e.client.Update(d.Status.AtProvider.ID, devicesclient.NewUpdateDeviceRequest(d)); err != nil {
+	if _, _, err := e.client.Update(meta.GetExternalName(d), devicesclient.NewUpdateDeviceRequest(d)); err != nil {
 		return resource.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 	}
 
@@ -198,6 +200,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 	d.SetConditions(runtimev1alpha1.Deleting())
 
-	_, err := e.client.Delete(d.Status.AtProvider.ID)
+	_, err := e.client.Delete(meta.GetExternalName(d))
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteDevice)
 }
