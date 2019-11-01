@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package packet
+package controller
 
 import (
-	"github.com/packethost/stack-packet/pkg/controller/packet/server/device"
+	"github.com/packethost/stack-packet/pkg/controller/server/device"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -26,10 +26,18 @@ type Controllers struct{}
 
 // SetupWithManager adds all Packet controllers to the manager.
 func (c *Controllers) SetupWithManager(mgr ctrl.Manager) error {
-
-	if err := (&device.DeviceController{}).SetupWithManager(mgr); err != nil {
-		return err
+	controllers := []interface {
+		SetupWithManager(ctrl.Manager) error
+	}{
+		&device.ClaimSchedulingController{},
+		&device.ClaimDefaultingController{},
+		&device.ClaimController{},
+		&device.Controller{},
 	}
-
+	for _, c := range controllers {
+		if err := c.SetupWithManager(mgr); err != nil {
+			return err
+		}
+	}
 	return nil
 }

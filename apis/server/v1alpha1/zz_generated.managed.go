@@ -32,9 +32,14 @@ func (mg *Device) GetClaimReference() *corev1.ObjectReference {
 	return mg.Spec.ClaimReference
 }
 
-// GetNonPortableClassReference of this Device.
-func (mg *Device) GetNonPortableClassReference() *corev1.ObjectReference {
-	return mg.Spec.NonPortableClassReference
+// GetClassReference of this Device.
+func (mg *Device) GetClassReference() *corev1.ObjectReference {
+	return mg.Spec.ClassReference
+}
+
+// GetCondition of this Device.
+func (mg *Device) GetCondition(ct runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
+	return mg.Status.GetCondition(ct)
 }
 
 // GetReclaimPolicy of this Device.
@@ -43,7 +48,7 @@ func (mg *Device) GetReclaimPolicy() runtimev1alpha1.ReclaimPolicy {
 }
 
 // GetWriteConnectionSecretToReference of this Device.
-func (mg *Device) GetWriteConnectionSecretToReference() corev1.LocalObjectReference {
+func (mg *Device) GetWriteConnectionSecretToReference() *runtimev1alpha1.SecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
@@ -57,14 +62,14 @@ func (mg *Device) SetClaimReference(r *corev1.ObjectReference) {
 	mg.Spec.ClaimReference = r
 }
 
+// SetClassReference of this Device.
+func (mg *Device) SetClassReference(r *corev1.ObjectReference) {
+	mg.Spec.ClassReference = r
+}
+
 // SetConditions of this Device.
 func (mg *Device) SetConditions(c ...runtimev1alpha1.Condition) {
 	mg.Status.SetConditions(c...)
-}
-
-// SetNonPortableClassReference of this Device.
-func (mg *Device) SetNonPortableClassReference(r *corev1.ObjectReference) {
-	mg.Spec.NonPortableClassReference = r
 }
 
 // SetReclaimPolicy of this Device.
@@ -73,6 +78,6 @@ func (mg *Device) SetReclaimPolicy(r runtimev1alpha1.ReclaimPolicy) {
 }
 
 // SetWriteConnectionSecretToReference of this Device.
-func (mg *Device) SetWriteConnectionSecretToReference(r corev1.LocalObjectReference) {
+func (mg *Device) SetWriteConnectionSecretToReference(r *runtimev1alpha1.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

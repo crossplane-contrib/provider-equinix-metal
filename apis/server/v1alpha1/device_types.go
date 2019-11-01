@@ -34,28 +34,25 @@ const (
 	StateQueued = "queued"
 )
 
+// TODO: make optional parameters pointers and add +optional
+
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
 	runtimev1alpha1.ResourceSpec `json:",inline"`
-	DeviceParameters             `json:",inline"`
+	ForProvider                  DeviceParameters `json:"forProvider,omitempty"`
 }
 
 // DeviceStatus defines the observed state of Device
 type DeviceStatus struct {
 	runtimev1alpha1.ResourceStatus `json:",inline"`
-
-	ID           string            `json:"id"`
-	Href         string            `json:"href,omitempty"`
-	Hostname     string            `json:"hostname,omitempty"`
-	State        string            `json:"state,omitempty"`
-	ProvisionPer resource.Quantity `json:"provisionPer,omitempty"`
-	IPv4         string            `json:"ipv4,omitempty"`
+	AtProvider                     DeviceObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 
 // Device is the Schema for the devices API
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 type Device struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -73,7 +70,8 @@ type DeviceList struct {
 	Items           []Device `json:"items"`
 }
 
-// DeviceParameters ...
+// DeviceParameters define the desired state of a Packet device.
+// https://www.packet.com/developers/api/#devices
 type DeviceParameters struct {
 	Hostname              string                           `json:"hostname"`
 	Plan                  string                           `json:"plan"`
@@ -83,7 +81,7 @@ type DeviceParameters struct {
 	ProjectID             string                           `json:"projectID"`
 	UserData              string                           `json:"userdata,omitempty"`
 	Tags                  []string                         `json:"tags,omitempty"`
-	Locked                *bool                            `json:"locked,omitemtpy"`
+	Locked                bool                             `json:"locked,omitemtpy"`
 	IPXEScriptURL         string                           `json:"ipxe_script_url,omitempty"`
 	PublicIPv4SubnetSize  int                              `json:"public_ipv4_subnet_size,omitempty"`
 	AlwaysPXE             bool                             `json:"always_pxe,omitempty"`
@@ -95,15 +93,29 @@ type DeviceParameters struct {
 	IPAddresses           []packngo.IPAddressCreateRequest `json:"ip_addresses,omitempty"`
 }
 
-// DeviceClassSpecTemplate ...
+// DeviceObservation is used to show the observed state of the
+// Device resource on Packet.
+type DeviceObservation struct {
+	ID           string            `json:"id"`
+	Href         string            `json:"href,omitempty"`
+	Hostname     string            `json:"hostname,omitempty"`
+	State        string            `json:"state,omitempty"`
+	ProvisionPer resource.Quantity `json:"provisionPer,omitempty"`
+	IPv4         string            `json:"ipv4,omitempty"`
+}
+
+// DeviceClassSpecTemplate is a template for the spec of a dynamically provisioned Device.
 type DeviceClassSpecTemplate struct {
-	runtimev1alpha1.NonPortableClassSpecTemplate `json:",inline"`
-	DeviceParameters                             `json:",inline"`
+	runtimev1alpha1.ClassSpecTemplate `json:",inline"`
+	ForProvider                       DeviceParameters `json:"forProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// DeviceClass ...
+// A DeviceClass is a resource class. It defines the desired
+// spec of resource claims that use it to dynamically provision a managed
+// resource.
+// +kubebuilder:resource:scope=Cluster
 type DeviceClass struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -115,7 +127,7 @@ type DeviceClass struct {
 
 // +kubebuilder:object:root=true
 
-// DeviceClassList ...
+// DeviceClassList contains a list of device resource classes.
 type DeviceClassList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
