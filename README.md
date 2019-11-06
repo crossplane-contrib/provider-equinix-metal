@@ -98,7 +98,7 @@ spec:
 ```
 
 ```
-$ kubectl craete -f device.yaml
+$ kubectl create -f device.yaml
 device.server.packet.crossplane.io/devices created
 ```
 
