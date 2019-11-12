@@ -11,9 +11,10 @@ data:
 apiVersion: packet.crossplane.io/v1alpha1
 kind: Provider
 metadata:
-  name: example
-  namespace: packet-infra-dev
+  name: example-provider-packet
+  # namespace: packet-infra-dev
 spec:
   credentialsSecretRef:
     name: example-provider-packet
+    namespace: packet-infra-dev
     key: credentials

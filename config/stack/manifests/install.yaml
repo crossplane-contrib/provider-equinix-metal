@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: "crossplane-stack-packet-controller"
-        image: "crossplane/stack-packet"
+        image: "jasmingacic/stack-packet"
         env:
         - name: POD_NAME
           valueFrom:

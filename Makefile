@@ -57,7 +57,7 @@ STACK_PACKAGE_REGISTRY=$(STACK_PACKAGE)/.registry
 CRD_DIR=config/crd
 STACK_PACKAGE_REGISTRY_SOURCE=config/stack/manifests
 
-DOCKER_REGISTRY = crossplane # replace with Packet
+DOCKER_REGISTRY = jasmingacic # replace with Packet
 IMAGES = stack-packet
 -include build/makelib/image.mk
 

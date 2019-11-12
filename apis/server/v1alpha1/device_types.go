@@ -39,7 +39,7 @@ const (
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
 	runtimev1alpha1.ResourceSpec `json:",inline"`
-	ForProvider                  DeviceParameters `json:"forProvider,omitempty"`
+	ForProvider                  DeviceParameters `json:"forProvider"`
 }
 
 // DeviceStatus defines the observed state of Device
