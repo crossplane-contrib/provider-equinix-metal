@@ -42,6 +42,8 @@ import (
 
 // Error strings.
 const (
+	errManagedUpdateFailed = "cannot update Device custom resource"
+
 	errGetProvider       = "cannot get Provider"
 	errGetProviderSecret = "cannot get Provider Secret"
 	errNewClient         = "cannot create new Device client"
@@ -62,7 +64,7 @@ type Controller struct{}
 func (c *Controller) SetupWithManager(mgr ctrl.Manager) error {
 	r := resource.NewManagedReconciler(mgr,
 		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
-		resource.WithExternalConnecter(&connecter{client: mgr.GetClient()}),
+		resource.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
 		resource.WithManagedInitializers(resource.NewAPIManagedFinalizerAdder(mgr.GetClient())))
 
 	name := strings.ToLower(fmt.Sprintf("%s.%s", v1alpha1.DeviceKind, v1alpha1.Group))
@@ -74,7 +76,7 @@ func (c *Controller) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 type connecter struct {
-	client      client.Client
+	kube        client.Client
 	newClientFn func(ctx context.Context, credentials []byte) (packngo.DeviceService, error)
 }
 
@@ -86,13 +88,13 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.
 
 	p := &packetv1alpha1.Provider{}
 	n := meta.NamespacedNameOf(g.Spec.ProviderReference)
-	if err := c.client.Get(ctx, n, p); err != nil {
+	if err := c.kube.Get(ctx, n, p); err != nil {
 		return nil, errors.Wrap(err, errGetProvider)
 	}
 
 	s := &corev1.Secret{}
 	n = types.NamespacedName{Namespace: p.Spec.Secret.Namespace, Name: p.Spec.Secret.Name}
-	if err := c.client.Get(ctx, n, s); err != nil {
+	if err := c.kube.Get(ctx, n, s); err != nil {
 		return nil, errors.Wrap(err, errGetProviderSecret)
 	}
 	newClientFn := devicesclient.NewClient
@@ -100,11 +102,11 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.
 		newClientFn = c.newClientFn
 	}
 	client, err := newClientFn(ctx, s.Data[p.Spec.Secret.Key])
-	return &external{client: client}, errors.Wrap(err, errNewClient)
+	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }
 
 type external struct {
-	// TODO: use kube client for any late initialization
+	kube   client.Client
 	client packngo.DeviceService
 }
 
@@ -176,6 +178,9 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.Ex
 
 	d.Status.AtProvider.ID = device.ID
 	meta.SetExternalName(d, device.ID)
+	if err := e.kube.Update(ctx, d); err != nil {
+		return resource.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
+	}
 
 	return resource.ExternalCreation{}, nil
 }

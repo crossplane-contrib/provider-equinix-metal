@@ -159,7 +159,7 @@ func TestConnect(t *testing.T) {
 	}{
 		"Connected": {
 			conn: &connecter{
-				client: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						*obj.(*packetv1alpha1.Provider) = provider
@@ -185,7 +185,7 @@ func TestConnect(t *testing.T) {
 		},
 		"FailedToGetProvider": {
 			conn: &connecter{
-				client: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					return errorBoom
 				}},
 			},
@@ -194,7 +194,7 @@ func TestConnect(t *testing.T) {
 		},
 		"FailedToGetProviderSecret": {
 			conn: &connecter{
-				client: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						*obj.(*packetv1alpha1.Provider) = provider
@@ -209,7 +209,7 @@ func TestConnect(t *testing.T) {
 		},
 		"FailedToCreateDevice": {
 			conn: &connecter{
-				client: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						*obj.(*packetv1alpha1.Provider) = provider
@@ -457,6 +457,9 @@ func TestCreate(t *testing.T) {
 						},
 					}, nil, nil
 				}},
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
 			},
 			args: args{
 				ctx: context.Background(),
