@@ -1,20 +1,39 @@
-title: ""
-readme: ""
-overview: ""
-overviewShort: ""
+title: "Packet"
+readme: |-
+  This `stack-packet` repository is the implementation of a Crossplane infrastructure
+  [stack](https://github.com/crossplaneio/crossplane/blob/master/design/design-doc-stacks.md) for
+  [Packet](https://www.packet.com).
+ 
+  The stack that is built from the source code in this repository can be
+  installed into a Crossplane control plane and adds the following new
+  functionality:
+  
+  * Custom Resource Definitions (CRDs) that model Packet infrastructure (e.g.
+  [Bare Metal](https://www.packet.com/cloud/servers/))
+  * Controllers to provision these resources in Packet based on the users desired state captured in CRDs they create
+  * Implementations of Crossplane's [portable resource abstractions](https://crossplane.io/docs/master/running-resources.html), enabling Packet resources to fulfill a user's general need for cloud services
+
+overview: |-
+  The Packet Crossplane Stack adds support for managing Packet resources in Kubernetes.
+
+  Packet Device resources can be provisioned, updated, and deleted by this
+  stack.
+overviewShort: The Packet Crossplane Stack enabling resource management for the Packet platform.
 version: 0.0.1
 maintainers:
-- name: ""
-  email: ""
+- name: "Packet"
+  email: "support@packet.com"
 owners:
-- name: ""
-  email: ""
-company: ""
-category: ""
+- name: "Packet"
+  email: "support@packet.com"
+company: "Packet"
+category: "Infrastructure"
 keywords:
- - "crossplane-cli"
-website: ""
-source: ""
+ - "packet"
+ - "packethost"
+ - "infrastructure"
+website: "https://github.com/packethost/stack-packet"
+source: "https://github.com/packethost/stack-packet"
 permissionScope: Cluster
 # License SPDX name: https://spdx.org/licenses/
 license: Apache-2.0
