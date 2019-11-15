@@ -1,0 +1,29 @@
+id: device
+title: Bare Metal
+titlePlural: Bare Metal
+category: Machine
+overviewShort: The Promise of the Cloud, Delivered on Bare Metal
+overview: |
+  Improve performance and minimize cost with single tenant, dedicated servers by the hour.
+readme: |
+  ## 60 Second Deploys
+
+  A single gaming server? A full Kubernetes cluster? No sweat! We've reduced
+  most installs to under 60 seconds, so you can tap into bare metal faster than
+  a VM at AWS.
+
+  ## Hourly Pricing
+
+  While we love monthly and annual commitments (seriously, call us!), all of
+  our servers and add-on products are billed based upon hourly usage.
+
+  ## 18+ Global Data Centers
+
+  With on-demand bare metal in 18 global locations, we have your audience
+  covered from Los Angeles to Tokyo and New York to Amsterdam!
+
+  ## Learn more
+
+  This content is from https://www.packet.com/cloud/all-features/, you can learn
+  more in the [Packet API
+  documentation](https://www.packet.com/developers/api/).
