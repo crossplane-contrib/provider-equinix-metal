@@ -17,7 +17,7 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/packethost/stack-packet/pkg/controller/server/device"
+	"github.com/packethost/provider-packet/pkg/controller/server/device"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 

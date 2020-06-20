@@ -1,6 +1,6 @@
 version: "2"
 domain: packet.crossplane.io
-repo: github.com/packethost/stack-packet
+repo: github.com/packethost/provider-packet
 resources:
 - group: server
   version: v1alpha1

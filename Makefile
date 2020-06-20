@@ -1,7 +1,7 @@
 # ====================================================================================
 # Setup Project
 
-PROJECT_NAME := stack-packet
+PROJECT_NAME := provider-packet
 PROJECT_REPO := github.com/packethost/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -14,7 +14,6 @@ PLATFORMS ?= linux_amd64 linux_arm64
 # ====================================================================================
 # Setup Output
 
-S3_BUCKET ?= crossplane.releases # replace with Packet
 -include build/makelib/output.mk
 
 # ====================================================================================
@@ -29,7 +28,7 @@ NPROCS ?= 1
 # to half the number of CPU cores.
 GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
-GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/stack
+GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
 GO_SUBDIRS += cmd pkg apis
 GO111MODULE = on
@@ -49,16 +48,15 @@ API_DIR=./apis/...
 -include build/makelib/k8s_tools.mk
 
 # ====================================================================================
-# Setup Stacks
+# Setup Packages
 
-STACK_PACKAGE=stack-package
-export STACK_PACKAGE
-STACK_PACKAGE_REGISTRY=$(STACK_PACKAGE)/.registry
-CRD_DIR=config/crd
-STACK_PACKAGE_REGISTRY_SOURCE=config/stack/manifests
+PACKAGE=package
+export PACKAGE
+PACKAGE_REGISTRY=$(PACKAGE)/.registry
+PACKAGE_REGISTRY_SOURCE=config/package/manifests
 
 DOCKER_REGISTRY = crossplane # replace with Packet
-IMAGES = stack-packet
+IMAGES = package-packet
 -include build/makelib/image.mk
 
 # ====================================================================================
@@ -82,6 +80,16 @@ cobertura:
 		grep -v zz_generated.deepcopy | \
 		$(GOCOVER_COBERTURA) > $(GO_TEST_OUTPUT)/cobertura-coverage.xml
 
+# Ensure a PR is ready for review.
+reviewable: generate lint
+	@go mod tidy
+
+# Ensure branch is clean.
+check-diff: reviewable
+	@$(INFO) checking that branch is clean
+	@test -z "$$(git status --porcelain)" || $(FAIL)
+	@$(OK) branch is clean
+
 # integration tests
 e2e.run: test-integration
 
@@ -90,6 +98,9 @@ test-integration: $(KIND) $(KUBECTL) $(HELM)
 	@$(INFO) running integration tests using kind $(KIND_VERSION)
 	@$(ROOT_DIR)/cluster/local/integration_tests.sh || $(FAIL)
 	@$(OK) integration tests passed
+
+go-integration:
+	GO_TEST_FLAGS="-timeout 1h -v" GO_TAGS=integration $(MAKE) go.test.integration
 
 # Update the submodules, such as the common build scripts.
 submodules:
@@ -104,17 +115,32 @@ run: go.build
 	@# To see other arguments that can be provided, run the command with --help instead
 	$(GO_OUT_DIR)/$(PROJECT_NAME) --debug
 
+dev: $(KIND) $(KUBECTL)
+	@$(INFO) Creating kind cluster
+	@$(KIND) create cluster --name=provider-packet-dev
+	@$(KUBECTL) cluster-info --context kind-provider-packet-dev
+	@$(INFO) Installing Crossplane CRDs
+	@$(KUBECTL) apply -k https://github.com/crossplane/crossplane//cluster?ref=master
+	@$(INFO) Installing Provider Packet CRDs
+	@$(KUBECTL) apply -f $(CRD_DIR) -R
+	@$(INFO) Starting Provider Packet controllers
+	@$(GO) run cmd/provider/main.go --debug
+
+dev-clean: $(KIND) $(KUBECTL)
+	@$(INFO) Deleting kind cluster
+	@$(KIND) delete cluster --name=provider-packet-dev
+
 # ====================================================================================
-# Stacks related targets
+# Package related targets
 
-# Initialize the stack package folder
-$(STACK_PACKAGE_REGISTRY):
-	@mkdir -p $(STACK_PACKAGE_REGISTRY)/resources
-	@touch $(STACK_PACKAGE_REGISTRY)/app.yaml $(STACK_PACKAGE_REGISTRY)/install.yaml
+# Initialize the package folder
+$(PACKAGE_REGISTRY):
+	@mkdir -p $(PACKAGE_REGISTRY)/resources
+	@touch $(PACKAGE_REGISTRY)/app.yaml $(PACKAGE_REGISTRY)/install.yaml
 
-build.artifacts: build-stack-package
+build.artifacts: build-package
 
-build-stack-package: $(STACK_PACKAGE_REGISTRY)
+build-package: $(PACKAGE_REGISTRY)
 # Copy CRDs over
 #
 # The reason this looks complicated is because it is
@@ -124,31 +150,33 @@ build-stack-package: $(STACK_PACKAGE_REGISTRY)
 # An alternate and simpler-looking approach would
 # be to cat all of the files into a single crd.yaml,
 # but then we couldn't use per CRD metadata files.
-	@$(INFO) building stack package in $(STACK_PACKAGE)
+	@$(INFO) building package in $(PACKAGE)
 	@find $(CRD_DIR) -type f -name '*.yaml' | \
-		while read filename ; do cat $$filename > \
-		$(STACK_PACKAGE_REGISTRY)/resources/$$( basename $${filename/.yaml/.crd.yaml} ) \
+		while read filename ; do mkdir -p $(PACKAGE_REGISTRY)/resources/$$(basename $${filename%_*});\
+		concise=$${filename#*_}; \
+		cat $$filename > \
+		$(PACKAGE_REGISTRY)/resources/$$( basename $${filename%_*} )/$$( basename $${concise/.yaml/.crd.yaml} ) \
 		; done
-	@cp -r $(STACK_PACKAGE_REGISTRY_SOURCE)/* $(STACK_PACKAGE_REGISTRY)
+	@cp -r $(PACKAGE_REGISTRY_SOURCE)/* $(PACKAGE_REGISTRY)
 
-clean: clean-stack-package
+clean: clean-package
 
-clean-stack-package:
-	@rm -rf $(STACK_PACKAGE)
+clean-package:
+	@rm -rf $(PACKAGE)
 
-.PHONY: manifests cobertura submodules fallthrough test-integration run clean-stack-package build-stack-package
+.PHONY: cobertura submodules fallthrough test-integration run clean-package build-package go-integration dev dev-clean
 
 # ====================================================================================
 # Special Targets
 
 define CROSSPLANE_MAKE_HELP
 Crossplane Targets:
-    manifests             Generate manifests e.g. CRD, RBAC etc.
     cobertura             Generate a coverage report for cobertura applying exclusions on generated files.
+    reviewable            Ensure a PR is ready for review.
     submodules            Update the submodules, such as the common build scripts.
     run                   Run crossplane locally, out-of-cluster. Useful for development.
-    build-stack-package   Builds the stack package contents in the stack package directory (./$(STACK_PACKAGE))
-    clean-stack-package   Cleans out the generated stack package directory (./$(STACK_PACKAGE))
+    build-package   Builds the package contents in the package directory (./$(PACKAGE))
+    clean-package   Cleans out the generated package directory (./$(PACKAGE))
 
 endef
 # The reason CROSSPLANE_MAKE_HELP is used instead of CROSSPLANE_HELP is because the crossplane

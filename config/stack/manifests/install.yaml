@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "crossplane-stack-packet"
+  name: "crossplane-provider-packet"
   labels:
-    core.crossplane.io/name: "crossplane-stack-packet"
+    core.crossplane.io/name: "crossplane-provider-packet"
 spec:
   selector:
     matchLabels:
-      core.crossplane.io/name: "crossplane-stack-packet"
+      core.crossplane.io/name: "crossplane-provider-packet"
   replicas: 1
   template:
     metadata:
-      name: "crossplane-stack-packet-controller"
+      name: "crossplane-provider-packet-controller"
       labels:
-        core.crossplane.io/name: "crossplane-stack-packet"
+        core.crossplane.io/name: "crossplane-provider-packet"
     spec:
       containers:
-      - name: "crossplane-stack-packet-controller"
-        image: "crossplane/stack-packet"
+      - name: "crossplane-provider-packet-controller"
+        image: "crossplane/provider-packet"
         env:
         - name: POD_NAME
           valueFrom:

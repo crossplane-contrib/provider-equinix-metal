@@ -30,10 +30,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/stack-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/stack-packet/apis/v1alpha1"
-	packetclient "github.com/packethost/stack-packet/pkg/clients"
-	devicesclient "github.com/packethost/stack-packet/pkg/clients/device"
+	"github.com/packethost/provider-packet/apis/server/v1alpha1"
+	packetv1alpha1 "github.com/packethost/provider-packet/apis/v1alpha1"
+	packetclient "github.com/packethost/provider-packet/pkg/clients"
+	devicesclient "github.com/packethost/provider-packet/pkg/clients/device"
 
 	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplaneio/crossplane-runtime/pkg/meta"
