@@ -30,8 +30,8 @@ import (
 	packetapi "github.com/packethost/provider-packet/apis"
 	"github.com/packethost/provider-packet/pkg/controller"
 
-	"github.com/crossplaneio/crossplane-runtime/pkg/logging"
-	"github.com/crossplaneio/crossplane/apis"
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane/apis"
 )
 
 func main() {
