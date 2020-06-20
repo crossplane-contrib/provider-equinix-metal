@@ -55,8 +55,8 @@ export PACKAGE
 PACKAGE_REGISTRY=$(PACKAGE)/.registry
 PACKAGE_REGISTRY_SOURCE=config/package/manifests
 
-DOCKER_REGISTRY = crossplane # replace with Packet
-IMAGES = package-packet
+DOCKER_REGISTRY = packethost
+IMAGES = provider-packet
 -include build/makelib/image.mk
 
 # ====================================================================================
