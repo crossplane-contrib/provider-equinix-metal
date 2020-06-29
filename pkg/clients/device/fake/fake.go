@@ -6,7 +6,7 @@ import (
 
 var _ packngo.DeviceService = &MockClient{}
 
-// MockClient is a fake implementation of cloudmemorystore.Client.
+// MockClient is a fake implementation of packngo.Client.
 type MockClient struct {
 	MockCreate          func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
 	MockUpdate          func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)

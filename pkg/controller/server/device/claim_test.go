@@ -20,10 +20,11 @@ import (
 	"context"
 	"testing"
 
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/crossplaneio/crossplane-runtime/pkg/resource"
-	"github.com/crossplaneio/crossplane-runtime/pkg/test"
-	computev1alpha1 "github.com/crossplaneio/crossplane/apis/compute/v1alpha1"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimbinding"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/test"
+	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/provider-packet/apis/server/v1alpha1"
 	packettest "github.com/packethost/provider-packet/pkg/test"
@@ -32,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var _ resource.ManagedConfigurator = resource.ManagedConfiguratorFn(ConfigureDevice)
+var _ claimbinding.ManagedConfigurator = claimbinding.ManagedConfiguratorFn(ConfigureDevice)
 
 func TestConfigureDevice(t *testing.T) {
 	type args struct {

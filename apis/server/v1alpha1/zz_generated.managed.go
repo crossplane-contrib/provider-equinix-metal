@@ -18,7 +18,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -40,6 +40,11 @@ func (mg *Device) GetClassReference() *corev1.ObjectReference {
 // GetCondition of this Device.
 func (mg *Device) GetCondition(ct runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
 	return mg.Status.GetCondition(ct)
+}
+
+// GetProviderReference of this Device.
+func (mg *Device) GetProviderReference() *corev1.ObjectReference {
+	return mg.Spec.ProviderReference
 }
 
 // GetReclaimPolicy of this Device.
@@ -70,6 +75,11 @@ func (mg *Device) SetClassReference(r *corev1.ObjectReference) {
 // SetConditions of this Device.
 func (mg *Device) SetConditions(c ...runtimev1alpha1.Condition) {
 	mg.Status.SetConditions(c...)
+}
+
+// SetProviderReference of this Device.
+func (mg *Device) SetProviderReference(r *corev1.ObjectReference) {
+	mg.Spec.ProviderReference = r
 }
 
 // SetReclaimPolicy of this Device.

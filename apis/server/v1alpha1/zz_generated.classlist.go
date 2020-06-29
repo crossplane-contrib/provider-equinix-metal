@@ -17,14 +17,13 @@ limitations under the License.
 
 package v1alpha1
 
-import runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+import resource "github.com/crossplane/crossplane-runtime/pkg/resource"
 
-// GetReclaimPolicy of this DeviceClass.
-func (cs *DeviceClass) GetReclaimPolicy() runtimev1alpha1.ReclaimPolicy {
-	return cs.SpecTemplate.ReclaimPolicy
-}
-
-// SetReclaimPolicy of this DeviceClass.
-func (cs *DeviceClass) SetReclaimPolicy(r runtimev1alpha1.ReclaimPolicy) {
-	cs.SpecTemplate.ReclaimPolicy = r
+// GetItems of this DeviceClassList.
+func (l *DeviceClassList) GetItems() []resource.Class {
+	items := make([]resource.Class, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
 }

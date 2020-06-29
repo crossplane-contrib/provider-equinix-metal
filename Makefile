@@ -198,7 +198,7 @@ export CROSSPLANETOOLS_ANGRYJET
 $(CROSSPLANETOOLS_ANGRYJET):
 	@$(INFO) installing Crossplane AngryJet
 	@mkdir -p $(TOOLS_HOST_DIR)/tmp-angryjet || $(FAIL)
-	@GO111MODULE=off GOPATH=$(TOOLS_HOST_DIR)/tmp-angryjet GOBIN=$(TOOLS_HOST_DIR) $(GOHOST) get github.com/crossplaneio/crossplane-tools/cmd/angryjet || rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet|| $(FAIL)
+	@GO111MODULE=off GOPATH=$(TOOLS_HOST_DIR)/tmp-angryjet GOBIN=$(TOOLS_HOST_DIR) $(GOHOST) get github.com/crossplane/crossplane-tools/cmd/angryjet || rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet|| $(FAIL)
 	@rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet
 	@$(OK) installing Crossplane AngryJet
 

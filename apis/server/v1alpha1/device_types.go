@@ -17,7 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/packethost/packngo"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,9 +50,11 @@ type DeviceStatus struct {
 
 // +kubebuilder:object:root=true
 
-// Device is the Schema for the devices API
+// Device is a managed resource that represents a Packet Device
+// +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,packet}
 type Device struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -81,7 +83,7 @@ type DeviceParameters struct {
 	ProjectID             string                           `json:"projectID"`
 	UserData              string                           `json:"userdata,omitempty"`
 	Tags                  []string                         `json:"tags,omitempty"`
-	Locked                bool                             `json:"locked,omitemtpy"`
+	Locked                bool                             `json:"locked,omitempty"`
 	IPXEScriptURL         string                           `json:"ipxe_script_url,omitempty"`
 	PublicIPv4SubnetSize  int                              `json:"public_ipv4_subnet_size,omitempty"`
 	AlwaysPXE             bool                             `json:"always_pxe,omitempty"`

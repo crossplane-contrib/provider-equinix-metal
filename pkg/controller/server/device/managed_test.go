@@ -37,10 +37,11 @@ import (
 	"github.com/packethost/provider-packet/pkg/clients/device/fake"
 	packettest "github.com/packethost/provider-packet/pkg/test"
 
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/crossplaneio/crossplane-runtime/pkg/meta"
-	"github.com/crossplaneio/crossplane-runtime/pkg/resource"
-	"github.com/crossplaneio/crossplane-runtime/pkg/test"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/test"
 )
 
 const (
@@ -94,7 +95,7 @@ func device(im ...deviceModifier) *v1alpha1.Device {
 			Name:       deviceName,
 			Finalizers: []string{},
 			Annotations: map[string]string{
-				meta.ExternalNameAnnotationKey: deviceName,
+				meta.AnnotationKeyExternalName: deviceName,
 			},
 		},
 		Spec: v1alpha1.DeviceSpec{
@@ -118,19 +119,21 @@ func device(im ...deviceModifier) *v1alpha1.Device {
 	return i
 }
 
-var _ resource.ExternalClient = &external{}
-var _ resource.ExternalConnecter = &connecter{}
+var _ managed.ExternalClient = &external{}
+var _ managed.ExternalConnecter = &connecter{}
 
 func TestConnect(t *testing.T) {
 	provider := packetv1alpha1.Provider{
 		ObjectMeta: metav1.ObjectMeta{Name: providerName},
 		Spec: packetv1alpha1.ProviderSpec{
-			Secret: runtimev1alpha1.SecretKeySelector{
-				SecretReference: runtimev1alpha1.SecretReference{
-					Namespace: namespace,
-					Name:      providerSecretName,
+			ProviderSpec: runtimev1alpha1.ProviderSpec{
+				CredentialsSecretRef: &runtimev1alpha1.SecretKeySelector{
+					SecretReference: runtimev1alpha1.SecretReference{
+						Namespace: namespace,
+						Name:      providerSecretName,
+					},
+					Key: providerSecretKey,
 				},
-				Key: providerSecretKey,
 			},
 		},
 	}
@@ -153,7 +156,7 @@ func TestConnect(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		conn resource.ExternalConnecter
+		conn managed.ExternalConnecter
 		args args
 		want want
 	}{
@@ -207,6 +210,23 @@ func TestConnect(t *testing.T) {
 			args: args{ctx: context.Background(), mg: device()},
 			want: want{err: errors.Wrap(errorBoom, errGetProviderSecret)},
 		},
+		"ProviderSecretNil": {
+			conn: &connecter{
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+					switch key {
+					case client.ObjectKey{Name: providerName}:
+						nilSecretProvider := provider
+						nilSecretProvider.SetCredentialsSecretReference(nil)
+						*obj.(*packetv1alpha1.Provider) = nilSecretProvider
+					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
+						return errorBoom
+					}
+					return nil
+				}},
+			},
+			args: args{ctx: context.Background(), mg: device()},
+			want: want{err: errors.New(errProviderSecretNil)},
+		},
 		"FailedToCreateDevice": {
 			conn: &connecter{
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
@@ -243,12 +263,12 @@ func TestObserve(t *testing.T) {
 	}
 	type want struct {
 		mg          resource.Managed
-		observation resource.ExternalObservation
+		observation managed.ExternalObservation
 		err         error
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{
@@ -274,10 +294,10 @@ func TestObserve(t *testing.T) {
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
 					withState(v1alpha1.StateActive)),
-				observation: resource.ExternalObservation{
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
@@ -303,10 +323,10 @@ func TestObserve(t *testing.T) {
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
 					withState(v1alpha1.StateActive)),
-				observation: resource.ExternalObservation{
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  false,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
@@ -331,10 +351,10 @@ func TestObserve(t *testing.T) {
 					withConditions(runtimev1alpha1.Creating()),
 					withProvisionPer(float32(50)),
 					withState(v1alpha1.StateProvisioning)),
-				observation: resource.ExternalObservation{
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
@@ -359,10 +379,10 @@ func TestObserve(t *testing.T) {
 					withConditions(runtimev1alpha1.Unavailable()),
 					withProvisionPer(float32(50)),
 					withState(v1alpha1.StateQueued)),
-				observation: resource.ExternalObservation{
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
@@ -382,7 +402,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg:          device(),
-				observation: resource.ExternalObservation{ResourceExists: false},
+				observation: managed.ExternalObservation{ResourceExists: false},
 			},
 		},
 		"NotDevice": {
@@ -439,12 +459,12 @@ func TestCreate(t *testing.T) {
 	}
 	type want struct {
 		mg       resource.Managed
-		creation resource.ExternalCreation
+		creation managed.ExternalCreation
 		err      error
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{
@@ -526,12 +546,12 @@ func TestUpdate(t *testing.T) {
 	}
 	type want struct {
 		mg     resource.Managed
-		update resource.ExternalUpdate
+		update managed.ExternalUpdate
 		err    error
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{
@@ -608,7 +628,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{

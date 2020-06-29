@@ -19,12 +19,12 @@ package v1alpha1
 
 import runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 
-// GetReclaimPolicy of this DeviceClass.
-func (cs *DeviceClass) GetReclaimPolicy() runtimev1alpha1.ReclaimPolicy {
-	return cs.SpecTemplate.ReclaimPolicy
+// GetCredentialsSecretReference of this Provider.
+func (p *Provider) GetCredentialsSecretReference() *runtimev1alpha1.SecretKeySelector {
+	return p.Spec.CredentialsSecretRef
 }
 
-// SetReclaimPolicy of this DeviceClass.
-func (cs *DeviceClass) SetReclaimPolicy(r runtimev1alpha1.ReclaimPolicy) {
-	cs.SpecTemplate.ReclaimPolicy = r
+// SetCredentialsSecretReference of this Provider.
+func (p *Provider) SetCredentialsSecretReference(r *runtimev1alpha1.SecretKeySelector) {
+	p.Spec.CredentialsSecretRef = r
 }

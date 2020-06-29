@@ -20,7 +20,7 @@ import (
 	"reflect"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
 // Packet type metadata.
@@ -40,6 +40,7 @@ var (
 // Device type metadata.
 var (
 	DeviceKind             = reflect.TypeOf(Device{}).Name()
+	DeviceGroupKind        = schema.GroupKind{Group: Group, Kind: DeviceKind}.String()
 	DeviceKindAPIVersion   = DeviceKind + "." + SchemeGroupVersion.String()
 	DeviceGroupVersionKind = SchemeGroupVersion.WithKind(DeviceKind)
 )

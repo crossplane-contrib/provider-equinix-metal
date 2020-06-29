@@ -19,7 +19,6 @@ package device
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/packethost/packngo"
 
@@ -35,39 +34,39 @@ import (
 	packetclient "github.com/packethost/provider-packet/pkg/clients"
 	devicesclient "github.com/packethost/provider-packet/pkg/clients/device"
 
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/crossplaneio/crossplane-runtime/pkg/meta"
-	"github.com/crossplaneio/crossplane-runtime/pkg/resource"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
 )
 
 // Error strings.
 const (
 	errManagedUpdateFailed = "cannot update Device custom resource"
-
-	errGetProvider       = "cannot get Provider"
-	errGetProviderSecret = "cannot get Provider Secret"
-	errNewClient         = "cannot create new Device client"
-	errNotDevice         = "managed resource is not a Device"
-	errGetDevice         = "cannot get Device"
-	errCreateDevice      = "cannot create Device"
-	errUpdateDevice      = "cannot modify Device"
-	errDeleteDevice      = "cannot delete Device"
+	errProviderSecretNil   = "cannot find Secret reference on Provider"
+	errGetProvider         = "cannot get Provider"
+	errGetProviderSecret   = "cannot get Provider Secret"
+	errNewClient           = "cannot create new Device client"
+	errNotDevice           = "managed resource is not a Device"
+	errGetDevice           = "cannot get Device"
+	errCreateDevice        = "cannot create Device"
+	errUpdateDevice        = "cannot modify Device"
+	errDeleteDevice        = "cannot delete Device"
 )
 
-// Controller is responsible for adding the Packet Device controller
-// and its corresponding reconciler to the manager with any runtime configuration.
-type Controller struct{}
+// SetupDevice adds a controller that reconciles Devices
+func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
+	name := managed.ControllerName(v1alpha1.DeviceGroupKind)
 
-// SetupWithManager creates a new Device Controller and adds it to the
-// Manager with default RBAC. The Manager will set fields on the Controller and
-// start it when the Manager is Started.
-func (c *Controller) SetupWithManager(mgr ctrl.Manager) error {
-	r := resource.NewManagedReconciler(mgr,
+	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
-		resource.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
-		resource.WithManagedInitializers(resource.NewAPIManagedFinalizerAdder(mgr.GetClient())))
-
-	name := strings.ToLower(fmt.Sprintf("%s.%s", v1alpha1.DeviceKind, v1alpha1.Group))
+		managed.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
+		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient())),
+		managed.WithLogger(l.WithValues("controller", name)),
+		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+	)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -80,7 +79,7 @@ type connecter struct {
 	newClientFn func(ctx context.Context, credentials []byte) (packngo.DeviceService, error)
 }
 
-func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.ExternalClient, error) {
+func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
 	g, ok := mg.(*v1alpha1.Device)
 	if !ok {
 		return nil, errors.New(errNotDevice)
@@ -92,8 +91,12 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.
 		return nil, errors.Wrap(err, errGetProvider)
 	}
 
+	if p.GetCredentialsSecretReference() == nil {
+		return nil, errors.New(errProviderSecretNil)
+	}
+
 	s := &corev1.Secret{}
-	n = types.NamespacedName{Namespace: p.Spec.Secret.Namespace, Name: p.Spec.Secret.Name}
+	n = types.NamespacedName{Namespace: p.Spec.CredentialsSecretRef.Namespace, Name: p.Spec.CredentialsSecretRef.Name}
 	if err := c.kube.Get(ctx, n, s); err != nil {
 		return nil, errors.Wrap(err, errGetProviderSecret)
 	}
@@ -101,7 +104,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (resource.
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
-	client, err := newClientFn(ctx, s.Data[p.Spec.Secret.Key])
+	client, err := newClientFn(ctx, s.Data[p.Spec.CredentialsSecretRef.Key])
 	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }
 
@@ -110,19 +113,19 @@ type external struct {
 	client packngo.DeviceService
 }
 
-func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.ExternalObservation, error) {
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	d, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return resource.ExternalObservation{}, errors.New(errNotDevice)
+		return managed.ExternalObservation{}, errors.New(errNotDevice)
 	}
 
 	// Observe device
 	device, _, err := e.client.Get(meta.GetExternalName(d), nil)
 	if packetclient.IsNotFound(err) {
-		return resource.ExternalObservation{ResourceExists: false}, nil
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 	if err != nil {
-		return resource.ExternalObservation{}, errors.Wrap(err, errGetDevice)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetDevice)
 	}
 
 	// Update device status
@@ -151,10 +154,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 		d.Status.SetConditions(runtimev1alpha1.Unavailable())
 	}
 
-	o := resource.ExternalObservation{
+	o := managed.ExternalObservation{
 		ResourceExists:    true,
 		ResourceUpToDate:  devicesclient.IsUpToDate(d, device),
-		ConnectionDetails: resource.ConnectionDetails{},
+		ConnectionDetails: managed.ConnectionDetails{},
 	}
 
 	// TODO: propagate secret info
@@ -162,10 +165,10 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (resource.E
 	return o, nil
 }
 
-func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.ExternalCreation, error) {
+func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
 	d, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return resource.ExternalCreation{}, errors.New(errNotDevice)
+		return managed.ExternalCreation{}, errors.New(errNotDevice)
 	}
 
 	d.Status.SetConditions(runtimev1alpha1.Creating())
@@ -173,29 +176,27 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (resource.Ex
 	create := devicesclient.CreateFromDevice(d)
 	device, _, err := e.client.Create(create)
 	if err != nil {
-		return resource.ExternalCreation{}, errors.Wrap(err, errCreateDevice)
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateDevice)
 	}
 
 	d.Status.AtProvider.ID = device.ID
 	meta.SetExternalName(d, device.ID)
 	if err := e.kube.Update(ctx, d); err != nil {
-		return resource.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
+		return managed.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
 	}
 
-	return resource.ExternalCreation{}, nil
+	return managed.ExternalCreation{}, nil
 }
 
-func (e *external) Update(ctx context.Context, mg resource.Managed) (resource.ExternalUpdate, error) {
+func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
 	d, ok := mg.(*v1alpha1.Device)
 	if !ok {
-		return resource.ExternalUpdate{}, errors.New(errNotDevice)
+		return managed.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	if _, _, err := e.client.Update(meta.GetExternalName(d), devicesclient.NewUpdateDeviceRequest(d)); err != nil {
-		return resource.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
-	}
+	_, _, err := e.client.Update(meta.GetExternalName(d), devicesclient.NewUpdateDeviceRequest(d))
 
-	return resource.ExternalUpdate{}, nil
+	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
