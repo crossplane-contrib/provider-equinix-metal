@@ -32,8 +32,8 @@ keywords:
  - "packet"
  - "packethost"
  - "infrastructure"
-website: "https://github.com/packethost/provider-packet"
-source: "https://github.com/packethost/provider-packet"
+website: "https://github.com/packethost/crossplane-provider-packet"
+source: "https://github.com/packethost/crossplane-provider-packet"
 permissionScope: Cluster
 # License SPDX name: https://spdx.org/licenses/
 license: Apache-2.0

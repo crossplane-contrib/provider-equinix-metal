@@ -21,7 +21,7 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
-	"github.com/packethost/provider-packet/pkg/controller/server/device"
+	"github.com/packethost/crossplane-provider-packet/pkg/controller/server/device"
 )
 
 // Setup creates all Packet controllers with the supplied logger and adds them to

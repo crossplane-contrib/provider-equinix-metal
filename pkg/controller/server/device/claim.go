@@ -27,7 +27,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimscheduling"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
-	"github.com/packethost/provider-packet/apis/server/v1alpha1"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/source"

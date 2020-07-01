@@ -43,7 +43,7 @@ curl -sL https://raw.githubusercontent.com/crossplane/crossplane-cli/master/boot
 ```console
 kubectl crossplane package install --cluster \
   --namespace crossplane-system \
-  packethost/provider-packet:v0.0.2 provider-packet
+  packethost/crossplane-provider-packet:v0.0.2 provider-packet
 ```
 
 ### Create a Provider Secret

@@ -3,4 +3,4 @@ spec:
     spec:
       containers:
       - name: "crossplane-provider-packet-controller"
-        image: "localhost:5000/crossplane/provider-packet"
+        image: "localhost:5000/packethost/crossplane-provider-packet"

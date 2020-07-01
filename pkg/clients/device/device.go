@@ -21,8 +21,8 @@ import (
 	"reflect"
 
 	"github.com/packethost/packngo"
-	"github.com/packethost/provider-packet/apis/server/v1alpha1"
-	"github.com/packethost/provider-packet/pkg/clients"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
+	"github.com/packethost/crossplane-provider-packet/pkg/clients"
 )
 
 // NewClient ... TODO

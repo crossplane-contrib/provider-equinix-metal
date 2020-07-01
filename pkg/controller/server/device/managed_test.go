@@ -32,10 +32,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/provider-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/provider-packet/apis/v1alpha1"
-	"github.com/packethost/provider-packet/pkg/clients/device/fake"
-	packettest "github.com/packethost/provider-packet/pkg/test"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
+	packetv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/v1alpha1"
+	"github.com/packethost/crossplane-provider-packet/pkg/clients/device/fake"
+	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"

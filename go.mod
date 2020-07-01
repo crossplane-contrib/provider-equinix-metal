@@ -1,4 +1,4 @@
-module github.com/packethost/provider-packet
+module github.com/packethost/crossplane-provider-packet
 
 go 1.13
 

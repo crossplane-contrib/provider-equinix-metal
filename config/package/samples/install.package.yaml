@@ -4,4 +4,4 @@ kind: ClusterPackageInstall
 metadata:
   name: "crossplane-provider-packet"
 spec:
-  package: "crossplane/provider-packet"
+  package: "packethost/crossplane-provider-packet"

@@ -1,7 +1,7 @@
 # ====================================================================================
 # Setup Project
 
-PROJECT_NAME := provider-packet
+PROJECT_NAME := crossplane-provider-packet
 PROJECT_REPO := github.com/packethost/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -56,7 +56,7 @@ PACKAGE_REGISTRY=$(PACKAGE)/.registry
 PACKAGE_REGISTRY_SOURCE=config/package/manifests
 
 DOCKER_REGISTRY = packethost
-IMAGES = provider-packet
+IMAGES = crossplane-provider-packet
 -include build/makelib/image.mk
 
 # ====================================================================================

@@ -6,5 +6,5 @@ organization](https://github.com/packethost/) will list their repository maintai
 
 ## Maintainers
 
-* Marques Johansson <maeques@packet.com> ([displague](https://github.com/displague))
+* Marques Johansson <marques@packet.com> ([displague](https://github.com/displague))
 * Jasmin Gacic <jasmin.gacic@gmail.com> ([jasmingacic](https://github.com/jasmingacic))
