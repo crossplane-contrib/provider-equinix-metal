@@ -93,6 +93,8 @@ kubectl patch provider packet-provider --type=merge --patch='{"spec":{"projectID
 
 ## Provision a Packet Device
 
+Replace `YOUR_PROJECT_ID` with your actual Project ID and add the following record to your cluster:
+
 ```yaml
 apiVersion: server.packet.crossplane.io/v1alpha2
 kind: Device
@@ -121,7 +123,10 @@ device.server.packet.crossplane.io/devices created
 To view the device in the cluster:
 
 ```console
-$ kubectl get device -n app-project1-dev
-NAME      AGE
-devices   0m45s
+$ kubectl get packet -o wide
+NAME                                            PROJECT-ID                             AGE   SECRET-NAME
+provider.packet.crossplane.io/packet-provider   0ac84673-b679-40c1-9de9-8a8792675515   38m   packet-creds
+
+NAME                                         READY   SYNCED   STATE    ID                                     HOSTNAME     IPV4            RECLAIM-POLICY   AGE
+device.server.packet.crossplane.io/devices   True    True     active   bc09a78d-14c4-48d2-9e54-b13dc0ab56bb   crossplane   147.75.68.117   Delete           28m
 ```
