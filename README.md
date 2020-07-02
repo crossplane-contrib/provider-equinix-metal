@@ -64,6 +64,12 @@ kubectl create -n crossplane-system secret generic packet-creds --from-literal=k
 
 ### Create a Provider record
 
+Get the project id from the Packet Portal or using the Packet CLI (`packet project get`). Run the commands below, entering your Project ID when prompted.
+
+```console
+read -p "Project ID: " PROJECT_ID; echo
+```
+
 ```yaml
 cat << EOS | kubectl apply -f -
 apiVersion: packet.crossplane.io/v1alpha2
@@ -71,6 +77,7 @@ kind: Provider
 metadata:
   name: packet-provider
 spec:
+  projectID: $PROJECT_ID
   credentialsSecretRef:
     namespace: crossplane-system
     name: packet-creds
@@ -79,7 +86,9 @@ EOS
 ```
 
 <!---
-TODO(displague): kubectl patch facility and projectID into this provider?
+TODO(displague): do we want projectID in the provider? facility? organization?
+Use a shell prompt or patch approach?
+kubectl patch provider packet-provider --type=merge --patch='{"spec":{"projectID":"the-uuid"}}'
 --->
 
 ## Provision a Packet Device
@@ -89,7 +98,6 @@ apiVersion: server.packet.crossplane.io/v1alpha2
 kind: Device
 metadata:
   name: devices
-  namespace: app-project1-dev
 spec:
   forProvider:
     projectID: YOUR_PROJECT_ID
@@ -101,8 +109,7 @@ spec:
     hardware_reservation_id: next_available
     locked: false
   providerRef:
-    name: example
-    namespace: packet-infra-dev
+    name: packet-provider
   reclaimPolicy: Delete
 ```
 
