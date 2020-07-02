@@ -17,7 +17,6 @@ spec:
     spec:
       containers:
       - name: "crossplane-provider-packet-controller"
-        image: "packethost/crossplane-provider-packet"
         env:
         - name: POD_NAME
           valueFrom:

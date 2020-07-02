@@ -20,9 +20,9 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/packethost/packngo"
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 	"github.com/packethost/crossplane-provider-packet/pkg/clients"
+	"github.com/packethost/packngo"
 )
 
 // NewClient ... TODO
@@ -33,7 +33,7 @@ func NewClient(ctx context.Context, credentials []byte) (packngo.DeviceService, 
 }
 
 // CreateFromDevice return packngo.DeviceCreateRequest created from Kubernetes
-func CreateFromDevice(d *v1alpha1.Device) *packngo.DeviceCreateRequest {
+func CreateFromDevice(d *v1alpha2.Device) *packngo.DeviceCreateRequest {
 	return &packngo.DeviceCreateRequest{
 		Hostname:     d.Spec.ForProvider.Hostname,
 		Plan:         d.Spec.ForProvider.Plan,
@@ -49,7 +49,7 @@ func CreateFromDevice(d *v1alpha1.Device) *packngo.DeviceCreateRequest {
 // IsUpToDate returns true if the supplied Kubernetes resource does not differ from the
 // supplied Packet resource. It considers only fields that can be modified in
 // place without deleting and recreating the instance.
-func IsUpToDate(d *v1alpha1.Device, p *packngo.Device) bool {
+func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) bool {
 	if d.Spec.ForProvider.Hostname != p.Hostname {
 		return false
 	}
@@ -74,7 +74,7 @@ func IsUpToDate(d *v1alpha1.Device, p *packngo.Device) bool {
 
 // NewUpdateDeviceRequest creates a request to update an instance suitable for
 // use with the Packet API.
-func NewUpdateDeviceRequest(d *v1alpha1.Device) *packngo.DeviceUpdateRequest {
+func NewUpdateDeviceRequest(d *v1alpha2.Device) *packngo.DeviceUpdateRequest {
 	return &packngo.DeviceUpdateRequest{
 		Hostname:      &d.Spec.ForProvider.Hostname,
 		Locked:        &d.Spec.ForProvider.Locked,

@@ -20,15 +20,15 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	serverv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/v1alpha1"
+	serverv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
 )
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
-		packetv1alpha1.SchemeBuilder.AddToScheme,
-		serverv1alpha1.SchemeBuilder.AddToScheme,
+		packetv1alpha2.SchemeBuilder.AddToScheme,
+		serverv1alpha2.SchemeBuilder.AddToScheme,
 	)
 }
 

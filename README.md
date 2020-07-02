@@ -85,7 +85,7 @@ TODO(displague): kubectl patch facility and projectID into this provider?
 ## Provision a Packet Device
 
 ```yaml
-apiVersion: server.packet.crossplane.io/v1alpha1
+apiVersion: server.packet.crossplane.io/v1alpha2
 kind: Device
 metadata:
   name: devices

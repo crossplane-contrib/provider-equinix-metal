@@ -1,4 +1,4 @@
-apiVersion: server.packet.crossplane.io/v1alpha1
+apiVersion: server.packet.crossplane.io/v1alpha2
 kind: Device
 metadata:
   name: devicea

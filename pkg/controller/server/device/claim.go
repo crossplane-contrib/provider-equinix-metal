@@ -27,7 +27,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimscheduling"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -49,7 +49,7 @@ func SetupDeviceClaimScheduling(mgr ctrl.Manager, l logging.Logger) error {
 		))).
 		Complete(claimscheduling.NewReconciler(mgr,
 			resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
-			resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind),
+			resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind),
 			claimscheduling.WithLogger(l.WithValues("controller", name)),
 			claimscheduling.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 		))
@@ -71,7 +71,7 @@ func SetupDeviceClaimDefaulting(mgr ctrl.Manager, l logging.Logger) error {
 		))).
 		Complete(claimdefaulting.NewReconciler(mgr,
 			resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
-			resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind),
+			resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind),
 			claimdefaulting.WithLogger(l.WithValues("controller", name)),
 			claimdefaulting.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 		))
@@ -83,8 +83,8 @@ func SetupDeviceClaimBinding(mgr ctrl.Manager, l logging.Logger) error {
 
 	r := claimbinding.NewReconciler(mgr,
 		resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
-		resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind),
-		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
+		resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind),
+		resource.ManagedKind(v1alpha2.DeviceGroupVersionKind),
 		claimbinding.WithBinder(claimbinding.NewAPIBinder(mgr.GetClient(), mgr.GetScheme())),
 		claimbinding.WithManagedConfigurators(
 			claimbinding.ManagedConfiguratorFn(ConfigureDevice),
@@ -96,14 +96,14 @@ func SetupDeviceClaimBinding(mgr ctrl.Manager, l logging.Logger) error {
 	)
 
 	p := resource.NewPredicates(resource.AnyOf(
-		resource.HasClassReferenceKind(resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind)),
-		resource.HasManagedResourceReferenceKind(resource.ManagedKind(v1alpha1.DeviceGroupVersionKind)),
-		resource.IsManagedKind(resource.ManagedKind(v1alpha1.DeviceGroupVersionKind), mgr.GetScheme()),
+		resource.HasClassReferenceKind(resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind)),
+		resource.HasManagedResourceReferenceKind(resource.ManagedKind(v1alpha2.DeviceGroupVersionKind)),
+		resource.IsManagedKind(resource.ManagedKind(v1alpha2.DeviceGroupVersionKind), mgr.GetScheme()),
 	))
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		Watches(&source.Kind{Type: &v1alpha1.Device{}}, &resource.EnqueueRequestForClaim{}).
+		Watches(&source.Kind{Type: &v1alpha2.Device{}}, &resource.EnqueueRequestForClaim{}).
 		For(&computev1alpha1.MachineInstance{}).
 		WithEventFilter(p).
 		Complete(r)
@@ -118,17 +118,17 @@ func ConfigureDevice(_ context.Context, cm resource.Claim, cs resource.Class, mg
 		return errors.Errorf("expected resource claim %s to be %s", cm.GetName(), computev1alpha1.MachineInstanceGroupVersionKind)
 	}
 
-	rc, csok := cs.(*v1alpha1.DeviceClass)
+	rc, csok := cs.(*v1alpha2.DeviceClass)
 	if !csok {
-		return errors.Errorf("expected resource class %s to be %s", cs.GetName(), v1alpha1.DeviceClassGroupVersionKind)
+		return errors.Errorf("expected resource class %s to be %s", cs.GetName(), v1alpha2.DeviceClassGroupVersionKind)
 	}
 
-	c, mgok := mg.(*v1alpha1.Device)
+	c, mgok := mg.(*v1alpha2.Device)
 	if !mgok {
-		return errors.Errorf("expected managed resource %s to be %s", mg.GetName(), v1alpha1.DeviceGroupVersionKind)
+		return errors.Errorf("expected managed resource %s to be %s", mg.GetName(), v1alpha2.DeviceGroupVersionKind)
 	}
 
-	spec := &v1alpha1.DeviceSpec{
+	spec := &v1alpha2.DeviceSpec{
 		ResourceSpec: runtimev1alpha1.ResourceSpec{
 			ReclaimPolicy: runtimev1alpha1.ReclaimRetain,
 		},

@@ -3,5 +3,5 @@ domain: packet.crossplane.io
 repo: github.com/packethost/crossplane-provider-packet
 resources:
 - group: server
-  version: v1alpha1
+  version: v1alpha2
   kind: Device

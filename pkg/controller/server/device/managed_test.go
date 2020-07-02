@@ -32,8 +32,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/v1alpha1"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
 	"github.com/packethost/crossplane-provider-packet/pkg/clients/device/fake"
 	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 
@@ -65,32 +65,32 @@ type strange struct {
 	resource.Managed
 }
 
-type deviceModifier func(*v1alpha1.Device)
+type deviceModifier func(*v1alpha2.Device)
 
 func withConditions(c ...runtimev1alpha1.Condition) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.SetConditions(c...) }
+	return func(i *v1alpha2.Device) { i.Status.SetConditions(c...) }
 }
 
 func withBindingPhase(p runtimev1alpha1.BindingPhase) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.SetBindingPhase(p) }
+	return func(i *v1alpha2.Device) { i.Status.SetBindingPhase(p) }
 }
 
 func withProvisionPer(p float32) deviceModifier {
-	return func(i *v1alpha1.Device) {
+	return func(i *v1alpha2.Device) {
 		i.Status.AtProvider.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", p))
 	}
 }
 
 func withState(s string) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.AtProvider.State = s }
+	return func(i *v1alpha2.Device) { i.Status.AtProvider.State = s }
 }
 
 func withID(d string) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.AtProvider.ID = d }
+	return func(i *v1alpha2.Device) { i.Status.AtProvider.ID = d }
 }
 
-func device(im ...deviceModifier) *v1alpha1.Device {
-	i := &v1alpha1.Device{
+func device(im ...deviceModifier) *v1alpha2.Device {
+	i := &v1alpha2.Device{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       deviceName,
 			Finalizers: []string{},
@@ -98,7 +98,7 @@ func device(im ...deviceModifier) *v1alpha1.Device {
 				meta.AnnotationKeyExternalName: deviceName,
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			ResourceSpec: runtimev1alpha1.ResourceSpec{
 				ProviderReference: &corev1.ObjectReference{Name: providerName},
 				WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
@@ -106,7 +106,7 @@ func device(im ...deviceModifier) *v1alpha1.Device {
 					Name:      connectionSecretName,
 				},
 			},
-			ForProvider: v1alpha1.DeviceParameters{
+			ForProvider: v1alpha2.DeviceParameters{
 				AlwaysPXE: alwaysPXE,
 			},
 		},
@@ -123,9 +123,9 @@ var _ managed.ExternalClient = &external{}
 var _ managed.ExternalConnecter = &connecter{}
 
 func TestConnect(t *testing.T) {
-	provider := packetv1alpha1.Provider{
+	provider := packetv1alpha2.Provider{
 		ObjectMeta: metav1.ObjectMeta{Name: providerName},
-		Spec: packetv1alpha1.ProviderSpec{
+		Spec: packetv1alpha2.ProviderSpec{
 			ProviderSpec: runtimev1alpha1.ProviderSpec{
 				CredentialsSecretRef: &runtimev1alpha1.SecretKeySelector{
 					SecretReference: runtimev1alpha1.SecretReference{
@@ -165,7 +165,7 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha1.Provider) = provider
+						*obj.(*packetv1alpha2.Provider) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						*obj.(*corev1.Secret) = secret
 					}
@@ -200,7 +200,7 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha1.Provider) = provider
+						*obj.(*packetv1alpha2.Provider) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						return errorBoom
 					}
@@ -217,7 +217,7 @@ func TestConnect(t *testing.T) {
 					case client.ObjectKey{Name: providerName}:
 						nilSecretProvider := provider
 						nilSecretProvider.SetCredentialsSecretReference(nil)
-						*obj.(*packetv1alpha1.Provider) = nilSecretProvider
+						*obj.(*packetv1alpha2.Provider) = nilSecretProvider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						return errorBoom
 					}
@@ -232,7 +232,7 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha1.Provider) = provider
+						*obj.(*packetv1alpha2.Provider) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						*obj.(*corev1.Secret) = secret
 					}
@@ -277,7 +277,7 @@ func TestObserve(t *testing.T) {
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateActive,
+							State:        v1alpha2.StateActive,
 							ProvisionPer: float32(100),
 							AlwaysPXE:    alwaysPXE,
 						},
@@ -293,7 +293,7 @@ func TestObserve(t *testing.T) {
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
-					withState(v1alpha1.StateActive)),
+					withState(v1alpha2.StateActive)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
@@ -306,7 +306,7 @@ func TestObserve(t *testing.T) {
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateActive,
+							State:        v1alpha2.StateActive,
 							ProvisionPer: float32(100),
 							AlwaysPXE:    !alwaysPXE,
 						},
@@ -322,7 +322,7 @@ func TestObserve(t *testing.T) {
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
-					withState(v1alpha1.StateActive)),
+					withState(v1alpha2.StateActive)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  false,
@@ -335,7 +335,7 @@ func TestObserve(t *testing.T) {
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateProvisioning,
+							State:        v1alpha2.StateProvisioning,
 							ProvisionPer: float32(50),
 							AlwaysPXE:    alwaysPXE,
 						},
@@ -350,7 +350,7 @@ func TestObserve(t *testing.T) {
 				mg: device(
 					withConditions(runtimev1alpha1.Creating()),
 					withProvisionPer(float32(50)),
-					withState(v1alpha1.StateProvisioning)),
+					withState(v1alpha2.StateProvisioning)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
@@ -363,7 +363,7 @@ func TestObserve(t *testing.T) {
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateQueued,
+							State:        v1alpha2.StateQueued,
 							ProvisionPer: float32(50),
 							AlwaysPXE:    alwaysPXE,
 						},
@@ -378,7 +378,7 @@ func TestObserve(t *testing.T) {
 				mg: device(
 					withConditions(runtimev1alpha1.Unavailable()),
 					withProvisionPer(float32(50)),
-					withState(v1alpha1.StateQueued)),
+					withState(v1alpha2.StateQueued)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,

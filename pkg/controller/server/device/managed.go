@@ -29,8 +29,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/v1alpha1"
+	v1alpha2 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
 	packetclient "github.com/packethost/crossplane-provider-packet/pkg/clients"
 	devicesclient "github.com/packethost/crossplane-provider-packet/pkg/clients/device"
 
@@ -58,10 +58,10 @@ const (
 
 // SetupDevice adds a controller that reconciles Devices
 func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
-	name := managed.ControllerName(v1alpha1.DeviceGroupKind)
+	name := managed.ControllerName(v1alpha2.DeviceGroupKind)
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
+		resource.ManagedKind(v1alpha2.DeviceGroupVersionKind),
 		managed.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
 		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient())),
 		managed.WithLogger(l.WithValues("controller", name)),
@@ -70,7 +70,7 @@ func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.Device{}).
+		For(&v1alpha2.Device{}).
 		Complete(r)
 }
 
@@ -80,12 +80,12 @@ type connecter struct {
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	g, ok := mg.(*v1alpha1.Device)
+	g, ok := mg.(*v1alpha2.Device)
 	if !ok {
 		return nil, errors.New(errNotDevice)
 	}
 
-	p := &packetv1alpha1.Provider{}
+	p := &packetv1alpha2.Provider{}
 	n := meta.NamespacedNameOf(g.Spec.ProviderReference)
 	if err := c.kube.Get(ctx, n, p); err != nil {
 		return nil, errors.Wrap(err, errGetProvider)
@@ -114,7 +114,7 @@ type external struct {
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	d, ok := mg.(*v1alpha1.Device)
+	d, ok := mg.(*v1alpha2.Device)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotDevice)
 	}
@@ -145,12 +145,12 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Set Device status and bindable
 	// TODO: identify deleting state
 	switch d.Status.AtProvider.State {
-	case v1alpha1.StateActive:
+	case v1alpha2.StateActive:
 		d.Status.SetConditions(runtimev1alpha1.Available())
 		resource.SetBindable(d)
-	case v1alpha1.StateProvisioning:
+	case v1alpha2.StateProvisioning:
 		d.Status.SetConditions(runtimev1alpha1.Creating())
-	case v1alpha1.StateQueued:
+	case v1alpha2.StateQueued:
 		d.Status.SetConditions(runtimev1alpha1.Unavailable())
 	}
 
@@ -166,7 +166,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	d, ok := mg.(*v1alpha1.Device)
+	d, ok := mg.(*v1alpha2.Device)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotDevice)
 	}
@@ -189,7 +189,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	d, ok := mg.(*v1alpha1.Device)
+	d, ok := mg.(*v1alpha2.Device)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errNotDevice)
 	}
@@ -200,7 +200,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
-	d, ok := mg.(*v1alpha1.Device)
+	d, ok := mg.(*v1alpha2.Device)
 	if !ok {
 		return errors.New(errNotDevice)
 	}

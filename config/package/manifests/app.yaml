@@ -1,8 +1,8 @@
-title: "Packet"
+title: "Packet Provider"
 readme: |-
   This `provider-packet` repository is the implementation of a Crossplane infrastructure
   [provider](https://github.com/crossplane/crossplane/blob/master/design/design-doc-packages.md) for
-  [Packet](https://www.packet.com).
+  [Packet, an Equinix company](https://www.packet.com).
  
   The package that is built from the source code in this repository can be
   installed into a Crossplane control plane and adds the following new
@@ -19,7 +19,6 @@ overview: |-
   Packet Device resources can be provisioned, updated, and deleted by this
   package.
 overviewShort: The Packet Crossplane Package enabling resource management for the Packet platform.
-version: 0.0.1
 maintainers:
 - name: "Packet"
   email: "support@packet.com"
@@ -28,6 +27,7 @@ owners:
   email: "support@packet.com"
 company: "Packet"
 category: "Infrastructure"
+packageType: Provider
 keywords:
  - "packet"
  - "packethost"
@@ -35,5 +35,7 @@ keywords:
 website: "https://github.com/packethost/crossplane-provider-packet"
 source: "https://github.com/packethost/crossplane-provider-packet"
 permissionScope: Cluster
+dependsOn:
+- crd: '*.compute.crossplane.io/v1alpha1'
 # License SPDX name: https://spdx.org/licenses/
 license: Apache-2.0

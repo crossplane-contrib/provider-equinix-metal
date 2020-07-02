@@ -8,7 +8,7 @@ type: Opaque
 data:
   credentials: BASE64ENCODED_PACKET_PROVIDER_CREDS
 ---
-apiVersion: packet.crossplane.io/v1alpha1
+apiVersion: packet.crossplane.io/v1alpha2
 kind: Provider
 metadata:
   name: example-provider-packet
