@@ -25,22 +25,54 @@ import (
 	"github.com/packethost/packngo"
 )
 
-// NewClient ... TODO
-func NewClient(ctx context.Context, credentials []byte) (packngo.DeviceService, error) {
-	client := clients.NewClient(ctx, credentials)
+// Client implements the Packet API methods needed to interact with Devices for
+// the Packet Crossplane Provider
+type Client interface {
+	Get(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
+	Create(*packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
+	Delete(deviceID string) (*packngo.Response, error)
+	Update(string, *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
+}
 
-	return client.Devices, nil
+// build-time test that the interface is implemented
+var _ Client = (&packngo.Client{}).Devices
+
+type ClientWithDefaults interface {
+	Client
+	clients.DefaultGetter
+}
+
+type DeviceClient struct {
+	Client
+	*clients.Credentials
+}
+
+var _ ClientWithDefaults = &DeviceClient{}
+
+// NewClient returns a Client implementing the Packet API methods needed to
+// interact with Devices for the Packet Crossplane Provider
+func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
+	client, err := clients.NewClient(ctx, credentials)
+	if err != nil {
+		return nil, err
+	}
+	deviceClient := DeviceClient{
+		Client:      client.Client.Devices,
+		Credentials: client.Credentials,
+	}
+	deviceClient.SetProjectID(projectID)
+	return deviceClient, nil
 }
 
 // CreateFromDevice return packngo.DeviceCreateRequest created from Kubernetes
-func CreateFromDevice(d *v1alpha2.Device) *packngo.DeviceCreateRequest {
+func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreateRequest {
 	return &packngo.DeviceCreateRequest{
 		Hostname:     d.Spec.ForProvider.Hostname,
 		Plan:         d.Spec.ForProvider.Plan,
 		Facility:     []string{d.Spec.ForProvider.Facility},
 		OS:           d.Spec.ForProvider.OS,
 		BillingCycle: d.Spec.ForProvider.BillingCycle,
-		ProjectID:    d.Spec.ForProvider.ProjectID,
+		ProjectID:    projectID,
 		UserData:     d.Spec.ForProvider.UserData,
 		Tags:         d.Spec.ForProvider.Tags,
 	}
@@ -65,6 +97,14 @@ func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) bool {
 	if d.Spec.ForProvider.AlwaysPXE != p.AlwaysPXE {
 		return false
 	}
+
+	// TODO(displague) CustomData is string vs map[string]interface{}
+	/* TODO(displague) missing: https://github.com/packethost/packngo/pull/182
+	if d.Spec.ForProvider.Description != p.Description {
+		return false
+	}
+	*/
+
 	if !reflect.DeepEqual(d.Spec.ForProvider.Tags, p.Tags) {
 		return false
 	}
@@ -82,5 +122,7 @@ func NewUpdateDeviceRequest(d *v1alpha2.Device) *packngo.DeviceUpdateRequest {
 		IPXEScriptURL: &d.Spec.ForProvider.IPXEScriptURL,
 		AlwaysPXE:     &d.Spec.ForProvider.AlwaysPXE,
 		Tags:          &d.Spec.ForProvider.Tags,
+		Description:   &d.Spec.ForProvider.Description,
+		CustomData:    &d.Spec.ForProvider.CustomData,
 	}
 }

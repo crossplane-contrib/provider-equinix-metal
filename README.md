@@ -46,29 +46,26 @@ kubectl crossplane package install --cluster \
   packethost/crossplane-provider-packet:v0.0.2 provider-packet
 ```
 
+The upcoming commands will make use your Packet API key and project ID. Run the following, entering your API key and project ID when prompted:
+
+```console
+read -s -p "API Key: " APIKEY; echo
+read -p "Project ID: " PROJECT_ID; echo
+```
+
 ### Create a Provider Secret
 
 Create a [Packet Project and a project level API key](https://www.packet.com/developers/docs/API/getting-started/).
 
-Run the following and supply the API Key into the console when prompted:
+Create a Kubernetes secret with the API Key and Project ID.
 
 ```console
-read -s -p "API Key: " APIKEY; echo
-```
-
-Create a Kubernetes secret with this API Key.
-
-```console
-kubectl create -n crossplane-system secret generic packet-creds --from-literal=key=$APIKEY
+kubectl create -n crossplane-system secret generic packet-creds --from-file=key=<(echo '{"apiKey":"'$APIKEY'", "projectID":"'$PROJECT_ID'"}')
 ```
 
 ### Create a Provider record
 
-Get the project id from the Packet Portal or using the Packet CLI (`packet project get`). Run the commands below, entering your Project ID when prompted.
-
-```console
-read -p "Project ID: " PROJECT_ID; echo
-```
+Get the project id from the Packet Portal or using the Packet CLI (`packet project get`). With `PROJECT_ID` in your environemnt, run the command below:
 
 ```yaml
 cat << EOS | kubectl apply -f -
@@ -85,15 +82,9 @@ spec:
 EOS
 ```
 
-<!---
-TODO(displague): do we want projectID in the provider? facility? organization?
-Use a shell prompt or patch approach?
-kubectl patch provider packet-provider --type=merge --patch='{"spec":{"projectID":"the-uuid"}}'
---->
-
 ## Provision a Packet Device
 
-Replace `YOUR_PROJECT_ID` with your actual Project ID and add the following record to your cluster:
+Save the following as `device.yaml`:
 
 ```yaml
 apiVersion: server.packet.crossplane.io/v1alpha2
@@ -102,13 +93,12 @@ metadata:
   name: devices
 spec:
   forProvider:
-    projectID: YOUR_PROJECT_ID
     hostname: crossplane
     plan: c1.small.x86
     facility: any
     operatingSystem: centos_7
     billingCycle: hourly
-    hardware_reservation_id: next_available
+    hardwareReservationID: next_available
     locked: false
   providerRef:
     name: packet-provider
@@ -130,3 +120,11 @@ provider.packet.crossplane.io/packet-provider   0ac84673-b679-40c1-9de9-8a879267
 NAME                                         READY   SYNCED   STATE    ID                                     HOSTNAME     IPV4            RECLAIM-POLICY   AGE
 device.server.packet.crossplane.io/devices   True    True     active   bc09a78d-14c4-48d2-9e54-b13dc0ab56bb   crossplane   147.75.68.117   Delete           28m
 ```
+
+To delete the device:
+
+```console
+$ kubectl delete -f device.yaml
+device.server.packet.crossplane.io/devices deleted
+```
+

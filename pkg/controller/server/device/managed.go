@@ -20,8 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/packethost/packngo"
-
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
@@ -54,6 +52,7 @@ const (
 	errCreateDevice        = "cannot create Device"
 	errUpdateDevice        = "cannot modify Device"
 	errDeleteDevice        = "cannot delete Device"
+	errUnmarshalDate       = "cannot unmarshal date"
 )
 
 // SetupDevice adds a controller that reconciles Devices
@@ -76,7 +75,7 @@ func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
 
 type connecter struct {
 	kube        client.Client
-	newClientFn func(ctx context.Context, credentials []byte) (packngo.DeviceService, error)
+	newClientFn func(ctx context.Context, credentials []byte, projectID string) (devicesclient.ClientWithDefaults, error)
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -104,13 +103,14 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
-	client, err := newClientFn(ctx, s.Data[p.Spec.CredentialsSecretRef.Key])
+	client, err := newClientFn(ctx, s.Data[p.Spec.CredentialsSecretRef.Key], p.Spec.ProjectID)
+
 	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }
 
 type external struct {
 	kube   client.Client
-	client packngo.DeviceService
+	client devicesclient.ClientWithDefaults
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -130,9 +130,23 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	// Update device status
 	d.Status.AtProvider.ID = device.ID
+	d.Status.AtProvider.Description = device.ID
 	d.Status.AtProvider.Hostname = device.Hostname
 	d.Status.AtProvider.Href = device.Href
 	d.Status.AtProvider.State = device.State
+	d.Status.AtProvider.BillingCycle = device.BillingCycle
+	d.Status.AtProvider.Tags = device.Tags
+	d.Status.AtProvider.NetworkType = device.NetworkType
+	d.Status.AtProvider.Locked = device.Locked
+
+	err = d.Status.AtProvider.CreatedAt.UnmarshalText([]byte(device.Created))
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errUnmarshalDate)
+	}
+	err = d.Status.AtProvider.UpdatedAt.UnmarshalText([]byte(device.Updated))
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errUnmarshalDate)
+	}
 
 	for _, n := range device.Network {
 		if n.Public && n.AddressFamily == 4 {
@@ -140,7 +154,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		}
 	}
 	// TODO: investigate better way to do this
-	d.Status.AtProvider.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
+	d.Status.AtProvider.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
 
 	// Set Device status and bindable
 	// TODO: identify deleting state
@@ -173,7 +187,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	d.Status.SetConditions(runtimev1alpha1.Creating())
 
-	create := devicesclient.CreateFromDevice(d)
+	create := devicesclient.CreateFromDevice(d, e.client.GetProjectID(packetclient.CredentialProjectID))
 	device, _, err := e.client.Create(create)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateDevice)

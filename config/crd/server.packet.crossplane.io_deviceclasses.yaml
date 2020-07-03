@@ -40,11 +40,13 @@ spec:
               description: DeviceParameters define the desired state of a Packet device.
                 https://www.packet.com/developers/api/#devices
               properties:
-                always_pxe:
+                alwaysPXE:
                   type: boolean
                 billingCycle:
                   type: string
-                customdata:
+                customData:
+                  type: string
+                description:
                   type: string
                 facility:
                   type: string
@@ -52,11 +54,11 @@ spec:
                   additionalProperties:
                     type: string
                   type: object
-                hardware_reservation_id:
+                hardwareReservationID:
                   type: string
                 hostname:
                   type: string
-                ip_addresses:
+                ipAddresses:
                   items:
                     properties:
                       address_family:
@@ -68,7 +70,7 @@ spec:
                     - public
                     type: object
                   type: array
-                ipxe_script_url:
+                ipxeScriptUrl:
                   type: string
                 locked:
                   type: boolean
@@ -76,31 +78,26 @@ spec:
                   type: string
                 plan:
                   type: string
-                project_ssh_keys:
+                projectSSHKeys:
                   items:
                     type: string
                   type: array
-                projectID:
-                  type: string
-                public_ipv4_subnet_size:
+                publicIPv4SubnetSize:
                   type: integer
                 tags:
                   items:
                     type: string
                   type: array
-                user_ssh_keys:
+                userSSHKeys:
                   items:
                     type: string
                   type: array
                 userdata:
                   type: string
               required:
-              - billingCycle
               - facility
-              - hostname
               - operatingSystem
               - plan
-              - projectID
               type: object
             providerRef:
               description: ProviderReference specifies the provider that will be used

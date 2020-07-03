@@ -34,6 +34,7 @@ import (
 
 	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
+	devicesclient "github.com/packethost/crossplane-provider-packet/pkg/clients/device"
 	"github.com/packethost/crossplane-provider-packet/pkg/clients/device/fake"
 	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 
@@ -77,7 +78,7 @@ func withBindingPhase(p runtimev1alpha1.BindingPhase) deviceModifier {
 
 func withProvisionPer(p float32) deviceModifier {
 	return func(i *v1alpha2.Device) {
-		i.Status.AtProvider.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", p))
+		i.Status.AtProvider.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", p))
 	}
 }
 
@@ -117,6 +118,10 @@ func device(im ...deviceModifier) *v1alpha2.Device {
 	}
 
 	return i
+}
+
+func projectIDFromCredentials(_ string) string {
+	return "id-from-credentials"
 }
 
 var _ managed.ExternalClient = &external{}
@@ -171,7 +176,7 @@ func TestConnect(t *testing.T) {
 					}
 					return nil
 				}},
-				newClientFn: func(_ context.Context, _ []byte) (packngo.DeviceService, error) { return nil, nil },
+				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) { return nil, nil },
 			},
 			args: args{
 				ctx: context.Background(),
@@ -238,7 +243,9 @@ func TestConnect(t *testing.T) {
 					}
 					return nil
 				}},
-				newClientFn: func(_ context.Context, _ []byte) (packngo.DeviceService, error) { return nil, errorBoom },
+				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) {
+					return nil, errorBoom
+				},
 			},
 			args: args{ctx: context.Background(), mg: device()},
 			want: want{err: errors.Wrap(errorBoom, errNewClient)},
@@ -470,6 +477,7 @@ func TestCreate(t *testing.T) {
 	}{
 		"CreatedInstance": {
 			client: &external{client: &fake.MockClient{
+				MockGetProjectID: projectIDFromCredentials,
 				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
@@ -504,6 +512,7 @@ func TestCreate(t *testing.T) {
 		},
 		"FailedToCreateDevice": {
 			client: &external{client: &fake.MockClient{
+				MockGetProjectID: projectIDFromCredentials,
 				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
 					return nil, nil, errorBoom
 				},

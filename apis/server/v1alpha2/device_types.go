@@ -81,35 +81,59 @@ type DeviceList struct {
 // DeviceParameters define the desired state of a Packet device.
 // https://www.packet.com/developers/api/#devices
 type DeviceParameters struct {
-	Hostname              string                           `json:"hostname"`
+	Hostname              string                           `json:"hostname,omitempty"`
 	Plan                  string                           `json:"plan"`
 	Facility              string                           `json:"facility"`
 	OS                    string                           `json:"operatingSystem"`
-	BillingCycle          string                           `json:"billingCycle"`
-	ProjectID             string                           `json:"projectID"`
+	Description           string                           `json:"description,omitempty"`
+	BillingCycle          string                           `json:"billingCycle,omitempty"`
 	UserData              string                           `json:"userdata,omitempty"`
 	Tags                  []string                         `json:"tags,omitempty"`
 	Locked                bool                             `json:"locked,omitempty"`
-	IPXEScriptURL         string                           `json:"ipxe_script_url,omitempty"`
-	PublicIPv4SubnetSize  int                              `json:"public_ipv4_subnet_size,omitempty"`
-	AlwaysPXE             bool                             `json:"always_pxe,omitempty"`
-	HardwareReservationID string                           `json:"hardware_reservation_id,omitempty"`
-	CustomData            string                           `json:"customdata,omitempty"`
-	UserSSHKeys           []string                         `json:"user_ssh_keys,omitempty"`
-	ProjectSSHKeys        []string                         `json:"project_ssh_keys,omitempty"`
+	IPXEScriptURL         string                           `json:"ipxeScriptUrl,omitempty"`
+	PublicIPv4SubnetSize  int                              `json:"publicIPv4SubnetSize,omitempty"`
+	AlwaysPXE             bool                             `json:"alwaysPXE,omitempty"`
+	HardwareReservationID string                           `json:"hardwareReservationID,omitempty"`
+	CustomData            string                           `json:"customData,omitempty"`
+	UserSSHKeys           []string                         `json:"userSSHKeys,omitempty"`
+	ProjectSSHKeys        []string                         `json:"projectSSHKeys,omitempty"`
 	Features              map[string]string                `json:"features,omitempty"`
-	IPAddresses           []packngo.IPAddressCreateRequest `json:"ip_addresses,omitempty"`
+	IPAddresses           []packngo.IPAddressCreateRequest `json:"ipAddresses,omitempty"`
 }
 
-// DeviceObservation is used to show the observed state of the
-// Device resource on Packet.
+// DeviceObservation is used to reflect in the Kubernetes API, the observed
+// state of the Device resource from the Packet API.
 type DeviceObservation struct {
-	ID           string            `json:"id"`
-	Href         string            `json:"href,omitempty"`
-	Hostname     string            `json:"hostname,omitempty"`
-	State        string            `json:"state,omitempty"`
-	ProvisionPer resource.Quantity `json:"provisionPer,omitempty"`
-	IPv4         string            `json:"ipv4,omitempty"`
+	ID                  string            `json:"id"`
+	Href                string            `json:"href,omitempty"`
+	Hostname            string            `json:"hostname,omitempty"`
+	Description         string            `json:"description,omitempty"`
+	Tags                []string          `json:"tags,omitempty"`
+	State               string            `json:"state,omitempty"`
+	ProvisionPercentage resource.Quantity `json:"provisionPercentage,omitempty"`
+	IPv4                string            `json:"ipv4,omitempty"`
+	Locked              bool              `json:"locked"`
+	BillingCycle        string            `json:"billingCycle,omitempty"`
+	NetworkType         string            `json:"networkType,omitempty"`
+	CreatedAt           metav1.Time       `json:"createdAt,omitempty"`
+	UpdatedAt           metav1.Time       `json:"updatedAt,omitempty"`
+
+	// IQN string is omitted
+	// ImageURL *string is omitted
+	// Facility map is omitted (see FacilityCode, FacilityID)
+	// HardwareReservation map is omitted
+	// IPAddresses []map is omitted
+	// NetworkPorts []map is omitted
+	// OperatingSystem map is omitted
+	// Plan map is omitted
+	// Project map is omitted
+	// ShortID string is omitted
+	// SSHKeys []map is omitted
+	// Volumes []map is omitted
+
+	// TODO(displague) should user+pass yield a secret?
+	// User string is omitted
+	// RootPassword string is omitted (available for 24 hours)
 }
 
 // DeviceClassSpecTemplate is a template for the spec of a dynamically provisioned Device.
