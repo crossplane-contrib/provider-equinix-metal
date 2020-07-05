@@ -53,6 +53,8 @@ spec:
                 features:
                   additionalProperties:
                     type: string
+                  description: "Features can be used to require or prefer devices
+                    with optional features: \n features: - tpm: required - tpm: preferred"
                   type: object
                 hardwareReservationID:
                   type: string

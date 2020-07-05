@@ -26,11 +26,12 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/test"
 	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
 	"github.com/google/go-cmp/cmp"
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 )
 
 var _ claimbinding.ManagedConfigurator = claimbinding.ManagedConfiguratorFn(ConfigureDevice)

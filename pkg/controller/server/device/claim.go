@@ -27,10 +27,11 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimscheduling"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 )
 
 // SetupDeviceClaimScheduling adds a controller that reconciles Device claims

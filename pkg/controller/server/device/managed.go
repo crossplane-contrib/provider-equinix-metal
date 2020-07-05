@@ -18,11 +18,10 @@ package device
 
 import (
 	"context"
-	"fmt"
+	"reflect"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,13 +45,13 @@ const (
 	errProviderSecretNil   = "cannot find Secret reference on Provider"
 	errGetProvider         = "cannot get Provider"
 	errGetProviderSecret   = "cannot get Provider Secret"
+	errGenObservation      = "cannot generate observation"
 	errNewClient           = "cannot create new Device client"
 	errNotDevice           = "managed resource is not a Device"
 	errGetDevice           = "cannot get Device"
 	errCreateDevice        = "cannot create Device"
 	errUpdateDevice        = "cannot modify Device"
 	errDeleteDevice        = "cannot delete Device"
-	errUnmarshalDate       = "cannot unmarshal date"
 )
 
 // SetupDevice adds a controller that reconciles Devices
@@ -62,6 +61,7 @@ func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha2.DeviceGroupVersionKind),
 		managed.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
+		managed.WithConnectionPublishers(),
 		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient())),
 		managed.WithLogger(l.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -128,53 +128,40 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetDevice)
 	}
 
-	// Update device status
-	d.Status.AtProvider.ID = device.ID
-	d.Status.AtProvider.Description = device.ID
-	d.Status.AtProvider.Hostname = device.Hostname
-	d.Status.AtProvider.Href = device.Href
-	d.Status.AtProvider.State = device.State
-	d.Status.AtProvider.BillingCycle = device.BillingCycle
-	d.Status.AtProvider.Tags = device.Tags
-	d.Status.AtProvider.NetworkType = device.NetworkType
-	d.Status.AtProvider.Locked = device.Locked
-
-	err = d.Status.AtProvider.CreatedAt.UnmarshalText([]byte(device.Created))
-	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errUnmarshalDate)
-	}
-	err = d.Status.AtProvider.UpdatedAt.UnmarshalText([]byte(device.Updated))
-	if err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errUnmarshalDate)
-	}
-
-	for _, n := range device.Network {
-		if n.Public && n.AddressFamily == 4 {
-			d.Status.AtProvider.IPv4 = n.Address
+	current := d.Spec.ForProvider.DeepCopy()
+	devicesclient.LateInitialize(&d.Spec.ForProvider, device)
+	if !reflect.DeepEqual(current, &d.Spec.ForProvider) {
+		if err := e.kube.Update(ctx, d); err != nil {
+			return managed.ExternalObservation{}, errors.Wrap(err, errManagedUpdateFailed)
 		}
 	}
-	// TODO: investigate better way to do this
-	d.Status.AtProvider.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
+
+	d.Status.AtProvider, err = devicesclient.GenerateObservation(device)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGenObservation)
+	}
 
 	// Set Device status and bindable
-	// TODO: identify deleting state
 	switch d.Status.AtProvider.State {
 	case v1alpha2.StateActive:
 		d.Status.SetConditions(runtimev1alpha1.Available())
 		resource.SetBindable(d)
 	case v1alpha2.StateProvisioning:
 		d.Status.SetConditions(runtimev1alpha1.Creating())
-	case v1alpha2.StateQueued:
+	case v1alpha2.StateQueued,
+		v1alpha2.StateDeprovisioning,
+		v1alpha2.StateFailed,
+		v1alpha2.StateInactive,
+		v1alpha2.StatePoweringOff,
+		v1alpha2.StateReinstalling:
 		d.Status.SetConditions(runtimev1alpha1.Unavailable())
 	}
 
 	o := managed.ExternalObservation{
 		ResourceExists:    true,
 		ResourceUpToDate:  devicesclient.IsUpToDate(d, device),
-		ConnectionDetails: managed.ConnectionDetails{},
+		ConnectionDetails: devicesclient.GetConnectionDetails(device),
 	}
-
-	// TODO: propagate secret info
 
 	return o, nil
 }

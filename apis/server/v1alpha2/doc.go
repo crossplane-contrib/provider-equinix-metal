@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains core Packet resources.
+// Package v1alpha2 contains core Packet resources.
 // +kubebuilder:object:generate=true
 // +groupName=server.packet.crossplane.io
 // +versionName=v1alpha2

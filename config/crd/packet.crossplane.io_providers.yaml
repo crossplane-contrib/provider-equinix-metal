@@ -70,10 +70,10 @@ spec:
               - namespace
               type: object
             projectID:
-              description: ProjectID is the project uuid of this Packet Provider.
+              description: ProjectID is the Project ID (UUID) of this Packet Provider.
+                If this is not specified it must be included in the Provider secret
+                (JSON field providerID).
               type: string
-          required:
-          - projectID
           type: object
       type: object
   version: v1alpha2

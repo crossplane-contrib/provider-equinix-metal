@@ -22,8 +22,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/version"
 	"github.com/packethost/packngo"
+
+	"github.com/packethost/crossplane-provider-packet/pkg/version"
 )
 
 // PacketClient is a structure that embeds Credentials for the purposes of

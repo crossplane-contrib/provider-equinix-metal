@@ -25,7 +25,10 @@ import (
 type ProviderSpec struct {
 	runtimev1alpha1.ProviderSpec `json:",inline"`
 
-	// ProjectID is the project uuid of this Packet Provider.
+	// ProjectID is the Project ID (UUID) of this Packet Provider. If this is
+	// not specified it must be included in the Provider secret (JSON field
+	// providerID).
+	// +kubebuilder:validation:Optional
 	ProjectID string `json:"projectID"`
 }
 

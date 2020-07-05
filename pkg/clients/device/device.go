@@ -18,11 +18,22 @@ package device
 
 import (
 	"context"
+	"fmt"
 	"reflect"
+
+	"github.com/packethost/packngo"
+	"github.com/pkg/errors"
+
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 	"github.com/packethost/crossplane-provider-packet/pkg/clients"
-	"github.com/packethost/packngo"
+)
+
+const (
+	errUnmarshalDate = "cannot unmarshal date"
 )
 
 // Client implements the Packet API methods needed to interact with Devices for
@@ -37,17 +48,20 @@ type Client interface {
 // build-time test that the interface is implemented
 var _ Client = (&packngo.Client{}).Devices
 
+// ClientWithDefaults is an interface that provides Device services and
+// provides default values for common properties
 type ClientWithDefaults interface {
 	Client
 	clients.DefaultGetter
 }
 
-type DeviceClient struct {
+// CredentialedClient is a credentialed client to Packet Device services
+type CredentialedClient struct {
 	Client
 	*clients.Credentials
 }
 
-var _ ClientWithDefaults = &DeviceClient{}
+var _ ClientWithDefaults = &CredentialedClient{}
 
 // NewClient returns a Client implementing the Packet API methods needed to
 // interact with Devices for the Packet Crossplane Provider
@@ -56,7 +70,7 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 	if err != nil {
 		return nil, err
 	}
-	deviceClient := DeviceClient{
+	deviceClient := CredentialedClient{
 		Client:      client.Client.Devices,
 		Credentials: client.Credentials,
 	}
@@ -75,6 +89,92 @@ func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreat
 		ProjectID:    projectID,
 		UserData:     d.Spec.ForProvider.UserData,
 		Tags:         d.Spec.ForProvider.Tags,
+	}
+}
+
+// GetConnectionDetails extracts managed.ConnectionDetails out of
+// packngo.Device.
+func GetConnectionDetails(device *packngo.Device) managed.ConnectionDetails {
+	// RootPassword is only in the device responses for 24h
+	// TODO(displague) Handle devices without public IPv4
+	if device.RootPassword == "" || device.GetNetworkInfo().PublicIPv4 == "" {
+		return managed.ConnectionDetails{}
+	}
+
+	// TODO(displague) device.User is in the API but not included in packngo
+	user := "root"
+
+	return managed.ConnectionDetails{
+		runtimev1alpha1.ResourceCredentialsSecretEndpointKey: []byte(device.GetNetworkInfo().PublicIPv4),
+		runtimev1alpha1.ResourceCredentialsSecretUserKey:     []byte(user),
+		runtimev1alpha1.ResourceCredentialsSecretPasswordKey: []byte(device.RootPassword),
+	}
+}
+
+// GenerateObservation produces v1alpha2.DeviceObservation from packngo.Device
+func GenerateObservation(device *packngo.Device) (v1alpha2.DeviceObservation, error) {
+	// Update device status
+	observation := v1alpha2.DeviceObservation{
+		ID:          device.ID,
+		Href:        device.Href,
+		Facility:    device.Facility.Code,
+		State:       device.State,
+		NetworkType: device.NetworkType,
+		Locked:      device.Locked,
+		IPv4:        device.GetNetworkInfo().PublicIPv4,
+	}
+
+	// TODO: investigate better way to do this
+	observation.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
+	if err := observation.CreatedAt.UnmarshalText([]byte(device.Created)); err != nil {
+		return v1alpha2.DeviceObservation{}, errors.Wrap(err, errUnmarshalDate)
+	}
+	if err := observation.UpdatedAt.UnmarshalText([]byte(device.Updated)); err != nil {
+		return v1alpha2.DeviceObservation{}, errors.Wrap(err, errUnmarshalDate)
+	}
+
+	return observation, nil
+}
+
+// LateInitialize fills the empty fields in *v1alpha2.DeviceParameters with the
+// values seen in packngo.Device
+func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
+	if device == nil {
+		return
+	}
+
+	// TODO(displague) initializer fields should be those that are optional and
+	// can be identified by nil as unspecified. Change these fields to *string
+	in.Hostname = device.Hostname
+	in.AlwaysPXE = device.AlwaysPXE
+	in.BillingCycle = device.BillingCycle
+	in.IPXEScriptURL = device.IPXEScriptURL
+	in.Locked = device.Locked
+	in.OS = device.OS.Slug
+	in.Plan = device.Plan.Slug
+	in.Tags = device.Tags
+	in.ProjectSSHKeys = device.Tags
+	in.UserSSHKeys = device.Tags
+	in.UserData = device.UserData
+
+	for _, n := range device.Network {
+		if n.Public && n.AddressFamily == 4 {
+			in.PublicIPv4SubnetSize = n.CIDR
+		}
+	}
+
+	// Facility is required with a supported "any" value
+	// AtProvider.Facility will reflect the Packet selected
+
+	// TODO(displague) CustomData is string on input and a map when fetched
+	// What's the format? Should it always be a map in k8s?
+	// in.CustomData = device.CustomData
+
+	// TODO(displague) Description is not yet supported
+	//in.Description = device.Description
+
+	if in.Tags == nil {
+		in.Tags = device.Tags
 	}
 }
 

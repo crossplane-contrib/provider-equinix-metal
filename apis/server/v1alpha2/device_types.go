@@ -24,13 +24,31 @@ import (
 )
 
 const (
+	// StatePoweringOn indicates device is powering on
+	StatePoweringOn = "powering_on"
+
+	// StatePoweringOff indicates device is powering off
+	StatePoweringOff = "powering_off"
+
 	// StateActive indicates device is in active state
 	StateActive = "active"
+
+	// StateInactive indicates device is in inactive state
+	StateInactive = "inactive"
 
 	// StateProvisioning indicates device is in provisioning state
 	StateProvisioning = "provisioning"
 
-	// StateQueued indicates device is in queued state
+	// StateDeprovisioning indicates device is in deprovisioning state
+	StateDeprovisioning = "deprovisioning"
+
+	// StateReinstalling indicates device is in reinstalling state
+	StateReinstalling = "reinstalling"
+
+	// StateFailed indicates device is in a failed state
+	StateFailed = "failed"
+
+	// StateQueued indicates device is in a queued state
 	StateQueued = "queued"
 )
 
@@ -55,7 +73,8 @@ type DeviceStatus struct {
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATE",type="string",JSONPath=".status.atProvider.state"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.id"
-// +kubebuilder:printcolumn:name="HOSTNAME",type="string",JSONPath=".status.atProvider.hostname"
+// +kubebuilder:printcolumn:name="HOSTNAME",type="string",JSONPath=".spec.forProvider.hostname"
+// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facility"
 // +kubebuilder:printcolumn:name="IPV4",type="string",JSONPath=".status.atProvider.ipv4"
 // +kubebuilder:printcolumn:name="RECLAIM-POLICY",type="string",JSONPath=".spec.reclaimPolicy"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
@@ -81,59 +100,83 @@ type DeviceList struct {
 // DeviceParameters define the desired state of a Packet device.
 // https://www.packet.com/developers/api/#devices
 type DeviceParameters struct {
-	Hostname              string                           `json:"hostname,omitempty"`
-	Plan                  string                           `json:"plan"`
-	Facility              string                           `json:"facility"`
-	OS                    string                           `json:"operatingSystem"`
-	Description           string                           `json:"description,omitempty"`
-	BillingCycle          string                           `json:"billingCycle,omitempty"`
-	UserData              string                           `json:"userdata,omitempty"`
-	Tags                  []string                         `json:"tags,omitempty"`
-	Locked                bool                             `json:"locked,omitempty"`
-	IPXEScriptURL         string                           `json:"ipxeScriptUrl,omitempty"`
-	PublicIPv4SubnetSize  int                              `json:"publicIPv4SubnetSize,omitempty"`
-	AlwaysPXE             bool                             `json:"alwaysPXE,omitempty"`
-	HardwareReservationID string                           `json:"hardwareReservationID,omitempty"`
-	CustomData            string                           `json:"customData,omitempty"`
-	UserSSHKeys           []string                         `json:"userSSHKeys,omitempty"`
-	ProjectSSHKeys        []string                         `json:"projectSSHKeys,omitempty"`
-	Features              map[string]string                `json:"features,omitempty"`
-	IPAddresses           []packngo.IPAddressCreateRequest `json:"ipAddresses,omitempty"`
+	Hostname string `json:"hostname,omitempty"`
+
+	// +immutable
+	Plan string `json:"plan"`
+
+	// +immutable
+	Facility string `json:"facility"`
+
+	// +immutable
+	OS            string   `json:"operatingSystem"`
+	Description   string   `json:"description,omitempty"`
+	BillingCycle  string   `json:"billingCycle,omitempty"`
+	UserData      string   `json:"userdata,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
+	Locked        bool     `json:"locked,omitempty"`
+	IPXEScriptURL string   `json:"ipxeScriptUrl,omitempty"`
+
+	// +immutable
+	PublicIPv4SubnetSize int  `json:"publicIPv4SubnetSize,omitempty"`
+	AlwaysPXE            bool `json:"alwaysPXE,omitempty"`
+
+	// +immutable
+	HardwareReservationID string `json:"hardwareReservationID,omitempty"`
+	CustomData            string `json:"customData,omitempty"`
+
+	// +immutable
+	UserSSHKeys []string `json:"userSSHKeys,omitempty"`
+
+	// +immutable
+	ProjectSSHKeys []string `json:"projectSSHKeys,omitempty"`
+
+	// Features can be used to require or prefer devices with optional features:
+	//
+	// features:
+	// - tpm: required
+	// - tpm: preferred
+	// +immutable
+	Features map[string]string `json:"features,omitempty"`
+
+	// +immutable
+	IPAddresses []packngo.IPAddressCreateRequest `json:"ipAddresses,omitempty"`
 }
 
 // DeviceObservation is used to reflect in the Kubernetes API, the observed
 // state of the Device resource from the Packet API.
 type DeviceObservation struct {
-	ID                  string            `json:"id"`
-	Href                string            `json:"href,omitempty"`
-	Hostname            string            `json:"hostname,omitempty"`
-	Description         string            `json:"description,omitempty"`
-	Tags                []string          `json:"tags,omitempty"`
+	ID   string `json:"id"`
+	Href string `json:"href,omitempty"`
+
+	// Facility is where the device is deployed. This field may differ from
+	// spec.forProvider.facility when the "any" value was used.
+	Facility            string            `json:"facility"`
 	State               string            `json:"state,omitempty"`
 	ProvisionPercentage resource.Quantity `json:"provisionPercentage,omitempty"`
 	IPv4                string            `json:"ipv4,omitempty"`
 	Locked              bool              `json:"locked"`
-	BillingCycle        string            `json:"billingCycle,omitempty"`
 	NetworkType         string            `json:"networkType,omitempty"`
 	CreatedAt           metav1.Time       `json:"createdAt,omitempty"`
 	UpdatedAt           metav1.Time       `json:"updatedAt,omitempty"`
 
 	// IQN string is omitted
 	// ImageURL *string is omitted
-	// Facility map is omitted (see FacilityCode, FacilityID)
-	// HardwareReservation map is omitted
+	// Hostname string is omitted (represented in ForProvider)
+	// Tags []string is omitted (represented in ForProvider)
+	// BillingCycle string is omitted (represented in ForProvider)
+	// HardwareReservation map is omitted (represented in ForProvider by HardwareReservationID)
 	// IPAddresses []map is omitted
 	// NetworkPorts []map is omitted
 	// OperatingSystem map is omitted
-	// Plan map is omitted
-	// Project map is omitted
+	// Plan map is omitted (represented in ForProvider by Plan)
+	// Project map is omitted (represented through ProviderReference)
 	// ShortID string is omitted
 	// SSHKeys []map is omitted
 	// Volumes []map is omitted
 
-	// TODO(displague) should user+pass yield a secret?
-	// User string is omitted
-	// RootPassword string is omitted (available for 24 hours)
+	// User string is omitted (written to Credentials)
+	// RootPassword string is omitted (written to Credentials)
 }
 
 // DeviceClassSpecTemplate is a template for the spec of a dynamically provisioned Device.

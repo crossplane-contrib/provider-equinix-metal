@@ -21,8 +21,11 @@ spec:
   - JSONPath: .status.atProvider.id
     name: ID
     type: string
-  - JSONPath: .status.atProvider.hostname
+  - JSONPath: .spec.forProvider.hostname
     name: HOSTNAME
+    type: string
+  - JSONPath: .status.atProvider.facility
+    name: FACILITY
     type: string
   - JSONPath: .status.atProvider.ipv4
     name: IPV4
@@ -159,6 +162,8 @@ spec:
                 features:
                   additionalProperties:
                     type: string
+                  description: "Features can be used to require or prefer devices
+                    with optional features: \n features: - tpm: required - tpm: preferred"
                   type: object
                 hardwareReservationID:
                   type: string
@@ -285,14 +290,13 @@ spec:
               description: DeviceObservation is used to reflect in the Kubernetes
                 API, the observed state of the Device resource from the Packet API.
               properties:
-                billingCycle:
-                  type: string
                 createdAt:
                   format: date-time
                   type: string
-                description:
-                  type: string
-                hostname:
+                facility:
+                  description: Facility is where the device is deployed. This field
+                    may differ from spec.forProvider.facility when the "any" value
+                    was used.
                   type: string
                 href:
                   type: string
@@ -312,14 +316,11 @@ spec:
                   x-kubernetes-int-or-string: true
                 state:
                   type: string
-                tags:
-                  items:
-                    type: string
-                  type: array
                 updatedAt:
                   format: date-time
                   type: string
               required:
+              - facility
               - id
               - locked
               type: object

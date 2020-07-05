@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package api contains Kubernetes API groups for Packet cloud provider.
+// Package apis contains Kubernetes API groups for Packet cloud provider.
 package apis
 
 import (
