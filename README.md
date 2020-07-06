@@ -109,13 +109,6 @@ spec:
     name: devices-creds
     namespace: crossplane-system
   reclaimPolicy: Delete
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: devices-creds
-  namespace: crossplane-system
-type: Opaque
 ```
 
 ```bash
