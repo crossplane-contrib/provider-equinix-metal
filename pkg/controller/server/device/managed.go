@@ -18,8 +18,8 @@ package device
 
 import (
 	"context"
-	"reflect"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -63,6 +63,7 @@ func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
 		managed.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
 		managed.WithConnectionPublishers(),
 		managed.WithInitializers(managed.NewNameAsExternalName(mgr.GetClient())),
+		managed.WithReferenceResolver(managed.NewAPISimpleReferenceResolver(mgr.GetClient())),
 		managed.WithLogger(l.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
@@ -130,7 +131,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	current := d.Spec.ForProvider.DeepCopy()
 	devicesclient.LateInitialize(&d.Spec.ForProvider, device)
-	if !reflect.DeepEqual(current, &d.Spec.ForProvider) {
+	if !cmp.Equal(current, &d.Spec.ForProvider) {
 		if err := e.kube.Update(ctx, d); err != nil {
 			return managed.ExternalObservation{}, errors.Wrap(err, errManagedUpdateFailed)
 		}
@@ -186,7 +187,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
 	}
 
-	return managed.ExternalCreation{}, nil
+	return managed.ExternalCreation{ConnectionDetails: devicesclient.GetConnectionDetails(device)}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {

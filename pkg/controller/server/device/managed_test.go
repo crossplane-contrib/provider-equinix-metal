@@ -48,7 +48,6 @@ import (
 const (
 	namespace  = "cool-namespace"
 	deviceName = "my-cool-device"
-	alwaysPXE  = true
 
 	providerName       = "cool-packet"
 	providerSecretName = "cool-packet-secret"
@@ -60,6 +59,8 @@ const (
 
 var (
 	errorBoom = errors.New("boom")
+	truthy    = true
+	alwaysPXE = &truthy
 )
 
 type strange struct {
@@ -88,6 +89,21 @@ func withState(s string) deviceModifier {
 
 func withID(d string) deviceModifier {
 	return func(i *v1alpha2.Device) { i.Status.AtProvider.ID = d }
+}
+
+type initializerParams struct {
+	hostname, billingCycle, userdata, ipxeScriptURL string
+	locked                                          bool
+}
+
+func withInitializerParams(p initializerParams) deviceModifier {
+	return func(i *v1alpha2.Device) {
+		i.Spec.ForProvider.Hostname = &p.hostname
+		i.Spec.ForProvider.BillingCycle = &p.billingCycle
+		i.Spec.ForProvider.UserData = &p.userdata
+		i.Spec.ForProvider.IPXEScriptURL = &p.ipxeScriptURL
+		i.Spec.ForProvider.Locked = &p.locked
+	}
 }
 
 func device(im ...deviceModifier) *v1alpha2.Device {
@@ -280,16 +296,20 @@ func TestObserve(t *testing.T) {
 		want   want
 	}{
 		"ObservedDeviceAvailableNoUpdateNeeded": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha2.StateActive,
-							ProvisionPer: float32(100),
-							AlwaysPXE:    alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateActive,
+								ProvisionPer: float32(100),
+								AlwaysPXE:    *alwaysPXE,
+							},
+						}, nil, nil
+					}},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -297,6 +317,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
@@ -309,16 +330,21 @@ func TestObserve(t *testing.T) {
 			},
 		},
 		"ObservedDeviceAvailableUpdateNeeded": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha2.StateActive,
-							ProvisionPer: float32(100),
-							AlwaysPXE:    !alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateActive,
+								ProvisionPer: float32(100),
+								AlwaysPXE:    !*alwaysPXE,
+							},
+						}, nil, nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -326,6 +352,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
@@ -338,16 +365,20 @@ func TestObserve(t *testing.T) {
 			},
 		},
 		"ObservedDeviceCreating": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha2.StateProvisioning,
-							ProvisionPer: float32(50),
-							AlwaysPXE:    alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateProvisioning,
+								ProvisionPer: float32(50),
+								AlwaysPXE:    *alwaysPXE,
+							},
+						}, nil, nil
+					}},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -355,9 +386,11 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Creating()),
 					withProvisionPer(float32(50)),
-					withState(v1alpha2.StateProvisioning)),
+					withState(v1alpha2.StateProvisioning),
+				),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
@@ -366,16 +399,20 @@ func TestObserve(t *testing.T) {
 			},
 		},
 		"ObservedDeviceQueued": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha2.StateQueued,
-							ProvisionPer: float32(50),
-							AlwaysPXE:    alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateQueued,
+								ProvisionPer: float32(50),
+								AlwaysPXE:    *alwaysPXE,
+							},
+						}, nil, nil
+					}},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -383,6 +420,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Unavailable()),
 					withProvisionPer(float32(50)),
 					withState(v1alpha2.StateQueued)),
@@ -496,7 +534,11 @@ func TestCreate(t *testing.T) {
 			want: want{
 				mg: device(
 					withConditions(runtimev1alpha1.Creating()),
-					withID(deviceName)),
+					withID(deviceName),
+				),
+				creation: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{},
+				},
 			},
 		},
 		"NotDevice": {

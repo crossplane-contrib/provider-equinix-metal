@@ -81,15 +81,22 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 // CreateFromDevice return packngo.DeviceCreateRequest created from Kubernetes
 func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreateRequest {
 	return &packngo.DeviceCreateRequest{
-		Hostname:     d.Spec.ForProvider.Hostname,
+		Hostname:     emptyIfNil(d.Spec.ForProvider.Hostname),
 		Plan:         d.Spec.ForProvider.Plan,
 		Facility:     []string{d.Spec.ForProvider.Facility},
 		OS:           d.Spec.ForProvider.OS,
-		BillingCycle: d.Spec.ForProvider.BillingCycle,
+		BillingCycle: emptyIfNil(d.Spec.ForProvider.BillingCycle),
 		ProjectID:    projectID,
-		UserData:     d.Spec.ForProvider.UserData,
+		UserData:     emptyIfNil(d.Spec.ForProvider.UserData),
 		Tags:         d.Spec.ForProvider.Tags,
 	}
+}
+
+func emptyIfNil(in *string) string {
+	if in == nil {
+		return ""
+	}
+	return *in
 }
 
 // GetConnectionDetails extracts managed.ConnectionDetails out of
@@ -103,11 +110,13 @@ func GetConnectionDetails(device *packngo.Device) managed.ConnectionDetails {
 
 	// TODO(displague) device.User is in the API but not included in packngo
 	user := "root"
+	port := "22" // ssh
 
 	return managed.ConnectionDetails{
 		runtimev1alpha1.ResourceCredentialsSecretEndpointKey: []byte(device.GetNetworkInfo().PublicIPv4),
 		runtimev1alpha1.ResourceCredentialsSecretUserKey:     []byte(user),
 		runtimev1alpha1.ResourceCredentialsSecretPasswordKey: []byte(device.RootPassword),
+		runtimev1alpha1.ResourceCredentialsSecretPortKey:     []byte(port),
 	}
 }
 
@@ -117,20 +126,28 @@ func GenerateObservation(device *packngo.Device) (v1alpha2.DeviceObservation, er
 	observation := v1alpha2.DeviceObservation{
 		ID:          device.ID,
 		Href:        device.Href,
-		Facility:    device.Facility.Code,
 		State:       device.State,
 		NetworkType: device.NetworkType,
 		Locked:      device.Locked,
 		IPv4:        device.GetNetworkInfo().PublicIPv4,
 	}
 
+	if device.Facility != nil {
+		observation.Facility = device.Facility.Code
+	}
+
 	// TODO: investigate better way to do this
 	observation.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", device.ProvisionPer))
-	if err := observation.CreatedAt.UnmarshalText([]byte(device.Created)); err != nil {
-		return v1alpha2.DeviceObservation{}, errors.Wrap(err, errUnmarshalDate)
+
+	if !observation.CreatedAt.IsZero() {
+		if err := observation.CreatedAt.UnmarshalText([]byte(device.Created)); err != nil {
+			return v1alpha2.DeviceObservation{}, errors.Wrap(err, errUnmarshalDate)
+		}
 	}
-	if err := observation.UpdatedAt.UnmarshalText([]byte(device.Updated)); err != nil {
-		return v1alpha2.DeviceObservation{}, errors.Wrap(err, errUnmarshalDate)
+	if !observation.UpdatedAt.IsZero() {
+		if err := observation.UpdatedAt.UnmarshalText([]byte(device.Updated)); err != nil {
+			return v1alpha2.DeviceObservation{}, errors.Wrap(err, errUnmarshalDate)
+		}
 	}
 
 	return observation, nil
@@ -143,23 +160,24 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 		return
 	}
 
-	// TODO(displague) initializer fields should be those that are optional and
-	// can be identified by nil as unspecified. Change these fields to *string
-	in.Hostname = device.Hostname
-	in.AlwaysPXE = device.AlwaysPXE
-	in.BillingCycle = device.BillingCycle
-	in.IPXEScriptURL = device.IPXEScriptURL
-	in.Locked = device.Locked
-	in.OS = device.OS.Slug
-	in.Plan = device.Plan.Slug
-	in.Tags = device.Tags
-	in.ProjectSSHKeys = device.Tags
-	in.UserSSHKeys = device.Tags
-	in.UserData = device.UserData
+	if device.OS != nil {
+		in.OS = clients.LateInitializeString(in.OS, &device.OS.Slug)
+	}
+
+	if device.Plan != nil {
+		in.Plan = clients.LateInitializeString(in.Plan, &device.Plan.Slug)
+	}
+
+	in.Hostname = clients.LateInitializeStringPtr(in.Hostname, &device.Hostname)
+	in.BillingCycle = clients.LateInitializeStringPtr(in.BillingCycle, &device.BillingCycle)
+	in.IPXEScriptURL = clients.LateInitializeStringPtr(in.IPXEScriptURL, &device.IPXEScriptURL)
+	in.UserData = clients.LateInitializeStringPtr(in.UserData, &device.UserData)
+	in.AlwaysPXE = clients.LateInitializeBoolPtr(in.AlwaysPXE, &device.AlwaysPXE)
+	in.Locked = clients.LateInitializeBoolPtr(in.Locked, &device.Locked)
 
 	for _, n := range device.Network {
 		if n.Public && n.AddressFamily == 4 {
-			in.PublicIPv4SubnetSize = n.CIDR
+			in.PublicIPv4SubnetSize = clients.LateInitializeIntPtr(in.PublicIPv4SubnetSize, &n.CIDR)
 		}
 	}
 
@@ -178,23 +196,26 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 	}
 }
 
-// IsUpToDate returns true if the supplied Kubernetes resource does not differ from the
-// supplied Packet resource. It considers only fields that can be modified in
-// place without deleting and recreating the instance.
+// IsUpToDate returns true if the supplied Kubernetes resource does not differ
+// from the supplied Packet resource. It considers only fields that can be
+// modified in place without deleting and recreating the instance, which are
+// immutable.
 func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) bool {
-	if d.Spec.ForProvider.Hostname != p.Hostname {
+	if !nilOrEqualStr(d.Spec.ForProvider.Hostname, p.Hostname) {
 		return false
 	}
-	if d.Spec.ForProvider.Locked != p.Locked {
+	if !nilOrEqualStr(d.Spec.ForProvider.UserData, p.UserData) {
 		return false
 	}
-	if d.Spec.ForProvider.UserData != p.UserData {
+	if !nilOrEqualStr(d.Spec.ForProvider.IPXEScriptURL, p.IPXEScriptURL) {
 		return false
 	}
-	if d.Spec.ForProvider.IPXEScriptURL != p.IPXEScriptURL {
+
+	if !nilOrEqualBool(d.Spec.ForProvider.Locked, p.Locked) {
 		return false
 	}
-	if d.Spec.ForProvider.AlwaysPXE != p.AlwaysPXE {
+
+	if !nilOrEqualBool(d.Spec.ForProvider.AlwaysPXE, p.AlwaysPXE) {
 		return false
 	}
 
@@ -212,17 +233,27 @@ func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) bool {
 	return true
 }
 
+// nilOrEqualStr is true if a (aPtr) is non-nil and equal to b
+func nilOrEqualStr(aPtr *string, b string) bool {
+	return (aPtr == nil || *aPtr == b)
+}
+
+// nilOrEqualBool is true if a (aPtr) is non-nil and equal to b
+func nilOrEqualBool(aPtr *bool, b bool) bool {
+	return (aPtr == nil || *aPtr == b)
+}
+
 // NewUpdateDeviceRequest creates a request to update an instance suitable for
 // use with the Packet API.
 func NewUpdateDeviceRequest(d *v1alpha2.Device) *packngo.DeviceUpdateRequest {
 	return &packngo.DeviceUpdateRequest{
-		Hostname:      &d.Spec.ForProvider.Hostname,
-		Locked:        &d.Spec.ForProvider.Locked,
-		UserData:      &d.Spec.ForProvider.UserData,
-		IPXEScriptURL: &d.Spec.ForProvider.IPXEScriptURL,
-		AlwaysPXE:     &d.Spec.ForProvider.AlwaysPXE,
+		Hostname:      d.Spec.ForProvider.Hostname,
+		Locked:        d.Spec.ForProvider.Locked,
+		UserData:      d.Spec.ForProvider.UserData,
+		IPXEScriptURL: d.Spec.ForProvider.IPXEScriptURL,
+		AlwaysPXE:     d.Spec.ForProvider.AlwaysPXE,
 		Tags:          &d.Spec.ForProvider.Tags,
-		Description:   &d.Spec.ForProvider.Description,
-		CustomData:    &d.Spec.ForProvider.CustomData,
+		Description:   d.Spec.ForProvider.Description,
+		CustomData:    d.Spec.ForProvider.CustomData,
 	}
 }

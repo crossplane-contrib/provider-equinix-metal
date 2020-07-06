@@ -99,36 +99,63 @@ type DeviceList struct {
 
 // DeviceParameters define the desired state of a Packet device.
 // https://www.packet.com/developers/api/#devices
+//
+// Reference values are used for optional parameters to determine if
+// LateInitialization should update the parameter after creation.
 type DeviceParameters struct {
-	Hostname string `json:"hostname,omitempty"`
-
 	// +immutable
+	// +required
 	Plan string `json:"plan"`
 
 	// +immutable
+	// +required
 	Facility string `json:"facility"`
 
 	// +immutable
-	OS            string   `json:"operatingSystem"`
-	Description   string   `json:"description,omitempty"`
-	BillingCycle  string   `json:"billingCycle,omitempty"`
-	UserData      string   `json:"userdata,omitempty"`
-	Tags          []string `json:"tags,omitempty"`
-	Locked        bool     `json:"locked,omitempty"`
-	IPXEScriptURL string   `json:"ipxeScriptUrl,omitempty"`
+	// +required
+	OS string `json:"operatingSystem"`
+
+	// +optional
+	Hostname *string `json:"hostname,omitempty"`
+
+	// +optional
+	Description *string `json:"description,omitempty"`
+
+	// +optional
+	BillingCycle *string `json:"billingCycle,omitempty"`
+
+	// +optional
+	UserData *string `json:"userdata,omitempty"`
+
+	// +optional
+	Tags []string `json:"tags,omitempty"`
+
+	// +optional
+	Locked *bool `json:"locked,omitempty"`
+
+	// +optional
+	IPXEScriptURL *string `json:"ipxeScriptUrl,omitempty"`
 
 	// +immutable
-	PublicIPv4SubnetSize int  `json:"publicIPv4SubnetSize,omitempty"`
-	AlwaysPXE            bool `json:"alwaysPXE,omitempty"`
+	// +optional
+	PublicIPv4SubnetSize *int `json:"publicIPv4SubnetSize,omitempty"`
+
+	// +optional
+	AlwaysPXE *bool `json:"alwaysPXE,omitempty"`
 
 	// +immutable
-	HardwareReservationID string `json:"hardwareReservationID,omitempty"`
-	CustomData            string `json:"customData,omitempty"`
+	// +optional
+	HardwareReservationID *string `json:"hardwareReservationID,omitempty"`
+
+	// +optional
+	CustomData *string `json:"customData,omitempty"`
 
 	// +immutable
+	// +optional
 	UserSSHKeys []string `json:"userSSHKeys,omitempty"`
 
 	// +immutable
+	// +optional
 	ProjectSSHKeys []string `json:"projectSSHKeys,omitempty"`
 
 	// Features can be used to require or prefer devices with optional features:
@@ -137,9 +164,11 @@ type DeviceParameters struct {
 	// - tpm: required
 	// - tpm: preferred
 	// +immutable
+	// +optional
 	Features map[string]string `json:"features,omitempty"`
 
 	// +immutable
+	// +optional
 	IPAddresses []packngo.IPAddressCreateRequest `json:"ipAddresses,omitempty"`
 }
 
@@ -157,8 +186,12 @@ type DeviceObservation struct {
 	IPv4                string            `json:"ipv4,omitempty"`
 	Locked              bool              `json:"locked"`
 	NetworkType         string            `json:"networkType,omitempty"`
-	CreatedAt           metav1.Time       `json:"createdAt,omitempty"`
-	UpdatedAt           metav1.Time       `json:"updatedAt,omitempty"`
+
+	// +optional
+	CreatedAt *metav1.Time `json:"createdAt,omitempty"`
+
+	// +optional
+	UpdatedAt *metav1.Time `json:"updatedAt,omitempty"`
 
 	// IQN string is omitted
 	// ImageURL *string is omitted

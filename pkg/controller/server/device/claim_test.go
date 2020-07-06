@@ -72,7 +72,7 @@ func TestConfigureDevice(t *testing.T) {
 							ReclaimPolicy:                     runtimev1alpha1.ReclaimDelete,
 						},
 						ForProvider: v1alpha2.DeviceParameters{
-							Hostname: hostname,
+							Hostname: &hostname,
 							OS:       os,
 						},
 					},
@@ -91,7 +91,7 @@ func TestConfigureDevice(t *testing.T) {
 							ProviderReference: &corev1.ObjectReference{Name: providerName},
 						},
 						ForProvider: v1alpha2.DeviceParameters{
-							Hostname: hostname,
+							Hostname: &hostname,
 							OS:       os,
 						},
 					},

@@ -7,12 +7,12 @@
 > Providers extend Crossplane to enable infrastructure resource provisioning. In order to provision a resource, a Custom Resource Definition(CRD) needs to be registered in your Kubernetes cluster and its controller should be watching the Custom Resources those CRDs define. Provider packages contain many Custom Resource Definitions and their controllers.
 
 This is the Crossplane Provider package for [Packet](https://www.packet.com)
-infrastructure. The provider that is built from the source code in this
-repository can be installed into a Crossplane control plane.
+infrastructure. The provider that is built from this repository can be installed
+into a Crossplane control plane.
 
 ## Getting Started and Documentation
 
-For getting started guides, installation, deployment, and administration, see [Documentation](https://crossplane.io/docs/latest).
+For getting started guides, installation, deployment, and administration, see the [Crossplane Documentation](https://crossplane.io/docs/latest).
 
 ## Pre-requisites
 
@@ -46,7 +46,7 @@ kubectl crossplane package install --cluster \
   packethost/crossplane-provider-packet:v0.0.2 provider-packet
 ```
 
-The upcoming commands will make use your Packet API key and project ID. Run the following, entering your API key and project ID when prompted:
+The following commands will require your [Packet API key and a project ID](https://www.packet.com/developers/docs/API/getting-started/). Entering your API key and project ID when prompted:
 
 ```console
 read -s -p "API Key: " APIKEY; echo
@@ -59,7 +59,7 @@ Create a [Packet Project and a project level API key](https://www.packet.com/dev
 
 Create a Kubernetes secret with the API Key and Project ID.
 
-```console
+```bash
 kubectl create -n crossplane-system secret generic packet-creds --from-file=key=<(echo '{"apiKey":"'$APIKEY'", "projectID":"'$PROJECT_ID'"}')
 ```
 
@@ -67,7 +67,7 @@ kubectl create -n crossplane-system secret generic packet-creds --from-file=key=
 
 Get the project id from the Packet Portal or using the Packet CLI (`packet project get`). With `PROJECT_ID` in your environemnt, run the command below:
 
-```yaml
+```bash
 cat << EOS | kubectl apply -f -
 apiVersion: packet.crossplane.io/v1alpha2
 kind: Provider
@@ -98,33 +98,70 @@ spec:
     facility: any
     operatingSystem: centos_7
     billingCycle: hourly
-    hardwareReservationID: next_available
+    hardware_reservation_id: next_available
     locked: false
+    tags:
+    - crossplane
+    - development
   providerRef:
     name: packet-provider
+  writeConnectionSecretToRef:
+    name: devices-creds
+    namespace: crossplane-system
   reclaimPolicy: Delete
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: devices-creds
+  namespace: crossplane-system
+type: Opaque
 ```
 
-```console
+```bash
 $ kubectl create -f device.yaml
 device.server.packet.crossplane.io/devices created
+secret/devices-creds created
 ```
 
 To view the device in the cluster:
 
-```console
+```bash
 $ kubectl get packet -o wide
 NAME                                            PROJECT-ID                             AGE   SECRET-NAME
 provider.packet.crossplane.io/packet-provider   0ac84673-b679-40c1-9de9-8a8792675515   38m   packet-creds
 
-NAME                                         READY   SYNCED   STATE    ID                                     HOSTNAME     IPV4            RECLAIM-POLICY   AGE
-device.server.packet.crossplane.io/devices   True    True     active   bc09a78d-14c4-48d2-9e54-b13dc0ab56bb   crossplane   147.75.68.117   Delete           28m
+NAME                                         READY   SYNCED   STATE    ID                                     HOSTNAME     FACILITY   IPV4            RECLAIM-POLICY   AGE
+device.server.packet.crossplane.io/devices   True    True     active   1c73767a-e16a-485c-89b4-4b553e1458b3   crossplane   sjc1       139.178.88.35   Delete           19m
 ```
 
 To delete the device:
 
-```console
+```bash
 $ kubectl delete -f device.yaml
 device.server.packet.crossplane.io/devices deleted
+secret/devices-creds deleted
 ```
 
+## Roadmap and Stability
+
+This Crossplane provider is alpha quality, not officially supported, and not intended for production use.
+
+Packet `Devices` can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volume, and SpotMarketRequests are not currently planned.  If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
+
+## Contributing
+
+crossplane-provider-packet is a community driven project and we welcome contributions. See the Crossplane [Contributing](https://github.com/crossplane/crossplane/blob/master/CONTRIBUTING.md) guidelines to get started.
+
+<!-- TODO(displague) Packet specific contribution pointers -->
+
+## Report a Bug
+
+For filing bugs, suggesting improvements, or requesting new features, please open an [issue](https://github.com/packethost/crossplane-provider-packet/issues).
+
+## Contact
+
+Please use the following Slack channels to reach members of the community:
+
+* Join the [Crossplane slack #general channel](https://slack.crossplane.io/)
+* Join the [Packet slack #community channel](https://packetcommunity.slack.com/)
