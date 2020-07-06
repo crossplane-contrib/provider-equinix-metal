@@ -128,6 +128,15 @@ NAME                                         READY   SYNCED   STATE    ID       
 device.server.packet.crossplane.io/devices   True    True     active   1c73767a-e16a-485c-89b4-4b553e1458b3   crossplane   sjc1       139.178.88.35   Delete           19m
 ```
 
+SSH Connection credentials (including IP address, username, and password) can be found in the provider managed secret defined by `writeConnectionSecretToRef`.
+
+**Caution** - Secret data is Base64 encoded, access to the namespace where this secret is stored offers `root` access to the provisioned device.
+
+```bash
+$ kubectl get secret -n crossplane-system devices-creds -o jsonpath='{.data}'; echo
+map[endpoint:MTM5LjE3OC44OC41Nw== password:cGFzc3dvcmQ== port:MjI= username:cm9vdA==]
+```
+
 To delete the device:
 
 ```bash
