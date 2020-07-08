@@ -1,0 +1,41 @@
+title: "Packet Provider"
+readme: |-
+  This `provider-packet` repository is the implementation of a Crossplane infrastructure
+  [provider](https://github.com/crossplane/crossplane/blob/master/design/design-doc-packages.md) for
+  [Packet, an Equinix company](https://www.packet.com).
+ 
+  The package that is built from the source code in this repository can be
+  installed into a Crossplane control plane and adds the following new
+  functionality:
+  
+  * Custom Resource Definitions (CRDs) that model Packet infrastructure (e.g.
+  [Bare Metal](https://www.packet.com/cloud/servers/))
+  * Controllers to provision these resources in Packet based on the users desired state captured in CRDs they create
+  * Implementations of Crossplane's [portable resource abstractions](https://crossplane.io/docs/master/running-resources.html), enabling Packet resources to fulfill a user's general need for cloud services
+
+overview: |-
+  The Packet Crossplane Package adds support for managing Packet resources in Kubernetes.
+
+  Packet Device resources can be provisioned, updated, and deleted by this
+  package.
+overviewShort: The Packet Crossplane Package enabling resource management for the Packet platform.
+maintainers:
+- name: "Packet"
+  email: "support@packet.com"
+owners:
+- name: "Packet"
+  email: "support@packet.com"
+company: "Packet"
+category: "Infrastructure"
+packageType: Provider
+keywords:
+ - "packet"
+ - "packethost"
+ - "infrastructure"
+website: "https://github.com/packethost/crossplane-provider-packet"
+source: "https://github.com/packethost/crossplane-provider-packet"
+permissionScope: Cluster
+dependsOn:
+- crd: '*.compute.crossplane.io/v1alpha1'
+# License SPDX name: https://spdx.org/licenses/
+license: Apache-2.0

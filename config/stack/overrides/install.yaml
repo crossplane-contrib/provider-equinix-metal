@@ -1,6 +1,0 @@
-spec:
-  template:
-    spec:
-      containers:
-      - name: "crossplane-stack-packet-controller"
-        image: "localhost:5000/crossplane/stack-packet"

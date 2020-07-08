@@ -4,7 +4,8 @@
 cover.out
 /vendor
 /.vendor-new
+/.vscode
 
-/stack-package
+/package
 
 credentials.*

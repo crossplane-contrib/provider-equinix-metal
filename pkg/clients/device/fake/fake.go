@@ -2,24 +2,21 @@ package fake
 
 import (
 	"github.com/packethost/packngo"
+
+	"github.com/packethost/crossplane-provider-packet/pkg/clients/device"
 )
 
-var _ packngo.DeviceService = &MockClient{}
+var _ device.ClientWithDefaults = &MockClient{}
 
-// MockClient is a fake implementation of cloudmemorystore.Client.
+// MockClient is a fake implementation of packngo.Client.
 type MockClient struct {
-	MockCreate          func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
-	MockUpdate          func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
-	MockDelete          func(deviceID string) (*packngo.Response, error)
-	MockGet             func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
-	MockList            func(projectID string, listOpt *packngo.ListOptions) ([]packngo.Device, *packngo.Response, error)
-	MockReboot          func(deviceID string) (*packngo.Response, error)
-	MockPowerOff        func(deviceID string) (*packngo.Response, error)
-	MockPowerOn         func(deviceID string) (*packngo.Response, error)
-	MockLock            func(deviceID string) (*packngo.Response, error)
-	MockUnlock          func(deviceID string) (*packngo.Response, error)
-	MockListBGPSessions func(deviceID string, listOpt *packngo.ListOptions) ([]packngo.BGPSession, *packngo.Response, error)
-	MockListEvents      func(deviceID string, listOpt *packngo.ListOptions) ([]packngo.Event, *packngo.Response, error)
+	MockCreate func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
+	MockUpdate func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
+	MockDelete func(deviceID string) (*packngo.Response, error)
+	MockGet    func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
+
+	MockGetProjectID  func(string) string
+	MockGetFacilityID func(string) string
 }
 
 // Create calls the MockClient's MockCreate function.
@@ -42,42 +39,12 @@ func (c *MockClient) Get(deviceID string, options *packngo.GetOptions) (*packngo
 	return c.MockGet(deviceID, options)
 }
 
-// List calls the MockClient's MockList function.
-func (c *MockClient) List(projectID string, options *packngo.ListOptions) ([]packngo.Device, *packngo.Response, error) {
-	return c.MockList(projectID, options)
+// GetFacilityID calls the MockClient's MockGet function.
+func (c *MockClient) GetFacilityID(id string) string {
+	return c.MockGetFacilityID(id)
 }
 
-// Reboot calls the MockClient's MockReboot function.
-func (c *MockClient) Reboot(deviceID string) (*packngo.Response, error) {
-	return c.MockReboot(deviceID)
-}
-
-// PowerOff calls the MockClient's MockPowerOff function.
-func (c *MockClient) PowerOff(deviceID string) (*packngo.Response, error) {
-	return c.MockPowerOff(deviceID)
-}
-
-// PowerOn calls the MockClient's MockPowerOn function.
-func (c *MockClient) PowerOn(deviceID string) (*packngo.Response, error) {
-	return c.MockPowerOn(deviceID)
-}
-
-// Lock calls the MockClient's MockLock function.
-func (c *MockClient) Lock(deviceID string) (*packngo.Response, error) {
-	return c.MockLock(deviceID)
-}
-
-// Unlock calls the MockClient's MockUnlock function.
-func (c *MockClient) Unlock(deviceID string) (*packngo.Response, error) {
-	return c.MockUnlock(deviceID)
-}
-
-// ListBGPSessions calls the MockClient's MockListBGPSessions function.
-func (c *MockClient) ListBGPSessions(deviceID string, options *packngo.ListOptions) ([]packngo.BGPSession, *packngo.Response, error) {
-	return c.MockListBGPSessions(deviceID, options)
-}
-
-// ListEvents calls the MockClient's MockListEvents function.
-func (c *MockClient) ListEvents(deviceID string, options *packngo.ListOptions) ([]packngo.Event, *packngo.Response, error) {
-	return c.MockListEvents(deviceID, options)
+// GetProjectID calls the MockClient's MockGet function.
+func (c *MockClient) GetProjectID(id string) string {
+	return c.MockGetProjectID(id)
 }

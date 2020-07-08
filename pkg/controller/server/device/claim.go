@@ -18,31 +18,27 @@ package device
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/crossplaneio/crossplane-runtime/pkg/resource"
-	computev1alpha1 "github.com/crossplaneio/crossplane/apis/compute/v1alpha1"
-	"github.com/packethost/stack-packet/apis/server/v1alpha1"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimbinding"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimdefaulting"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimscheduling"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 )
 
-// A ClaimSchedulingController reconciles MachineInstance
-// claims that include a class selector but omit their class and resource
-// references by picking a random matching DeviceClass, if
-// any.
-type ClaimSchedulingController struct{}
-
-// SetupWithManager sets up the
-// ClaimSchedulingController using the supplied manager.
-func (c *ClaimSchedulingController) SetupWithManager(mgr ctrl.Manager) error {
-	name := strings.ToLower(fmt.Sprintf("scheduler.%s.%s.%s",
-		computev1alpha1.MachineInstanceKind,
-		v1alpha1.DeviceKind,
-		v1alpha1.Group))
+// SetupDeviceClaimScheduling adds a controller that reconciles Device claims
+// that include a class selector but omit their class and resource references by
+// picking a random matching DeviceClass, if any.
+func SetupDeviceClaimScheduling(mgr ctrl.Manager, l logging.Logger) error {
+	name := claimscheduling.ControllerName(computev1alpha1.MachineInstanceGroupKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -52,24 +48,19 @@ func (c *ClaimSchedulingController) SetupWithManager(mgr ctrl.Manager) error {
 			resource.HasNoClassReference(),
 			resource.HasNoManagedResourceReference(),
 		))).
-		Complete(resource.NewClaimSchedulingReconciler(mgr,
+		Complete(claimscheduling.NewReconciler(mgr,
 			resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
-			resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind),
+			resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind),
+			claimscheduling.WithLogger(l.WithValues("controller", name)),
+			claimscheduling.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 		))
 }
 
-// A ClaimDefaultingController reconciles MachineInstance
-// claims that omit their resource ref, class ref, and class selector by
-// choosing a default DeviceClass if one exists.
-type ClaimDefaultingController struct{}
-
-// SetupWithManager sets up the
-// ClaimDefaultingController using the supplied manager.
-func (c *ClaimDefaultingController) SetupWithManager(mgr ctrl.Manager) error {
-	name := strings.ToLower(fmt.Sprintf("defaulter.%s.%s.%s",
-		computev1alpha1.MachineInstanceKind,
-		v1alpha1.DeviceKind,
-		v1alpha1.Group))
+// SetupDeviceClaimDefaulting adds a controller that reconciles Device claims
+// that omit their resource ref, class ref, and class selector by choosing a
+// default DeviceClass if one exists
+func SetupDeviceClaimDefaulting(mgr ctrl.Manager, l logging.Logger) error {
+	name := claimdefaulting.ControllerName(computev1alpha1.MachineInstanceGroupKind)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
@@ -79,43 +70,41 @@ func (c *ClaimDefaultingController) SetupWithManager(mgr ctrl.Manager) error {
 			resource.HasNoClassReference(),
 			resource.HasNoManagedResourceReference(),
 		))).
-		Complete(resource.NewClaimDefaultingReconciler(mgr,
+		Complete(claimdefaulting.NewReconciler(mgr,
 			resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
-			resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind),
+			resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind),
+			claimdefaulting.WithLogger(l.WithValues("controller", name)),
+			claimdefaulting.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 		))
 }
 
-// A ClaimController reconciles MachineInstance claims with
-// Devices, dynamically provisioning them if needed.
-type ClaimController struct{}
+// SetupDeviceClaimBinding adds a controller that reconciles Device claims with Device, dynamically provisioning them if needed.
+func SetupDeviceClaimBinding(mgr ctrl.Manager, l logging.Logger) error {
+	name := claimbinding.ControllerName(computev1alpha1.MachineInstanceGroupKind)
 
-// SetupWithManager adds a controller that reconciles MachineInstance resource claims.
-func (c *ClaimController) SetupWithManager(mgr ctrl.Manager) error {
-	name := strings.ToLower(fmt.Sprintf("%s.%s.%s",
-		computev1alpha1.MachineInstanceKind,
-		v1alpha1.DeviceKind,
-		v1alpha1.Group))
+	r := claimbinding.NewReconciler(mgr,
+		resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
+		resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind),
+		resource.ManagedKind(v1alpha2.DeviceGroupVersionKind),
+		claimbinding.WithBinder(claimbinding.NewAPIBinder(mgr.GetClient(), mgr.GetScheme())),
+		claimbinding.WithManagedConfigurators(
+			claimbinding.ManagedConfiguratorFn(ConfigureDevice),
+			claimbinding.ManagedConfiguratorFn(claimbinding.ConfigureReclaimPolicy),
+			claimbinding.ManagedConfiguratorFn(claimbinding.ConfigureNames),
+		),
+		claimbinding.WithLogger(l.WithValues("controller", name)),
+		claimbinding.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
+	)
 
 	p := resource.NewPredicates(resource.AnyOf(
-		resource.HasClassReferenceKind(resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind)),
-		resource.HasManagedResourceReferenceKind(resource.ManagedKind(v1alpha1.DeviceGroupVersionKind)),
-		resource.IsManagedKind(resource.ManagedKind(v1alpha1.DeviceGroupVersionKind), mgr.GetScheme()),
+		resource.HasClassReferenceKind(resource.ClassKind(v1alpha2.DeviceClassGroupVersionKind)),
+		resource.HasManagedResourceReferenceKind(resource.ManagedKind(v1alpha2.DeviceGroupVersionKind)),
+		resource.IsManagedKind(resource.ManagedKind(v1alpha2.DeviceGroupVersionKind), mgr.GetScheme()),
 	))
-
-	r := resource.NewClaimReconciler(mgr,
-		resource.ClaimKind(computev1alpha1.MachineInstanceGroupVersionKind),
-		resource.ClassKind(v1alpha1.DeviceClassGroupVersionKind),
-		resource.ManagedKind(v1alpha1.DeviceGroupVersionKind),
-		resource.WithManagedBinder(resource.NewAPIManagedStatusBinder(mgr.GetClient(), mgr.GetScheme())),
-		resource.WithManagedFinalizer(resource.NewAPIManagedStatusUnbinder(mgr.GetClient())),
-		resource.WithManagedConfigurators(
-			resource.ManagedConfiguratorFn(ConfigureDevice),
-			resource.NewObjectMetaConfigurator(mgr.GetScheme()),
-		))
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		Watches(&source.Kind{Type: &v1alpha1.Device{}}, &resource.EnqueueRequestForClaim{}).
+		Watches(&source.Kind{Type: &v1alpha2.Device{}}, &resource.EnqueueRequestForClaim{}).
 		For(&computev1alpha1.MachineInstance{}).
 		WithEventFilter(p).
 		Complete(r)
@@ -130,17 +119,17 @@ func ConfigureDevice(_ context.Context, cm resource.Claim, cs resource.Class, mg
 		return errors.Errorf("expected resource claim %s to be %s", cm.GetName(), computev1alpha1.MachineInstanceGroupVersionKind)
 	}
 
-	rc, csok := cs.(*v1alpha1.DeviceClass)
+	rc, csok := cs.(*v1alpha2.DeviceClass)
 	if !csok {
-		return errors.Errorf("expected resource class %s to be %s", cs.GetName(), v1alpha1.DeviceClassGroupVersionKind)
+		return errors.Errorf("expected resource class %s to be %s", cs.GetName(), v1alpha2.DeviceClassGroupVersionKind)
 	}
 
-	c, mgok := mg.(*v1alpha1.Device)
+	c, mgok := mg.(*v1alpha2.Device)
 	if !mgok {
-		return errors.Errorf("expected managed resource %s to be %s", mg.GetName(), v1alpha1.DeviceGroupVersionKind)
+		return errors.Errorf("expected managed resource %s to be %s", mg.GetName(), v1alpha2.DeviceGroupVersionKind)
 	}
 
-	spec := &v1alpha1.DeviceSpec{
+	spec := &v1alpha2.DeviceSpec{
 		ResourceSpec: runtimev1alpha1.ResourceSpec{
 			ReclaimPolicy: runtimev1alpha1.ReclaimRetain,
 		},

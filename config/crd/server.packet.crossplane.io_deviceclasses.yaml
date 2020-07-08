@@ -3,6 +3,8 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: deviceclasses.server.packet.crossplane.io
 spec:
@@ -21,12 +23,12 @@ spec:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -35,26 +37,32 @@ spec:
             DeviceSpec.
           properties:
             forProvider:
-              description: DeviceParameters define the desired state of a Packet device.
-                https://www.packet.com/developers/api/#devices
+              description: "DeviceParameters define the desired state of a Packet
+                device. https://www.packet.com/developers/api/#devices \n Reference
+                values are used for optional parameters to determine if LateInitialization
+                should update the parameter after creation."
               properties:
-                always_pxe:
+                alwaysPXE:
                   type: boolean
                 billingCycle:
                   type: string
-                customdata:
+                customData:
+                  type: string
+                description:
                   type: string
                 facility:
                   type: string
                 features:
                   additionalProperties:
                     type: string
+                  description: "Features can be used to require or prefer devices
+                    with optional features: \n features: - tpm: required - tpm: preferred"
                   type: object
-                hardware_reservation_id:
+                hardwareReservationID:
                   type: string
                 hostname:
                   type: string
-                ip_addresses:
+                ipAddresses:
                   items:
                     properties:
                       address_family:
@@ -66,7 +74,7 @@ spec:
                     - public
                     type: object
                   type: array
-                ipxe_script_url:
+                ipxeScriptUrl:
                   type: string
                 locked:
                   type: boolean
@@ -74,32 +82,26 @@ spec:
                   type: string
                 plan:
                   type: string
-                project_ssh_keys:
+                projectSSHKeys:
                   items:
                     type: string
                   type: array
-                projectID:
-                  type: string
-                public_ipv4_subnet_size:
+                publicIPv4SubnetSize:
                   type: integer
                 tags:
                   items:
                     type: string
                   type: array
-                user_ssh_keys:
+                userSSHKeys:
                   items:
                     type: string
                   type: array
                 userdata:
                   type: string
               required:
-              - billingCycle
               - facility
-              - hostname
-              - locked
               - operatingSystem
               - plan
-              - projectID
               type: object
             providerRef:
               description: ProviderReference specifies the provider that will be used
@@ -123,7 +125,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -133,19 +135,28 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
             reclaimPolicy:
-              description: ReclaimPolicy specifies what will happen to external resources
-                when managed resources dynamically provisioned using this resource
-                class are deleted. "Delete" deletes the external resource, while "Retain"
-                (the default) does not. Note this behaviour is subtly different from
-                other uses of the ReclaimPolicy concept within the Kubernetes ecosystem
-                per https://github.com/crossplaneio/crossplane-runtime/issues/21
+              description: ReclaimPolicy specifies what will happen to managed resources
+                dynamically provisioned using this class when their resource claims
+                are deleted, and what will happen to their underlying external resource
+                when they are deleted. The "Delete" policy causes the managed resource
+                to be deleted when its bound resource claim is deleted, and in turn
+                causes the external resource to be deleted when its managed resource
+                is deleted. The "Retain" policy causes the managed resource to be
+                retained, in binding phase "Released", when its resource claim is
+                deleted, and in turn causes the external resource to be retained when
+                its managed resource is deleted. The "Retain" policy is used when
+                no policy is specified, however the "Delete" policy is set at dynamic
+                provisioning time if no policy is set.
+              enum:
+              - Retain
+              - Delete
               type: string
             writeConnectionSecretsToNamespace:
               description: WriteConnectionSecretsToNamespace specifies the namespace
@@ -159,9 +170,9 @@ spec:
       required:
       - specTemplate
       type: object
-  version: v1alpha1
+  version: v1alpha2
   versions:
-  - name: v1alpha1
+  - name: v1alpha2
     served: true
     storage: true
 status:

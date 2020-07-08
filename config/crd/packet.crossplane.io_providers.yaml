@@ -3,10 +3,15 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: providers.packet.crossplane.io
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.projectID
+    name: PROJECT-ID
+    type: string
   - JSONPath: .metadata.creationTimestamp
     name: AGE
     type: date
@@ -16,6 +21,10 @@ spec:
     type: string
   group: packet.crossplane.io
   names:
+    categories:
+    - crossplane
+    - provider
+    - packet
     kind: Provider
     listKind: ProviderList
     plural: providers
@@ -30,12 +39,12 @@ spec:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -43,8 +52,8 @@ spec:
           description: A ProviderSpec defines the desired state of a Provider.
           properties:
             credentialsSecretRef:
-              description: A SecretKeySelector is a reference to a secret key in an
-                arbitrary namespace.
+              description: CredentialsSecretRef references a specific secret's key
+                that contains the credentials that are used to connect to the provider.
               properties:
                 key:
                   description: The key to select.
@@ -60,13 +69,16 @@ spec:
               - name
               - namespace
               type: object
-          required:
-          - credentialsSecretRef
+            projectID:
+              description: ProjectID is the Project ID (UUID) of this Packet Provider.
+                If this is not specified it must be included in the Provider secret
+                (JSON field providerID).
+              type: string
           type: object
       type: object
-  version: v1alpha1
+  version: v1alpha2
   versions:
-  - name: v1alpha1
+  - name: v1alpha2
     served: true
     storage: true
 status:

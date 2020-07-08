@@ -17,23 +17,30 @@ limitations under the License.
 package controller
 
 import (
-	"github.com/packethost/stack-packet/pkg/controller/server/device"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+
+	"github.com/packethost/crossplane-provider-packet/pkg/controller/server/device"
 )
 
-// Controllers passes down config and adds individual controllers to the manager.
-type Controllers struct{}
+// Setup creates all Packet controllers with the supplied logger and adds them to
+// the supplied manager.
+func Setup(mgr ctrl.Manager, l logging.Logger) error {
+	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
+		device.SetupDeviceClaimScheduling,
+		device.SetupDeviceClaimDefaulting,
+		device.SetupDeviceClaimBinding,
+		device.SetupDevice,
+	} {
+		if err := setup(mgr, l); err != nil {
+			return err
+		}
+	}
 
-// SetupWithManager adds all Packet controllers to the manager.
-func (c *Controllers) SetupWithManager(mgr ctrl.Manager) error {
 	controllers := []interface {
 		SetupWithManager(ctrl.Manager) error
-	}{
-		&device.ClaimSchedulingController{},
-		&device.ClaimDefaultingController{},
-		&device.ClaimController{},
-		&device.Controller{},
-	}
+	}{}
 	for _, c := range controllers {
 		if err := c.SetupWithManager(mgr); err != nil {
 			return err

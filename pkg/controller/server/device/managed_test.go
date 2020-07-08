@@ -32,21 +32,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/stack-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/stack-packet/apis/v1alpha1"
-	"github.com/packethost/stack-packet/pkg/clients/device/fake"
-	packettest "github.com/packethost/stack-packet/pkg/test"
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
+	devicesclient "github.com/packethost/crossplane-provider-packet/pkg/clients/device"
+	"github.com/packethost/crossplane-provider-packet/pkg/clients/device/fake"
+	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/crossplaneio/crossplane-runtime/pkg/meta"
-	"github.com/crossplaneio/crossplane-runtime/pkg/resource"
-	"github.com/crossplaneio/crossplane-runtime/pkg/test"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/test"
 )
 
 const (
 	namespace  = "cool-namespace"
 	deviceName = "my-cool-device"
-	alwaysPXE  = true
 
 	providerName       = "cool-packet"
 	providerSecretName = "cool-packet-secret"
@@ -58,46 +59,63 @@ const (
 
 var (
 	errorBoom = errors.New("boom")
+	truthy    = true
+	alwaysPXE = &truthy
 )
 
 type strange struct {
 	resource.Managed
 }
 
-type deviceModifier func(*v1alpha1.Device)
+type deviceModifier func(*v1alpha2.Device)
 
 func withConditions(c ...runtimev1alpha1.Condition) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.SetConditions(c...) }
+	return func(i *v1alpha2.Device) { i.Status.SetConditions(c...) }
 }
 
 func withBindingPhase(p runtimev1alpha1.BindingPhase) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.SetBindingPhase(p) }
+	return func(i *v1alpha2.Device) { i.Status.SetBindingPhase(p) }
 }
 
 func withProvisionPer(p float32) deviceModifier {
-	return func(i *v1alpha1.Device) {
-		i.Status.AtProvider.ProvisionPer = apiresource.MustParse(fmt.Sprintf("%.6f", p))
+	return func(i *v1alpha2.Device) {
+		i.Status.AtProvider.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", p))
 	}
 }
 
 func withState(s string) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.AtProvider.State = s }
+	return func(i *v1alpha2.Device) { i.Status.AtProvider.State = s }
 }
 
 func withID(d string) deviceModifier {
-	return func(i *v1alpha1.Device) { i.Status.AtProvider.ID = d }
+	return func(i *v1alpha2.Device) { i.Status.AtProvider.ID = d }
 }
 
-func device(im ...deviceModifier) *v1alpha1.Device {
-	i := &v1alpha1.Device{
+type initializerParams struct {
+	hostname, billingCycle, userdata, ipxeScriptURL string
+	locked                                          bool
+}
+
+func withInitializerParams(p initializerParams) deviceModifier {
+	return func(i *v1alpha2.Device) {
+		i.Spec.ForProvider.Hostname = &p.hostname
+		i.Spec.ForProvider.BillingCycle = &p.billingCycle
+		i.Spec.ForProvider.UserData = &p.userdata
+		i.Spec.ForProvider.IPXEScriptURL = &p.ipxeScriptURL
+		i.Spec.ForProvider.Locked = &p.locked
+	}
+}
+
+func device(im ...deviceModifier) *v1alpha2.Device {
+	i := &v1alpha2.Device{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       deviceName,
 			Finalizers: []string{},
 			Annotations: map[string]string{
-				meta.ExternalNameAnnotationKey: deviceName,
+				meta.AnnotationKeyExternalName: deviceName,
 			},
 		},
-		Spec: v1alpha1.DeviceSpec{
+		Spec: v1alpha2.DeviceSpec{
 			ResourceSpec: runtimev1alpha1.ResourceSpec{
 				ProviderReference: &corev1.ObjectReference{Name: providerName},
 				WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
@@ -105,7 +123,7 @@ func device(im ...deviceModifier) *v1alpha1.Device {
 					Name:      connectionSecretName,
 				},
 			},
-			ForProvider: v1alpha1.DeviceParameters{
+			ForProvider: v1alpha2.DeviceParameters{
 				AlwaysPXE: alwaysPXE,
 			},
 		},
@@ -118,19 +136,25 @@ func device(im ...deviceModifier) *v1alpha1.Device {
 	return i
 }
 
-var _ resource.ExternalClient = &external{}
-var _ resource.ExternalConnecter = &connecter{}
+func projectIDFromCredentials(_ string) string {
+	return "id-from-credentials"
+}
+
+var _ managed.ExternalClient = &external{}
+var _ managed.ExternalConnecter = &connecter{}
 
 func TestConnect(t *testing.T) {
-	provider := packetv1alpha1.Provider{
+	provider := packetv1alpha2.Provider{
 		ObjectMeta: metav1.ObjectMeta{Name: providerName},
-		Spec: packetv1alpha1.ProviderSpec{
-			Secret: runtimev1alpha1.SecretKeySelector{
-				SecretReference: runtimev1alpha1.SecretReference{
-					Namespace: namespace,
-					Name:      providerSecretName,
+		Spec: packetv1alpha2.ProviderSpec{
+			ProviderSpec: runtimev1alpha1.ProviderSpec{
+				CredentialsSecretRef: &runtimev1alpha1.SecretKeySelector{
+					SecretReference: runtimev1alpha1.SecretReference{
+						Namespace: namespace,
+						Name:      providerSecretName,
+					},
+					Key: providerSecretKey,
 				},
-				Key: providerSecretKey,
 			},
 		},
 	}
@@ -153,7 +177,7 @@ func TestConnect(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		conn resource.ExternalConnecter
+		conn managed.ExternalConnecter
 		args args
 		want want
 	}{
@@ -162,13 +186,13 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha1.Provider) = provider
+						*obj.(*packetv1alpha2.Provider) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						*obj.(*corev1.Secret) = secret
 					}
 					return nil
 				}},
-				newClientFn: func(_ context.Context, _ []byte) (packngo.DeviceService, error) { return nil, nil },
+				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) { return nil, nil },
 			},
 			args: args{
 				ctx: context.Background(),
@@ -197,7 +221,7 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha1.Provider) = provider
+						*obj.(*packetv1alpha2.Provider) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						return errorBoom
 					}
@@ -207,18 +231,37 @@ func TestConnect(t *testing.T) {
 			args: args{ctx: context.Background(), mg: device()},
 			want: want{err: errors.Wrap(errorBoom, errGetProviderSecret)},
 		},
+		"ProviderSecretNil": {
+			conn: &connecter{
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+					switch key {
+					case client.ObjectKey{Name: providerName}:
+						nilSecretProvider := provider
+						nilSecretProvider.SetCredentialsSecretReference(nil)
+						*obj.(*packetv1alpha2.Provider) = nilSecretProvider
+					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
+						return errorBoom
+					}
+					return nil
+				}},
+			},
+			args: args{ctx: context.Background(), mg: device()},
+			want: want{err: errors.New(errProviderSecretNil)},
+		},
 		"FailedToCreateDevice": {
 			conn: &connecter{
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha1.Provider) = provider
+						*obj.(*packetv1alpha2.Provider) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						*obj.(*corev1.Secret) = secret
 					}
 					return nil
 				}},
-				newClientFn: func(_ context.Context, _ []byte) (packngo.DeviceService, error) { return nil, errorBoom },
+				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) {
+					return nil, errorBoom
+				},
 			},
 			args: args{ctx: context.Background(), mg: device()},
 			want: want{err: errors.Wrap(errorBoom, errNewClient)},
@@ -243,26 +286,30 @@ func TestObserve(t *testing.T) {
 	}
 	type want struct {
 		mg          resource.Managed
-		observation resource.ExternalObservation
+		observation managed.ExternalObservation
 		err         error
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{
 		"ObservedDeviceAvailableNoUpdateNeeded": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateActive,
-							ProvisionPer: float32(100),
-							AlwaysPXE:    alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateActive,
+								ProvisionPer: float32(100),
+								AlwaysPXE:    *alwaysPXE,
+							},
+						}, nil, nil
+					}},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -270,28 +317,34 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
-					withState(v1alpha1.StateActive)),
-				observation: resource.ExternalObservation{
+					withState(v1alpha2.StateActive)),
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
 		"ObservedDeviceAvailableUpdateNeeded": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateActive,
-							ProvisionPer: float32(100),
-							AlwaysPXE:    !alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateActive,
+								ProvisionPer: float32(100),
+								AlwaysPXE:    !*alwaysPXE,
+							},
+						}, nil, nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -299,28 +352,33 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
-					withState(v1alpha1.StateActive)),
-				observation: resource.ExternalObservation{
+					withState(v1alpha2.StateActive)),
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  false,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
 		"ObservedDeviceCreating": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateProvisioning,
-							ProvisionPer: float32(50),
-							AlwaysPXE:    alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateProvisioning,
+								ProvisionPer: float32(50),
+								AlwaysPXE:    *alwaysPXE,
+							},
+						}, nil, nil
+					}},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -328,27 +386,33 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Creating()),
 					withProvisionPer(float32(50)),
-					withState(v1alpha1.StateProvisioning)),
-				observation: resource.ExternalObservation{
+					withState(v1alpha2.StateProvisioning),
+				),
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
 		"ObservedDeviceQueued": {
-			client: &external{client: &fake.MockClient{
-				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							State:        v1alpha1.StateQueued,
-							ProvisionPer: float32(50),
-							AlwaysPXE:    alwaysPXE,
-						},
-					}, nil, nil
-				}},
+			client: &external{
+				kube: &test.MockClient{
+					MockUpdate: test.NewMockUpdateFn(nil),
+				},
+				client: &fake.MockClient{
+					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+						return &packngo.Device{
+							DeviceRaw: packngo.DeviceRaw{
+								State:        v1alpha2.StateQueued,
+								ProvisionPer: float32(50),
+								AlwaysPXE:    *alwaysPXE,
+							},
+						}, nil, nil
+					}},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -356,13 +420,14 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg: device(
+					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Unavailable()),
 					withProvisionPer(float32(50)),
-					withState(v1alpha1.StateQueued)),
-				observation: resource.ExternalObservation{
+					withState(v1alpha2.StateQueued)),
+				observation: managed.ExternalObservation{
 					ResourceExists:    true,
 					ResourceUpToDate:  true,
-					ConnectionDetails: resource.ConnectionDetails{},
+					ConnectionDetails: managed.ConnectionDetails{},
 				},
 			},
 		},
@@ -382,7 +447,7 @@ func TestObserve(t *testing.T) {
 			},
 			want: want{
 				mg:          device(),
-				observation: resource.ExternalObservation{ResourceExists: false},
+				observation: managed.ExternalObservation{ResourceExists: false},
 			},
 		},
 		"NotDevice": {
@@ -439,17 +504,18 @@ func TestCreate(t *testing.T) {
 	}
 	type want struct {
 		mg       resource.Managed
-		creation resource.ExternalCreation
+		creation managed.ExternalCreation
 		err      error
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{
 		"CreatedInstance": {
 			client: &external{client: &fake.MockClient{
+				MockGetProjectID: projectIDFromCredentials,
 				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{
 						DeviceRaw: packngo.DeviceRaw{
@@ -468,7 +534,11 @@ func TestCreate(t *testing.T) {
 			want: want{
 				mg: device(
 					withConditions(runtimev1alpha1.Creating()),
-					withID(deviceName)),
+					withID(deviceName),
+				),
+				creation: managed.ExternalCreation{
+					ConnectionDetails: managed.ConnectionDetails{},
+				},
 			},
 		},
 		"NotDevice": {
@@ -484,6 +554,7 @@ func TestCreate(t *testing.T) {
 		},
 		"FailedToCreateDevice": {
 			client: &external{client: &fake.MockClient{
+				MockGetProjectID: projectIDFromCredentials,
 				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
 					return nil, nil, errorBoom
 				},
@@ -526,12 +597,12 @@ func TestUpdate(t *testing.T) {
 	}
 	type want struct {
 		mg     resource.Managed
-		update resource.ExternalUpdate
+		update managed.ExternalUpdate
 		err    error
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{
@@ -608,7 +679,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		client resource.ExternalClient
+		client managed.ExternalClient
 		args   args
 		want   want
 	}{

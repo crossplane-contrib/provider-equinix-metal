@@ -20,19 +20,21 @@ import (
 	"context"
 	"testing"
 
-	runtimev1alpha1 "github.com/crossplaneio/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/crossplaneio/crossplane-runtime/pkg/resource"
-	"github.com/crossplaneio/crossplane-runtime/pkg/test"
-	computev1alpha1 "github.com/crossplaneio/crossplane/apis/compute/v1alpha1"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/reconciler/claimbinding"
+	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/pkg/test"
+	computev1alpha1 "github.com/crossplane/crossplane/apis/compute/v1alpha1"
 	"github.com/google/go-cmp/cmp"
-	"github.com/packethost/stack-packet/apis/server/v1alpha1"
-	packettest "github.com/packethost/stack-packet/pkg/test"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
 )
 
-var _ resource.ManagedConfigurator = resource.ManagedConfiguratorFn(ConfigureDevice)
+var _ claimbinding.ManagedConfigurator = claimbinding.ManagedConfiguratorFn(ConfigureDevice)
 
 func TestConfigureDevice(t *testing.T) {
 	type args struct {
@@ -62,24 +64,24 @@ func TestConfigureDevice(t *testing.T) {
 				cm: &computev1alpha1.MachineInstance{
 					ObjectMeta: metav1.ObjectMeta{UID: claimUID},
 				},
-				cs: &v1alpha1.DeviceClass{
-					SpecTemplate: v1alpha1.DeviceClassSpecTemplate{
+				cs: &v1alpha2.DeviceClass{
+					SpecTemplate: v1alpha2.DeviceClassSpecTemplate{
 						ClassSpecTemplate: runtimev1alpha1.ClassSpecTemplate{
 							WriteConnectionSecretsToNamespace: namespace,
 							ProviderReference:                 &corev1.ObjectReference{Name: providerName},
 							ReclaimPolicy:                     runtimev1alpha1.ReclaimDelete,
 						},
-						ForProvider: v1alpha1.DeviceParameters{
-							Hostname: hostname,
+						ForProvider: v1alpha2.DeviceParameters{
+							Hostname: &hostname,
 							OS:       os,
 						},
 					},
 				},
-				mg: &v1alpha1.Device{},
+				mg: &v1alpha2.Device{},
 			},
 			want: want{
-				mg: &v1alpha1.Device{
-					Spec: v1alpha1.DeviceSpec{
+				mg: &v1alpha2.Device{
+					Spec: v1alpha2.DeviceSpec{
 						ResourceSpec: runtimev1alpha1.ResourceSpec{
 							ReclaimPolicy: runtimev1alpha1.ReclaimDelete,
 							WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
@@ -88,8 +90,8 @@ func TestConfigureDevice(t *testing.T) {
 							},
 							ProviderReference: &corev1.ObjectReference{Name: providerName},
 						},
-						ForProvider: v1alpha1.DeviceParameters{
-							Hostname: hostname,
+						ForProvider: v1alpha2.DeviceParameters{
+							Hostname: &hostname,
 							OS:       os,
 						},
 					},

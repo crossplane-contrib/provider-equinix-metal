@@ -1,0 +1,7 @@
+---
+apiVersion: packages.crossplane.io/v1alpha1
+kind: ClusterPackageInstall
+metadata:
+  name: "crossplane-provider-packet"
+spec:
+  package: "packethost/crossplane-provider-packet"

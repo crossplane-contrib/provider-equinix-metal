@@ -14,27 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Generate deepcopy methodsets
-//go:generate ${CONTROLLERGEN} object:headerFile=../hack/boilerplate.go.txt paths=./...
-
-// Generate crossplane-runtime methodsets (resource.Claim, etc)
-//go:generate ${CROSSPLANETOOLS_ANGRYJET} generate-methodsets --header-file=../hack/boilerplate.go.txt ./...
-
-// Package api contains Kubernetes API groups for Packet cloud provider.
-package api
+// Package apis contains Kubernetes API groups for Packet cloud provider.
+package apis
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	serverv1alpha1 "github.com/packethost/stack-packet/apis/server/v1alpha1"
-	packetv1alpha1 "github.com/packethost/stack-packet/apis/v1alpha1"
+	serverv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
 )
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
-		packetv1alpha1.SchemeBuilder.AddToScheme,
-		serverv1alpha1.SchemeBuilder.AddToScheme,
+		packetv1alpha2.SchemeBuilder.AddToScheme,
+		serverv1alpha2.SchemeBuilder.AddToScheme,
 	)
 }
 

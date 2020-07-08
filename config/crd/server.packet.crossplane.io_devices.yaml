@@ -3,11 +3,45 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
   name: devices.server.packet.crossplane.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=='Ready')].status
+    name: READY
+    type: string
+  - JSONPath: .status.conditions[?(@.type=='Synced')].status
+    name: SYNCED
+    type: string
+  - JSONPath: .status.atProvider.state
+    name: STATE
+    type: string
+  - JSONPath: .status.atProvider.id
+    name: ID
+    type: string
+  - JSONPath: .spec.forProvider.hostname
+    name: HOSTNAME
+    type: string
+  - JSONPath: .status.atProvider.facility
+    name: FACILITY
+    type: string
+  - JSONPath: .status.atProvider.ipv4
+    name: IPV4
+    type: string
+  - JSONPath: .spec.reclaimPolicy
+    name: RECLAIM-POLICY
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: server.packet.crossplane.io
   names:
+    categories:
+    - crossplane
+    - managed
+    - packet
     kind: Device
     listKind: DeviceList
     plural: devices
@@ -17,17 +51,17 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Device is the Schema for the devices API
+      description: Device is a managed resource that represents a Packet Device
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -38,7 +72,7 @@ spec:
               description: ClaimReference specifies the resource claim to which this
                 managed resource will be bound. ClaimReference is set automatically
                 during dynamic provisioning. Crossplane does not currently support
-                setting this field manually, per https://github.com/crossplaneio/crossplane-runtime/issues/19
+                setting this field manually, per https://github.com/crossplane/crossplane-runtime/issues/19
               properties:
                 apiVersion:
                   description: API version of the referent.
@@ -57,7 +91,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -67,7 +101,7 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
@@ -76,7 +110,7 @@ spec:
             classRef:
               description: ClassReference specifies the resource class that was used
                 to dynamically provision this managed resource, if any. Crossplane
-                does not currently support setting this field manually, per https://github.com/crossplaneio/crossplane-runtime/issues/20
+                does not currently support setting this field manually, per https://github.com/crossplane/crossplane-runtime/issues/20
               properties:
                 apiVersion:
                   description: API version of the referent.
@@ -95,7 +129,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -105,33 +139,39 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
             forProvider:
-              description: DeviceParameters define the desired state of a Packet device.
-                https://www.packet.com/developers/api/#devices
+              description: "DeviceParameters define the desired state of a Packet
+                device. https://www.packet.com/developers/api/#devices \n Reference
+                values are used for optional parameters to determine if LateInitialization
+                should update the parameter after creation."
               properties:
-                always_pxe:
+                alwaysPXE:
                   type: boolean
                 billingCycle:
                   type: string
-                customdata:
+                customData:
+                  type: string
+                description:
                   type: string
                 facility:
                   type: string
                 features:
                   additionalProperties:
                     type: string
+                  description: "Features can be used to require or prefer devices
+                    with optional features: \n features: - tpm: required - tpm: preferred"
                   type: object
-                hardware_reservation_id:
+                hardwareReservationID:
                   type: string
                 hostname:
                   type: string
-                ip_addresses:
+                ipAddresses:
                   items:
                     properties:
                       address_family:
@@ -143,7 +183,7 @@ spec:
                     - public
                     type: object
                   type: array
-                ipxe_script_url:
+                ipxeScriptUrl:
                   type: string
                 locked:
                   type: boolean
@@ -151,32 +191,26 @@ spec:
                   type: string
                 plan:
                   type: string
-                project_ssh_keys:
+                projectSSHKeys:
                   items:
                     type: string
                   type: array
-                projectID:
-                  type: string
-                public_ipv4_subnet_size:
+                publicIPv4SubnetSize:
                   type: integer
                 tags:
                   items:
                     type: string
                   type: array
-                user_ssh_keys:
+                userSSHKeys:
                   items:
                     type: string
                   type: array
                 userdata:
                   type: string
               required:
-              - billingCycle
               - facility
-              - hostname
-              - locked
               - operatingSystem
               - plan
-              - projectID
               type: object
             providerRef:
               description: ProviderReference specifies the provider that will be used
@@ -199,7 +233,7 @@ spec:
                     in the future.'
                   type: string
                 kind:
-                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+                  description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                   type: string
                 name:
                   description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
@@ -209,19 +243,26 @@ spec:
                   type: string
                 resourceVersion:
                   description: 'Specific resourceVersion to which this reference is
-                    made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency'
+                    made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
                   type: string
                 uid:
                   description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                   type: string
               type: object
             reclaimPolicy:
-              description: ReclaimPolicy specifies what will happen to the external
-                resource this managed resource manages when the managed resource is
-                deleted. "Delete" deletes the external resource, while "Retain" (the
-                default) does not. Note this behaviour is subtly different from other
-                uses of the ReclaimPolicy concept within the Kubernetes ecosystem
-                per https://github.com/crossplaneio/crossplane-runtime/issues/21
+              description: ReclaimPolicy specifies what will happen to this managed
+                resource when its resource claim is deleted, and what will happen
+                to the underlying external resource when the managed resource is deleted.
+                The "Delete" policy causes the managed resource to be deleted when
+                its bound resource claim is deleted, and in turn causes the external
+                resource to be deleted when its managed resource is deleted. The "Retain"
+                policy causes the managed resource to be retained, in binding phase
+                "Released", when its resource claim is deleted, and in turn causes
+                the external resource to be retained when its managed resource is
+                deleted. The "Retain" policy is used when no policy is specified.
+              enum:
+              - Retain
+              - Delete
               type: string
             writeConnectionSecretToRef:
               description: WriteConnectionSecretToReference specifies the namespace
@@ -241,16 +282,23 @@ spec:
               - namespace
               type: object
           required:
+          - forProvider
           - providerRef
           type: object
         status:
           description: DeviceStatus defines the observed state of Device
           properties:
             atProvider:
-              description: DeviceObservation is used to show the observed state of
-                the Device resource on Packet.
+              description: DeviceObservation is used to reflect in the Kubernetes
+                API, the observed state of the Device resource from the Packet API.
               properties:
-                hostname:
+                createdAt:
+                  format: date-time
+                  type: string
+                facility:
+                  description: Facility is where the device is deployed. This field
+                    may differ from spec.forProvider.facility when the "any" value
+                    was used.
                   type: string
                 href:
                   type: string
@@ -258,12 +306,25 @@ spec:
                   type: string
                 ipv4:
                   type: string
-                provisionPer:
+                locked:
+                  type: boolean
+                networkType:
                   type: string
+                provisionPercentage:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
                 state:
                   type: string
+                updatedAt:
+                  format: date-time
+                  type: string
               required:
+              - facility
               - id
+              - locked
               type: object
             bindingPhase:
               description: Phase represents the binding phase of a managed resource
@@ -275,11 +336,12 @@ spec:
               - Unbindable
               - Unbound
               - Bound
+              - Released
               type: string
             conditions:
               description: Conditions of the resource.
               items:
-                description: A Condition that may apply to a managed resource.
+                description: A Condition that may apply to a resource.
                 properties:
                   lastTransitionTime:
                     description: LastTransitionTime is the last time this condition
@@ -311,9 +373,9 @@ spec:
               type: array
           type: object
       type: object
-  version: v1alpha1
+  version: v1alpha2
   versions:
-  - name: v1alpha1
+  - name: v1alpha2
     served: true
     storage: true
 status:
