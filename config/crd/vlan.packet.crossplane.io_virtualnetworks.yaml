@@ -15,9 +15,6 @@ spec:
   - JSONPath: .status.conditions[?(@.type=='Synced')].status
     name: SYNCED
     type: string
-  - JSONPath: .status.atProvider.state
-    name: STATE
-    type: string
   - JSONPath: .status.atProvider.id
     name: ID
     type: string
@@ -26,9 +23,6 @@ spec:
     type: string
   - JSONPath: .status.atProvider.facility
     name: FACILITY
-    type: string
-  - JSONPath: .status.atProvider.ipv4
-    name: IPV4
     type: string
   - JSONPath: .spec.reclaimPolicy
     name: RECLAIM-POLICY
