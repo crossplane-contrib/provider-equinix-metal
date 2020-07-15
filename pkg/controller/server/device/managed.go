@@ -155,9 +155,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		d.Status.SetConditions(runtimev1alpha1.Unavailable())
 	}
 
+	upToDate, _ := devicesclient.IsUpToDate(d, device)
+
 	o := managed.ExternalObservation{
 		ResourceExists:    true,
-		ResourceUpToDate:  devicesclient.IsUpToDate(d, device),
+		ResourceUpToDate:  upToDate,
 		ConnectionDetails: devicesclient.GetConnectionDetails(device),
 	}
 
@@ -193,7 +195,20 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotDevice)
 	}
 
-	_, _, err := e.client.Update(meta.GetExternalName(d), devicesclient.NewUpdateDeviceRequest(d))
+	// NOTE(hasheddan): we must get the device again to see what type of update
+	// we need to make
+	device, _, err := e.client.Get(meta.GetExternalName(d), nil)
+	if err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errGetDevice)
+	}
+
+	// NOTE(hasheddan): if the update is for the network type we return early
+	// and do any updates on subsequent reconciles
+	if _, n := devicesclient.IsUpToDate(d, device); n && d.Spec.ForProvider.NetworkType != nil {
+		_, err := e.client.DeviceToNetworkType(meta.GetExternalName(d), *d.Spec.ForProvider.NetworkType)
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
+	}
+	_, _, err = e.client.Update(meta.GetExternalName(d), devicesclient.NewUpdateDeviceRequest(d))
 
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 }
