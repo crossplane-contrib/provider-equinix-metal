@@ -158,6 +158,9 @@ type DeviceParameters struct {
 	// +optional
 	ProjectSSHKeys []string `json:"projectSSHKeys,omitempty"`
 
+	// +optional
+	NetworkType *string `json:"networkType,omitempty"`
+
 	// Features can be used to require or prefer devices with optional features:
 	//
 	// features:
@@ -185,7 +188,6 @@ type DeviceObservation struct {
 	ProvisionPercentage resource.Quantity `json:"provisionPercentage,omitempty"`
 	IPv4                string            `json:"ipv4,omitempty"`
 	Locked              bool              `json:"locked"`
-	NetworkType         string            `json:"networkType,omitempty"`
 
 	// +optional
 	CreatedAt *metav1.Time `json:"createdAt,omitempty"`

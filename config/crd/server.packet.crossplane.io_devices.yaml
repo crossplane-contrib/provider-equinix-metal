@@ -187,6 +187,8 @@ spec:
                   type: string
                 locked:
                   type: boolean
+                networkType:
+                  type: string
                 operatingSystem:
                   type: string
                 plan:
@@ -308,8 +310,6 @@ spec:
                   type: string
                 locked:
                   type: boolean
-                networkType:
-                  type: string
                 provisionPercentage:
                   anyOf:
                   - type: integer

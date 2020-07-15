@@ -78,6 +78,8 @@ spec:
                   type: string
                 locked:
                   type: boolean
+                networkType:
+                  type: string
                 operatingSystem:
                   type: string
                 plan:
