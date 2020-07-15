@@ -21,37 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	// StatePoweringOn indicates device is powering on
-	StatePoweringOn = "powering_on"
-
-	// StatePoweringOff indicates device is powering off
-	StatePoweringOff = "powering_off"
-
-	// StateActive indicates device is in active state
-	StateActive = "active"
-
-	// StateInactive indicates device is in inactive state
-	StateInactive = "inactive"
-
-	// StateProvisioning indicates device is in provisioning state
-	StateProvisioning = "provisioning"
-
-	// StateDeprovisioning indicates device is in deprovisioning state
-	StateDeprovisioning = "deprovisioning"
-
-	// StateReinstalling indicates device is in reinstalling state
-	StateReinstalling = "reinstalling"
-
-	// StateFailed indicates device is in a failed state
-	StateFailed = "failed"
-
-	// StateQueued indicates device is in a queued state
-	StateQueued = "queued"
-)
-
-// TODO: make optional parameters pointers and add +optional
-
 // VirtualNetworkSpec defines the desired state of VirtualNetwork
 type VirtualNetworkSpec struct {
 	runtimev1alpha1.ResourceSpec `json:",inline"`
@@ -69,11 +38,9 @@ type VirtualNetworkStatus struct {
 // VirtualNetwork is a managed resource that represents a Packet VirtualNetwork
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
-// +kubebuilder:printcolumn:name="STATE",type="string",JSONPath=".status.atProvider.state"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.id"
 // +kubebuilder:printcolumn:name="HOSTNAME",type="string",JSONPath=".spec.forProvider.hostname"
 // +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facility"
-// +kubebuilder:printcolumn:name="IPV4",type="string",JSONPath=".status.atProvider.ipv4"
 // +kubebuilder:printcolumn:name="RECLAIM-POLICY",type="string",JSONPath=".spec.reclaimPolicy"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
