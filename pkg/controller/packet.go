@@ -21,6 +21,7 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
+	"github.com/packethost/crossplane-provider-packet/pkg/controller/ports/assignment"
 	"github.com/packethost/crossplane-provider-packet/pkg/controller/server/device"
 	"github.com/packethost/crossplane-provider-packet/pkg/controller/vlan/virtualnetwork"
 )
@@ -29,6 +30,7 @@ import (
 // the supplied manager.
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
+		assignment.SetupAssignment,
 		device.SetupDeviceClaimScheduling,
 		device.SetupDeviceClaimDefaulting,
 		device.SetupDeviceClaimBinding,

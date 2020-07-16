@@ -60,6 +60,7 @@ func SetupVirtualNetwork(mgr ctrl.Manager, l logging.Logger) error {
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.VirtualNetworkGroupVersionKind),
 		managed.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
+		managed.WithConnectionPublishers(),
 		managed.WithLogger(l.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 	)
