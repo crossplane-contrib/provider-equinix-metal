@@ -22,6 +22,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
 	"github.com/packethost/crossplane-provider-packet/pkg/controller/server/device"
+	"github.com/packethost/crossplane-provider-packet/pkg/controller/vlan/virtualnetwork"
 )
 
 // Setup creates all Packet controllers with the supplied logger and adds them to
@@ -32,6 +33,7 @@ func Setup(mgr ctrl.Manager, l logging.Logger) error {
 		device.SetupDeviceClaimDefaulting,
 		device.SetupDeviceClaimBinding,
 		device.SetupDevice,
+		virtualnetwork.SetupVirtualNetwork,
 	} {
 		if err := setup(mgr, l); err != nil {
 			return err
