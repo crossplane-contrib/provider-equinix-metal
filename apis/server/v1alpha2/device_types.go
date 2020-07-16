@@ -159,6 +159,7 @@ type DeviceParameters struct {
 	ProjectSSHKeys []string `json:"projectSSHKeys,omitempty"`
 
 	// +optional
+	// +kubebuilder:validation:Enum="hybrid";"layer2-individual";"layer2-bonded";"layer3"
 	NetworkType *string `json:"networkType,omitempty"`
 
 	// Features can be used to require or prefer devices with optional features:

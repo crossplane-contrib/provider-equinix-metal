@@ -188,6 +188,11 @@ spec:
                 locked:
                   type: boolean
                 networkType:
+                  enum:
+                  - hybrid
+                  - layer2-individual
+                  - layer2-bonded
+                  - layer3
                   type: string
                 operatingSystem:
                   type: string
