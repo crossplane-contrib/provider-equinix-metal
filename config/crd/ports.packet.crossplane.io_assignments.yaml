@@ -15,7 +15,7 @@ spec:
   - JSONPath: .status.conditions[?(@.type=='Synced')].status
     name: SYNCED
     type: string
-  - JSONPath: .status.atProvider.id
+  - JSONPath: .metadata.annotations.crossplane\.io/external-name
     name: ID
     type: string
   - JSONPath: .spec.reclaimPolicy
