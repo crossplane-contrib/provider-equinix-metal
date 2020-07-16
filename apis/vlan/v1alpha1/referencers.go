@@ -14,17 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha2
+package v1alpha1
 
 import (
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
 	resource "github.com/crossplane/crossplane-runtime/pkg/resource"
 )
 
-// DeviceID extracts the ID of a Device.
-func DeviceID() reference.ExtractValueFn {
+// VirtualNetworkID extracts the ID of a VirtualNetwork.
+func VirtualNetworkID() reference.ExtractValueFn {
 	return func(mg resource.Managed) string {
-		c, ok := mg.(*Device)
+		c, ok := mg.(*VirtualNetwork)
 		if !ok {
 			return ""
 		}
