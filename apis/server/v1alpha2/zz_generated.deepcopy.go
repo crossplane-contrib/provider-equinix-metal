@@ -251,6 +251,11 @@ func (in *DeviceParameters) DeepCopyInto(out *DeviceParameters) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.NetworkType != nil {
+		in, out := &in.NetworkType, &out.NetworkType
+		*out = new(string)
+		**out = **in
+	}
 	if in.Features != nil {
 		in, out := &in.Features, &out.Features
 		*out = make(map[string]string, len(*in))

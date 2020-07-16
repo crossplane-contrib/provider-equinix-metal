@@ -58,9 +58,10 @@ const (
 )
 
 var (
-	errorBoom = errors.New("boom")
-	truthy    = true
-	alwaysPXE = &truthy
+	errorBoom   = errors.New("boom")
+	networkType = "cool-type"
+	truthy      = true
+	alwaysPXE   = &truthy
 )
 
 type strange struct {
@@ -89,6 +90,10 @@ func withState(s string) deviceModifier {
 
 func withID(d string) deviceModifier {
 	return func(i *v1alpha2.Device) { i.Status.AtProvider.ID = d }
+}
+
+func withNetworkType(d *string) deviceModifier {
+	return func(i *v1alpha2.Device) { i.Spec.ForProvider.NetworkType = d }
 }
 
 type initializerParams struct {
@@ -308,6 +313,7 @@ func TestObserve(t *testing.T) {
 								ProvisionPer: float32(100),
 								AlwaysPXE:    *alwaysPXE,
 							},
+							NetworkType: networkType,
 						}, nil, nil
 					}},
 			},
@@ -321,6 +327,7 @@ func TestObserve(t *testing.T) {
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
+					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
@@ -342,6 +349,7 @@ func TestObserve(t *testing.T) {
 								ProvisionPer: float32(100),
 								AlwaysPXE:    !*alwaysPXE,
 							},
+							NetworkType: networkType,
 						}, nil, nil
 					},
 				},
@@ -356,6 +364,7 @@ func TestObserve(t *testing.T) {
 					withConditions(runtimev1alpha1.Available()),
 					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
+					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
@@ -377,6 +386,7 @@ func TestObserve(t *testing.T) {
 								ProvisionPer: float32(50),
 								AlwaysPXE:    *alwaysPXE,
 							},
+							NetworkType: networkType,
 						}, nil, nil
 					}},
 			},
@@ -389,6 +399,7 @@ func TestObserve(t *testing.T) {
 					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Creating()),
 					withProvisionPer(float32(50)),
+					withNetworkType(&networkType),
 					withState(v1alpha2.StateProvisioning),
 				),
 				observation: managed.ExternalObservation{
@@ -411,6 +422,7 @@ func TestObserve(t *testing.T) {
 								ProvisionPer: float32(50),
 								AlwaysPXE:    *alwaysPXE,
 							},
+							NetworkType: networkType,
 						}, nil, nil
 					}},
 			},
@@ -423,6 +435,7 @@ func TestObserve(t *testing.T) {
 					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Unavailable()),
 					withProvisionPer(float32(50)),
+					withNetworkType(&networkType),
 					withState(v1alpha2.StateQueued)),
 				observation: managed.ExternalObservation{
 					ResourceExists:    true,
@@ -606,10 +619,54 @@ func TestUpdate(t *testing.T) {
 		args   args
 		want   want
 	}{
+		"NoUpdateNeeded": {
+			client: &external{client: &fake.MockClient{
+				MockUpdate: func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error) {
+					return &packngo.Device{}, nil, nil
+				},
+				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+					return &packngo.Device{}, nil, nil
+				},
+			}},
+			args: args{
+				ctx: context.Background(),
+				mg:  device(),
+			},
+			want: want{
+				mg: device(withConditions()),
+			},
+		},
+		"UpdatedInstanceNetworkType": {
+			client: &external{client: &fake.MockClient{
+				MockDeviceToNetworkType: func(deviceID string, networkType string) (*packngo.Device, error) {
+					return &packngo.Device{}, nil
+				},
+				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+					return &packngo.Device{
+						DeviceRaw:   packngo.DeviceRaw{},
+						NetworkType: "other-type",
+					}, nil, nil
+				},
+			}},
+			args: args{
+				ctx: context.Background(),
+				mg:  device(withNetworkType(&networkType)),
+			},
+			want: want{
+				mg: device(withNetworkType(&networkType), withConditions()),
+			},
+		},
 		"UpdatedInstance": {
 			client: &external{client: &fake.MockClient{
 				MockUpdate: func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error) {
 					return &packngo.Device{}, nil, nil
+				},
+				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+					return &packngo.Device{
+						DeviceRaw: packngo.DeviceRaw{
+							AlwaysPXE: false,
+						},
+					}, nil, nil
 				},
 			}},
 			args: args{
@@ -635,6 +692,9 @@ func TestUpdate(t *testing.T) {
 			client: &external{client: &fake.MockClient{
 				MockUpdate: func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error) {
 					return nil, nil, errorBoom
+				},
+				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
+					return &packngo.Device{}, nil, nil
 				},
 			}},
 
@@ -697,7 +757,7 @@ func TestDelete(t *testing.T) {
 				mg: device(withConditions(runtimev1alpha1.Deleting())),
 			},
 		},
-		"NotCloudMemorystoreInstance": {
+		"NotDeviceInstance": {
 			client: &external{},
 			args: args{
 				ctx: context.Background(),

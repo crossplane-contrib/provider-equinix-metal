@@ -22,6 +22,7 @@ import (
 
 	serverv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
 	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
+	vlanv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/vlan/v1alpha1"
 )
 
 func init() {
@@ -29,6 +30,7 @@ func init() {
 	AddToSchemes = append(AddToSchemes,
 		packetv1alpha2.SchemeBuilder.AddToScheme,
 		serverv1alpha2.SchemeBuilder.AddToScheme,
+		vlanv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 

@@ -31,6 +31,9 @@ type MockClient struct {
 	MockDelete func(deviceID string) (*packngo.Response, error)
 	MockGet    func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
 
+	MockDeviceToNetworkType func(deviceID string, networkType string) (*packngo.Device, error)
+	MockDeviceNetworkType   func(deviceID string) (string, error)
+
 	MockGetProjectID  func(string) string
 	MockGetFacilityID func(string) string
 }
@@ -53,6 +56,16 @@ func (c *MockClient) Delete(deviceID string) (*packngo.Response, error) {
 // Get calls the MockClient's MockGet function.
 func (c *MockClient) Get(deviceID string, options *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
 	return c.MockGet(deviceID, options)
+}
+
+// DeviceToNetworkType calls the MockClient's MockDeviceToNetworkType function.
+func (c *MockClient) DeviceToNetworkType(deviceID string, networkType string) (*packngo.Device, error) {
+	return c.MockDeviceToNetworkType(deviceID, networkType)
+}
+
+// DeviceNetworkType calls the MockClient's MockDeviceNetworkType function.
+func (c *MockClient) DeviceNetworkType(deviceID string) (string, error) {
+	return c.MockDeviceNetworkType(deviceID)
 }
 
 // GetFacilityID calls the MockClient's MockGet function.

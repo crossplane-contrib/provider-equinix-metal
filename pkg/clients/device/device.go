@@ -36,8 +36,8 @@ const (
 	errUnmarshalDate = "cannot unmarshal date"
 )
 
-// Client implements the Packet API methods needed to interact with Devices for
-// the Packet Crossplane Provider
+// Client implements the Packet API methods needed to interact with
+// Devices for the Packet Crossplane Provider
 type Client interface {
 	Get(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
 	Create(*packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
@@ -45,19 +45,29 @@ type Client interface {
 	Update(string, *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
 }
 
+// PortsClient implements the Packet API methods needed to interact with
+// Ports for the Packet Crossplane Provider
+type PortsClient interface {
+	DeviceToNetworkType(string, string) (*packngo.Device, error)
+	DeviceNetworkType(string) (string, error)
+}
+
 // build-time test that the interface is implemented
 var _ Client = (&packngo.Client{}).Devices
+var _ PortsClient = (&packngo.Client{}).DevicePorts
 
 // ClientWithDefaults is an interface that provides Device services and
 // provides default values for common properties
 type ClientWithDefaults interface {
 	Client
+	PortsClient
 	clients.DefaultGetter
 }
 
 // CredentialedClient is a credentialed client to Packet Device services
 type CredentialedClient struct {
 	Client
+	PortsClient
 	*clients.Credentials
 }
 
@@ -72,6 +82,7 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 	}
 	deviceClient := CredentialedClient{
 		Client:      client.Client.Devices,
+		PortsClient: client.Client.DevicePorts,
 		Credentials: client.Credentials,
 	}
 	deviceClient.SetProjectID(projectID)
@@ -124,12 +135,11 @@ func GetConnectionDetails(device *packngo.Device) managed.ConnectionDetails {
 func GenerateObservation(device *packngo.Device) (v1alpha2.DeviceObservation, error) {
 	// Update device status
 	observation := v1alpha2.DeviceObservation{
-		ID:          device.ID,
-		Href:        device.Href,
-		State:       device.State,
-		NetworkType: device.NetworkType,
-		Locked:      device.Locked,
-		IPv4:        device.GetNetworkInfo().PublicIPv4,
+		ID:     device.ID,
+		Href:   device.Href,
+		State:  device.State,
+		Locked: device.Locked,
+		IPv4:   device.GetNetworkInfo().PublicIPv4,
 	}
 
 	if device.Facility != nil {
@@ -168,6 +178,8 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 		in.Plan = clients.LateInitializeString(in.Plan, &device.Plan.Slug)
 	}
 
+	in.NetworkType = clients.LateInitializeStringPtr(in.NetworkType, &device.NetworkType)
+
 	in.Hostname = clients.LateInitializeStringPtr(in.Hostname, &device.Hostname)
 	in.BillingCycle = clients.LateInitializeStringPtr(in.BillingCycle, &device.BillingCycle)
 	in.IPXEScriptURL = clients.LateInitializeStringPtr(in.IPXEScriptURL, &device.IPXEScriptURL)
@@ -200,23 +212,25 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 // from the supplied Packet resource. It considers only fields that can be
 // modified in place without deleting and recreating the instance, which are
 // immutable.
-func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) bool {
+func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) (upToDate bool, networkTypeUpToDate bool) {
+	networkIsUpToDate := nilOrEqualStr(d.Spec.ForProvider.NetworkType, p.NetworkType)
+
 	if !nilOrEqualStr(d.Spec.ForProvider.Hostname, p.Hostname) {
-		return false
+		return false, networkIsUpToDate
 	}
 	if !nilOrEqualStr(d.Spec.ForProvider.UserData, p.UserData) {
-		return false
+		return false, networkIsUpToDate
 	}
 	if !nilOrEqualStr(d.Spec.ForProvider.IPXEScriptURL, p.IPXEScriptURL) {
-		return false
+		return false, networkIsUpToDate
 	}
 
 	if !nilOrEqualBool(d.Spec.ForProvider.Locked, p.Locked) {
-		return false
+		return false, networkIsUpToDate
 	}
 
 	if !nilOrEqualBool(d.Spec.ForProvider.AlwaysPXE, p.AlwaysPXE) {
-		return false
+		return false, networkIsUpToDate
 	}
 
 	// TODO(displague) CustomData is string vs map[string]interface{}
@@ -227,10 +241,10 @@ func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) bool {
 	*/
 
 	if !reflect.DeepEqual(d.Spec.ForProvider.Tags, p.Tags) {
-		return false
+		return false, networkIsUpToDate
 	}
 
-	return true
+	return true, networkIsUpToDate
 }
 
 // nilOrEqualStr is true if a (aPtr) is non-nil and equal to b
