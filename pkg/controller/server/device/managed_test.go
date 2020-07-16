@@ -711,7 +711,6 @@ func TestUpdate(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			fmt.Println(name)
 			got, err := tc.client.Update(tc.args.ctx, tc.args.mg)
 
 			if diff := cmp.Diff(tc.want.update, got, test.EquateErrors()); diff != "" {

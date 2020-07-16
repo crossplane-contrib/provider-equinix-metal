@@ -111,7 +111,7 @@ type external struct {
 	client devicesclient.ClientWithDefaults
 }
 
-func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
 	d, ok := mg.(*v1alpha2.Device)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotDevice)
@@ -155,11 +155,11 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		d.Status.SetConditions(runtimev1alpha1.Unavailable())
 	}
 
-	upToDate, _ := devicesclient.IsUpToDate(d, device)
+	upToDate, networkTypeUpToDate := devicesclient.IsUpToDate(d, device)
 
 	o := managed.ExternalObservation{
 		ResourceExists:    true,
-		ResourceUpToDate:  upToDate,
+		ResourceUpToDate:  upToDate && networkTypeUpToDate,
 		ConnectionDetails: devicesclient.GetConnectionDetails(device),
 	}
 
@@ -204,7 +204,7 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// NOTE(hasheddan): if the update is for the network type we return early
 	// and do any updates on subsequent reconciles
-	if _, n := devicesclient.IsUpToDate(d, device); n && d.Spec.ForProvider.NetworkType != nil {
+	if _, n := devicesclient.IsUpToDate(d, device); !n && d.Spec.ForProvider.NetworkType != nil {
 		_, err := e.client.DeviceToNetworkType(meta.GetExternalName(d), *d.Spec.ForProvider.NetworkType)
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 	}
