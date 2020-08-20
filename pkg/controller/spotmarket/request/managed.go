@@ -20,7 +20,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/packethost/packngo"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,7 +29,7 @@ import (
 	"github.com/packethost/crossplane-provider-packet/apis/spotmarket/v1alpha1"
 	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
 	packetclient "github.com/packethost/crossplane-provider-packet/pkg/clients"
-	spotmarketsclient "github.com/packethost/crossplane-provider-packet/pkg/clients/spotmarkets"
+	spotmarketclient "github.com/packethost/crossplane-provider-packet/pkg/clients/spotmarket"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
@@ -75,7 +74,7 @@ func SetupRequest(mgr ctrl.Manager, l logging.Logger) error {
 
 type connecter struct {
 	kube        client.Client
-	newClientFn func(ctx context.Context, credentials []byte, projectID string) (spotmarketsclient.ClientWithDefaults, error)
+	newClientFn func(ctx context.Context, credentials []byte, projectID string) (spotmarketclient.ClientWithDefaults, error)
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
@@ -99,7 +98,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	if err := c.kube.Get(ctx, n, s); err != nil {
 		return nil, errors.Wrap(err, errGetProviderSecret)
 	}
-	newClientFn := spotmarketsclient.NewClient
+	newClientFn := spotmarketclient.NewClient
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
@@ -110,7 +109,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 
 type external struct {
 	kube   client.Client
-	client spotmarketsclient.ClientWithDefaults
+	client spotmarketclient.ClientWithDefaults
 }
 
 func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -120,7 +119,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	// Observe spotmarket
-	spotmarket, err := e.client.Get(meta.GetExternalName(req), nil)
+	spotmarket, _, err := e.client.Get(meta.GetExternalName(req), nil)
 	if packetclient.IsNotFound(err) {
 		return managed.ExternalObservation{}, errors.New("spotmarket does not exist")
 	}
@@ -153,7 +152,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	req.Status.SetConditions(runtimev1alpha1.Creating())
 
-	create := spotmarketsclient.CreateFromRequest(req, e.client.GetProjectID(packetclient.CredentialProjectID))
+	create := spotmarketclient.CreateFromRequest(req, e.client.GetProjectID(packetclient.CredentialProjectID))
 	request, _, err := e.client.Create(create)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRequest)
@@ -161,11 +160,8 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	req.Status.AtProvider.ID = request.ID
 	meta.SetExternalName(req, request.ID)
-	if err := e.kube.Update(ctx, req); err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
-	}
-
-	return managed.ExternalCreation{ConnectionDetails: spotmarketsclient.GetConnectionDetails(request)}, nil
+	err = e.kube.Update(ctx, req)
+	return managed.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -174,11 +170,11 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
-	a, ok := mg.(*v1alpha1.Request)
+	req, ok := mg.(*v1alpha1.Request)
 	if !ok {
 		return errors.New(errNotRequest)
 	}
-	a.SetConditions(runtimev1alpha1.Deleting())
-	_, _, err := e.client.Unassign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
+	req.SetConditions(runtimev1alpha1.Deleting())
+	_, err := e.client.Delete(meta.GetExternalName(req), false)
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteRequest)
 }
