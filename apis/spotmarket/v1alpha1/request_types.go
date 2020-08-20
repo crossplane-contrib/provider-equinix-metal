@@ -71,7 +71,7 @@ type RequestParameters struct {
 	// MaxBidPrice the maximum price you are willing to pay for the
 	// instance, per hour. This should be greater or equal than the current spot
 	// price for the given facility and plan.
-	MaxBidPrice float64 `json:"maxBidPrice"`
+	MaxBidPrice string `json:"maxBidPrice"`
 
 	Attributes RequestInstanceAttributes `json:"attributes"`
 }

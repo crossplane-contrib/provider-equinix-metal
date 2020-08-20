@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package ports
+package spotmarket
 
 import (
 	"context"
@@ -24,7 +24,7 @@ import (
 // Client implements the Packet API methods needed to interact with
 // SpotMarketRequests for the Packet Crossplane Provider
 type Client interface {
-	Create(cr *packngo.SpotMarketRequestCreateRequest, pID string) (*packngo.SpotMarketRequest, *packngo.Response, error)
+	Create(createRequest *packngo.SpotMarketRequestCreateRequest, projectID string) (*packngo.SpotMarketRequest, *packngo.Response, error)
 	Get(id string, getOpt *packngo.GetOptions) (*packngo.SpotMarketRequest, *packngo.Response, error)
 	Delete(id string, forceDelete bool) (*packngo.Response, error)
 }

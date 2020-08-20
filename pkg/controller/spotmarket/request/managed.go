@@ -42,14 +42,15 @@ import (
 
 // Error strings.
 const (
-	errProviderSecretNil = "cannot find Secret reference on Provider"
-	errGetProvider       = "cannot get Provider"
-	errGetProviderSecret = "cannot get Provider Secret"
-	errNewClient         = "cannot create new Request client"
-	errNotRequest        = "managed resource is not a Request"
-	errGetPort           = "cannot get Port"
-	errCreateRequest     = "cannot create Request"
-	errDeleteRequest     = "cannot delete Request"
+	errProviderSecretNil   = "cannot find Secret reference on Provider"
+	errGetProvider         = "cannot get Provider"
+	errGetProviderSecret   = "cannot get Provider Secret"
+	errNewClient           = "cannot create new Request client"
+	errNotRequest          = "managed resource is not a Request"
+	errGetPort             = "cannot get Port"
+	errCreateRequest       = "cannot create Request"
+	errDeleteRequest       = "cannot delete Request"
+	errManagedUpdateFailed = "cannot update Request custom resource"
 )
 
 // SetupRequest adds a controller that reconciles Requests
@@ -145,17 +146,30 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	a, ok := mg.(*v1alpha1.Request)
+	req, ok := mg.(*v1alpha1.Request)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotRequest)
 	}
-	a.Status.SetConditions(runtimev1alpha1.Creating())
-	_, _, err := e.client.Assign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
-	return managed.ExternalCreation{}, errors.Wrap(err, errCreateRequest)
+
+	req.Status.SetConditions(runtimev1alpha1.Creating())
+
+	create := spotmarketsclient.CreateFromRequest(req, e.client.GetProjectID(packetclient.CredentialProjectID))
+	request, _, err := e.client.Create(create)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRequest)
+	}
+
+	req.Status.AtProvider.ID = request.ID
+	meta.SetExternalName(req, request.ID)
+	if err := e.kube.Update(ctx, req); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errManagedUpdateFailed)
+	}
+
+	return managed.ExternalCreation{ConnectionDetails: spotmarketsclient.GetConnectionDetails(request)}, nil
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// NOTE(hasheddan): Request cannot be updated.
+	// NOTE(displague): Request cannot be updated.
 	return managed.ExternalUpdate{}, nil
 }
 
