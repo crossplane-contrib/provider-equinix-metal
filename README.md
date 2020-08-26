@@ -1,4 +1,6 @@
 # Crossplane Packet Provider
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpackethost%2Fcrossplane-provider-packet.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpackethost%2Fcrossplane-provider-packet?ref=badge_shield)
+
 
 ## Overview
 
@@ -167,3 +169,7 @@ Please use the following Slack channels to reach members of the community:
 
 * Join the [Crossplane slack #general channel](https://slack.crossplane.io/)
 * Join the [Packet slack #community channel](https://packetcommunity.slack.com/)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpackethost%2Fcrossplane-provider-packet.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpackethost%2Fcrossplane-provider-packet?ref=badge_large)
