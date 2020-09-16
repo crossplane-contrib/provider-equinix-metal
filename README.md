@@ -1,5 +1,7 @@
 # Crossplane Packet Provider
 
+![](https://img.shields.io/badge/Stability-Maintained-green.svg)
+
 ## Overview
 
 [From Crossplane's Provider documentation](https://crossplane.io/docs/v0.12/introduction/providers.html):
@@ -9,6 +11,8 @@
 This is the Crossplane Provider package for [Packet](https://www.packet.com)
 infrastructure. The provider that is built from this repository can be installed
 into a Crossplane control plane.
+
+This repository is [Maintained](https://github.com/packethost/standards/blob/master/maintained-statement.md) meaning that this software is supported by Packet and its community - available to use in production environments.
 
 ## Getting Started and Documentation
 
