@@ -25,7 +25,7 @@ import (
 type ProviderSpec struct {
 	runtimev1alpha1.ProviderSpec `json:",inline"`
 
-	// ProjectID is the Project ID (UUID) of this Packet Provider. If this is
+	// ProjectID is the Project ID (UUID) of this Equinix Metal Provider. If this is
 	// not specified it must be included in the Provider secret (JSON field
 	// providerID).
 	// +kubebuilder:validation:Optional
@@ -34,8 +34,8 @@ type ProviderSpec struct {
 
 // +kubebuilder:object:root=true
 
-// A Provider configures a Packet 'provider', i.e. a connection to a particular
-// Packet account.
+// A Provider configures an Equinix Metal 'provider', i.e. a connection to a particular
+// Equinix Metal account.
 // +kubebuilder:printcolumn:name="PROJECT-ID",type="string",JSONPath=".spec.projectID"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:printcolumn:name="SECRET-NAME",type="string",JSONPath=".spec.credentialsSecretRef.name",priority=1

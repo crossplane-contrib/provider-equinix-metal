@@ -24,8 +24,8 @@ import (
 	"github.com/packethost/crossplane-provider-packet/pkg/clients"
 )
 
-// Client implements the Packet API methods needed to interact with Ports for
-// the Packet Crossplane Provider
+// Client implements the Equinix Metal API methods needed to interact with Ports for
+// the Equinix Metal Crossplane Provider
 type Client interface {
 	Assign(*packngo.PortAssignRequest) (*packngo.Port, *packngo.Response, error)
 	Unassign(*packngo.PortAssignRequest) (*packngo.Port, *packngo.Response, error)
@@ -42,7 +42,7 @@ type ClientWithDefaults interface {
 	clients.DefaultGetter
 }
 
-// CredentialedClient is a credentialed client to Packet Port services
+// CredentialedClient is a credentialed client to Equinix Metal Port services
 type CredentialedClient struct {
 	Client
 	*clients.Credentials
@@ -50,8 +50,8 @@ type CredentialedClient struct {
 
 var _ ClientWithDefaults = &CredentialedClient{}
 
-// NewClient returns a Client implementing the Packet API methods needed to
-// interact with Ports for the Packet Crossplane Provider
+// NewClient returns a Client implementing the Equinix Metal API methods needed to
+// interact with Ports for the Equinix Metal Crossplane Provider
 func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
 	client, err := clients.NewClient(ctx, credentials)
 	if err != nil {

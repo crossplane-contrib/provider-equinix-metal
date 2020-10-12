@@ -1,4 +1,4 @@
-# Crossplane Packet Provider
+# Crossplane Equinix Metal Provider
 
 ![](https://img.shields.io/badge/Stability-Maintained-green.svg)
 
@@ -8,11 +8,11 @@
 
 > Providers extend Crossplane to enable infrastructure resource provisioning. In order to provision a resource, a Custom Resource Definition(CRD) needs to be registered in your Kubernetes cluster and its controller should be watching the Custom Resources those CRDs define. Provider packages contain many Custom Resource Definitions and their controllers.
 
-This is the Crossplane Provider package for [Packet](https://www.packet.com)
+This is the Crossplane Provider package for [Equinix Metal](https://metal.equinix.com)
 infrastructure. The provider that is built from this repository can be installed
 into a Crossplane control plane.
 
-This repository is [Maintained](https://github.com/packethost/standards/blob/master/maintained-statement.md) meaning that this software is supported by Packet and its community - available to use in production environments.
+This repository is [Maintained](https://github.com/packethost/standards/blob/master/maintained-statement.md) meaning that this software is supported by Equinix Metal and its community - available to use in production environments.
 
 ## Getting Started and Documentation
 
@@ -42,7 +42,7 @@ helm install crossplane --namespace crossplane-system crossplane-alpha/crossplan
 curl -sL https://raw.githubusercontent.com/crossplane/crossplane-cli/master/bootstrap.sh | bash
 ```
 
-## Install the Packet Provider
+## Install the Equinix Metal Provider
 
 ```console
 kubectl crossplane package install --cluster \
@@ -50,7 +50,7 @@ kubectl crossplane package install --cluster \
   packethost/crossplane-provider-packet:v0.0.2 provider-packet
 ```
 
-The following commands will require your [Packet API key and a project ID](https://www.packet.com/developers/docs/API/getting-started/). Entering your API key and project ID when prompted:
+The following commands will require your [Equinix Metal API key and a project ID](https://metal.equinix.com/developers/docs/). Entering your API key and project ID when prompted:
 
 ```console
 read -s -p "API Key: " APIKEY; echo
@@ -59,7 +59,7 @@ read -p "Project ID: " PROJECT_ID; echo
 
 ### Create a Provider Secret
 
-Create a [Packet Project and a project level API key](https://www.packet.com/developers/docs/API/getting-started/).
+Create a [Equinix Metal Project and a project level API key](https://metal.equinix.com/developers/docs/).
 
 Create a Kubernetes secret with the API Key and Project ID.
 
@@ -69,7 +69,7 @@ kubectl create -n crossplane-system secret generic packet-creds --from-file=key=
 
 ### Create a Provider record
 
-Get the project id from the Packet Portal or using the Packet CLI (`packet project get`). With `PROJECT_ID` in your environemnt, run the command below:
+Get the project id from the Equinix Metal Portal or using the Equinix Metal CLI (`packet project get`). With `PROJECT_ID` in your environemnt, run the command below:
 
 ```bash
 cat << EOS | kubectl apply -f -
@@ -86,7 +86,7 @@ spec:
 EOS
 ```
 
-## Provision a Packet Device
+## Provision an Equinix Metal Device
 
 Save the following as `device.yaml`:
 
@@ -153,13 +153,13 @@ secret/devices-creds deleted
 
 This Crossplane provider is alpha quality, not officially supported, and not intended for production use.
 
-Packet `Devices` can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volume, and SpotMarketRequests are not currently planned.  If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
+Equinix Metal `Devices` can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volume, and SpotMarketRequests are not currently planned.  If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
 
 ## Contributing
 
 crossplane-provider-packet is a community driven project and we welcome contributions. See the Crossplane [Contributing](https://github.com/crossplane/crossplane/blob/master/CONTRIBUTING.md) guidelines to get started.
 
-<!-- TODO(displague) Packet specific contribution pointers -->
+<!-- TODO(displague) Equinix Metal specific contribution pointers -->
 
 ## Report a Bug
 
@@ -170,4 +170,4 @@ For filing bugs, suggesting improvements, or requesting new features, please ope
 Please use the following Slack channels to reach members of the community:
 
 * Join the [Crossplane slack #general channel](https://slack.crossplane.io/)
-* Join the [Packet slack #community channel](https://packetcommunity.slack.com/)
+* Join the [Equinix Metal slack #community channel](https://slack.equinixmetal.com/)

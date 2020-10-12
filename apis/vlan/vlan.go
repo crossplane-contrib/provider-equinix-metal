@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package vlan contains Packet vlan API versions
+// Package vlan contains Equinix Metal vlan API versions
 package vlan

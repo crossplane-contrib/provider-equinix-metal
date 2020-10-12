@@ -1,31 +1,31 @@
-title: "Packet Provider"
+title: "Equinix Metal Provider"
 readme: |-
   This `provider-packet` repository is the implementation of a Crossplane infrastructure
   [provider](https://github.com/crossplane/crossplane/blob/master/design/design-doc-packages.md) for
-  [Packet, an Equinix company](https://www.packet.com).
+  [Equinix Metal, an Equinix company](https://metal.equinix.com).
  
   The package that is built from the source code in this repository can be
   installed into a Crossplane control plane and adds the following new
   functionality:
   
-  * Custom Resource Definitions (CRDs) that model Packet infrastructure (e.g.
-  [Bare Metal](https://www.packet.com/cloud/servers/))
-  * Controllers to provision these resources in Packet based on the users desired state captured in CRDs they create
-  * Implementations of Crossplane's [portable resource abstractions](https://crossplane.io/docs/master/running-resources.html), enabling Packet resources to fulfill a user's general need for cloud services
+  * Custom Resource Definitions (CRDs) that model Equinix Metal infrastructure (e.g.
+  [Bare Metal](https://metal.equinix.com/product/servers/))
+  * Controllers to provision these resources in Equinix Metal based on the users desired state captured in CRDs they create
+  * Implementations of Crossplane's [portable resource abstractions](https://crossplane.io/docs/master/running-resources.html), enabling Equinix Metal resources to fulfill a user's general need for cloud services
 
 overview: |-
-  The Packet Crossplane Package adds support for managing Packet resources in Kubernetes.
+  The Equinix Metal Crossplane Package adds support for managing Equinix Metal resources in Kubernetes.
 
-  Packet Device resources can be provisioned, updated, and deleted by this
+  Equinix Metal Device resources can be provisioned, updated, and deleted by this
   package.
-overviewShort: The Packet Crossplane Package enabling resource management for the Packet platform.
+overviewShort: The Equinix Metal Crossplane Package enabling resource management for the Equinix Metal platform.
 maintainers:
-- name: "Packet"
-  email: "support@packet.com"
+- name: "Equinix Metal"
+  email: "support@equinixmetal.com"
 owners:
-- name: "Packet"
-  email: "support@packet.com"
-company: "Packet"
+- name: "Equinix Metal"
+  email: "support@equinixmetal.com"
+company: "Equinix Metal"
 category: "Infrastructure"
 packageType: Provider
 keywords:

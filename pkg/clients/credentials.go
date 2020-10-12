@@ -16,7 +16,7 @@ limitations under the License.
 
 package clients
 
-// Credentials is a common credential format used by various Packet Kubernetes
+// Credentials is a common credential format used by various Equinix Metal Kubernetes
 // providers
 type Credentials struct {
 	APIKey     string `json:"apiKey"`
@@ -32,19 +32,19 @@ const (
 	CredentialFacilityID = ""
 )
 
-// DefaultGetter provides setters for common Packet client properties
+// DefaultGetter provides setters for common Equinix Metal client properties
 type DefaultGetter interface {
 	GetProjectID(string) string
 	GetFacilityID(string) string
 }
 
-// DefaultSetter provides setters for common Packet client properties
+// DefaultSetter provides setters for common Equinix Metal client properties
 type DefaultSetter interface {
 	SetProjectID(string)
 	SetFacilityID(string)
 }
 
-// Defaulter provides getter and setters for common Packet client properties
+// Defaulter provides getter and setters for common Equinix Metal client properties
 type Defaulter interface {
 	DefaultGetter
 	DefaultSetter

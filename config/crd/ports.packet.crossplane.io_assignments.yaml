@@ -39,7 +39,8 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Assignment is a managed resource that represents a Packet Assignment
+      description: Assignment is a managed resource that represents an Equinix Metal
+        Assignment
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -134,8 +135,8 @@ spec:
                   type: string
               type: object
             forProvider:
-              description: "AssignmentParameters define the desired state of a Packet
-                Virtual Network. https://www.packet.com/developers/api/vlans/#create-an-virtual-network
+              description: "AssignmentParameters define the desired state of an Equinix
+                Metal Virtual Network. https://metal.equinix.com/developers/api/vlans/#create-an-virtual-network
                 \n Reference values are used for optional parameters to determine
                 if LateInitialization should update the parameter after creation."
               properties:

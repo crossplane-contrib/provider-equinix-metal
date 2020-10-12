@@ -51,7 +51,7 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: Device is a managed resource that represents a Packet Device
+      description: Device is a managed resource that represents an Equinix Metal Device
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -146,10 +146,10 @@ spec:
                   type: string
               type: object
             forProvider:
-              description: "DeviceParameters define the desired state of a Packet
-                device. https://www.packet.com/developers/api/#devices \n Reference
-                values are used for optional parameters to determine if LateInitialization
-                should update the parameter after creation."
+              description: "DeviceParameters define the desired state of an Equinix
+                Metal device. https://metal.equinix.com/developers/api/#devices \n
+                Reference values are used for optional parameters to determine if
+                LateInitialization should update the parameter after creation."
               properties:
                 alwaysPXE:
                   type: boolean
@@ -297,7 +297,8 @@ spec:
           properties:
             atProvider:
               description: DeviceObservation is used to reflect in the Kubernetes
-                API, the observed state of the Device resource from the Packet API.
+                API, the observed state of the Device resource from the Equinix Metal
+                API.
               properties:
                 createdAt:
                   format: date-time

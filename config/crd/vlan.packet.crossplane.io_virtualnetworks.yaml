@@ -45,7 +45,8 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: VirtualNetwork is a managed resource that represents a Packet VirtualNetwork
+      description: VirtualNetwork is a managed resource that represents an Equinix
+        Metal VirtualNetwork
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -140,8 +141,8 @@ spec:
                   type: string
               type: object
             forProvider:
-              description: "VirtualNetworkParameters define the desired state of a
-                Packet Virtual Network. https://www.packet.com/developers/api/vlans/#create-an-virtual-network
+              description: "VirtualNetworkParameters define the desired state of an
+                Equinix Metal Virtual Network. https://metal.equinix.com/developers/api/vlans/#create-an-virtual-network
                 \n Reference values are used for optional parameters to determine
                 if LateInitialization should update the parameter after creation."
               properties:
@@ -230,8 +231,8 @@ spec:
           properties:
             atProvider:
               description: VirtualNetworkObservation is used to reflect in the Kubernetes
-                API, the observed state of the VirtualNetwork resource from the Packet
-                API.
+                API, the observed state of the VirtualNetwork resource from the Equinix
+                Metal API.
               properties:
                 createdAt:
                   format: date-time

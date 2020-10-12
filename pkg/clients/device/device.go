@@ -36,8 +36,8 @@ const (
 	errUnmarshalDate = "cannot unmarshal date"
 )
 
-// Client implements the Packet API methods needed to interact with
-// Devices for the Packet Crossplane Provider
+// Client implements the Equinix Metal API methods needed to interact with
+// Devices for the Equinix Metal Crossplane Provider
 type Client interface {
 	Get(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
 	Create(*packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
@@ -45,8 +45,8 @@ type Client interface {
 	Update(string, *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
 }
 
-// PortsClient implements the Packet API methods needed to interact with
-// Ports for the Packet Crossplane Provider
+// PortsClient implements the Equinix Metal API methods needed to interact with
+// Ports for the Equinix Metal Crossplane Provider
 type PortsClient interface {
 	DeviceToNetworkType(string, string) (*packngo.Device, error)
 	DeviceNetworkType(string) (string, error)
@@ -64,7 +64,7 @@ type ClientWithDefaults interface {
 	clients.DefaultGetter
 }
 
-// CredentialedClient is a credentialed client to Packet Device services
+// CredentialedClient is a credentialed client to Equinix Metal Device services
 type CredentialedClient struct {
 	Client
 	PortsClient
@@ -73,8 +73,8 @@ type CredentialedClient struct {
 
 var _ ClientWithDefaults = &CredentialedClient{}
 
-// NewClient returns a Client implementing the Packet API methods needed to
-// interact with Devices for the Packet Crossplane Provider
+// NewClient returns a Client implementing the Equinix Metal API methods needed to
+// interact with Devices for the Equinix Metal Crossplane Provider
 func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
 	client, err := clients.NewClient(ctx, credentials)
 	if err != nil {
@@ -194,7 +194,7 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 	}
 
 	// Facility is required with a supported "any" value
-	// AtProvider.Facility will reflect the Packet selected
+	// AtProvider.Facility will reflect the Equinix Metal selected
 
 	// TODO(displague) CustomData is string on input and a map when fetched
 	// What's the format? Should it always be a map in k8s?
@@ -209,7 +209,7 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 }
 
 // IsUpToDate returns true if the supplied Kubernetes resource does not differ
-// from the supplied Packet resource. It considers only fields that can be
+// from the supplied Equinix Metal resource. It considers only fields that can be
 // modified in place without deleting and recreating the instance, which are
 // immutable.
 func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) (upToDate bool, networkTypeUpToDate bool) {
@@ -258,7 +258,7 @@ func nilOrEqualBool(aPtr *bool, b bool) bool {
 }
 
 // NewUpdateDeviceRequest creates a request to update an instance suitable for
-// use with the Packet API.
+// use with the Equinix Metal API.
 func NewUpdateDeviceRequest(d *v1alpha2.Device) *packngo.DeviceUpdateRequest {
 	return &packngo.DeviceUpdateRequest{
 		Hostname:      d.Spec.ForProvider.Hostname,

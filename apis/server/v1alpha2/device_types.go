@@ -68,7 +68,7 @@ type DeviceStatus struct {
 
 // +kubebuilder:object:root=true
 
-// Device is a managed resource that represents a Packet Device
+// Device is a managed resource that represents an Equinix Metal Device
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="STATE",type="string",JSONPath=".status.atProvider.state"
@@ -97,8 +97,8 @@ type DeviceList struct {
 	Items           []Device `json:"items"`
 }
 
-// DeviceParameters define the desired state of a Packet device.
-// https://www.packet.com/developers/api/#devices
+// DeviceParameters define the desired state of an Equinix Metal device.
+// https://metal.equinix.com/developers/api/#devices
 //
 // Reference values are used for optional parameters to determine if
 // LateInitialization should update the parameter after creation.
@@ -177,7 +177,7 @@ type DeviceParameters struct {
 }
 
 // DeviceObservation is used to reflect in the Kubernetes API, the observed
-// state of the Device resource from the Packet API.
+// state of the Device resource from the Equinix Metal API.
 type DeviceObservation struct {
 	ID   string `json:"id"`
 	Href string `json:"href,omitempty"`

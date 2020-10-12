@@ -33,8 +33,8 @@ spec:
   subresources: {}
   validation:
     openAPIV3Schema:
-      description: A Provider configures a Packet 'provider', i.e. a connection to
-        a particular Packet account.
+      description: A Provider configures an Equinix Metal 'provider', i.e. a connection
+        to a particular Equinix Metal account.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -70,9 +70,9 @@ spec:
               - namespace
               type: object
             projectID:
-              description: ProjectID is the Project ID (UUID) of this Packet Provider.
-                If this is not specified it must be included in the Provider secret
-                (JSON field providerID).
+              description: ProjectID is the Project ID (UUID) of this Equinix Metal
+                Provider. If this is not specified it must be included in the Provider
+                secret (JSON field providerID).
               type: string
           type: object
       type: object

@@ -26,7 +26,7 @@ import (
 	"github.com/packethost/crossplane-provider-packet/pkg/controller/vlan/virtualnetwork"
 )
 
-// Setup creates all Packet controllers with the supplied logger and adds them to
+// Setup creates all Equinix Metal controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
