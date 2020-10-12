@@ -27,10 +27,7 @@ I have:
 - [ ] Run `make reviewable` to ensure this PR is ready for review.
 - [ ] Ensured this PR contains a neat, self documenting set of commits.
 - [ ] Updated any relevant [documentation], [examples], or [release notes].
-- [ ] Updated the [package resources documentation] and [`app.yaml`] to include any new managed resources or classes.
 
 [documentation]: https://github.com/crossplane/crossplane/tree/master/docs
 [examples]: https://github.com/crossplane/crossplane/tree/master/cluster/examples
 [release notes]: https://github.com/crossplane/crossplane/tree/master/PendingReleaseNotes.md
-[`app.yaml`]: https://github.com/packethost/crossplane-provider-equinix-metal/blob/master/config/package/manifests/app.yaml
-[package resources documentation]: https://github.com/packethost/crossplane-provider-equinix-metal/blob/master/config/package/manifests/resources
