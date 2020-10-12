@@ -1,7 +1,7 @@
 # ====================================================================================
 # Setup Project
 
-PROJECT_NAME := crossplane-provider-packet
+PROJECT_NAME := crossplane-provider-equinix-metal
 PROJECT_REPO := github.com/packethost/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
