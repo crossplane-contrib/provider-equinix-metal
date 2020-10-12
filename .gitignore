@@ -6,6 +6,4 @@ cover.out
 /.vendor-new
 /.vscode
 
-/package
-
 credentials.txt
