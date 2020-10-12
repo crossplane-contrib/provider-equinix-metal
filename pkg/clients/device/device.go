@@ -201,7 +201,7 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 	// in.CustomData = device.CustomData
 
 	// TODO(displague) Description is not yet supported
-	//in.Description = device.Description
+	// in.Description = device.Description
 
 	if in.Tags == nil {
 		in.Tags = device.Tags
