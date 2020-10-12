@@ -28,7 +28,7 @@ import (
 )
 
 // PacketClient is a structure that embeds Credentials for the purposes of
-// defaulting to those credential supplied values during Packet API usage. This
+// defaulting to those credential supplied values during Equinix Metal API usage. This
 // allows for the Device resource to not require a ProjectID, for example, since
 // the provider was configured with a ProjectID.
 type PacketClient struct {
@@ -37,7 +37,7 @@ type PacketClient struct {
 	Client *packngo.Client
 }
 
-// NewClient returns a Packet Client configured with credentials
+// NewClient returns an Equinix Metal Client configured with credentials
 func NewClient(ctx context.Context, credentials []byte) (*PacketClient, error) {
 	config := &Credentials{}
 	if err := json.Unmarshal(credentials, config); err != nil {

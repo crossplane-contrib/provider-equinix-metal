@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains ports Packet resources.
+// Package v1alpha1 contains ports Equinix Metal resources.
 // +kubebuilder:object:generate=true
 // +groupName=ports.packet.crossplane.io
 // +versionName=v1alpha1

@@ -34,7 +34,7 @@ type AssignmentStatus struct {
 
 // +kubebuilder:object:root=true
 
-// Assignment is a managed resource that represents a Packet Assignment
+// Assignment is a managed resource that represents an Equinix Metal Assignment
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
@@ -59,8 +59,8 @@ type AssignmentList struct {
 	Items           []Assignment `json:"items"`
 }
 
-// AssignmentParameters define the desired state of a Packet Virtual Network.
-// https://www.packet.com/developers/api/vlans/#create-an-virtual-network
+// AssignmentParameters define the desired state of an Equinix Metal Virtual Network.
+// https://metal.equinix.com/developers/api/vlans/#create-an-virtual-network
 //
 // Reference values are used for optional parameters to determine if
 // LateInitialization should update the parameter after creation.

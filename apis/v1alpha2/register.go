@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
-// Packet type metadata.
+// Equinix Metal type metadata.
 const (
 	Group   = "packet.crossplane.io"
 	Version = "v1alpha2"

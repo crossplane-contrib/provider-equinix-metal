@@ -35,7 +35,7 @@ type VirtualNetworkStatus struct {
 
 // +kubebuilder:object:root=true
 
-// VirtualNetwork is a managed resource that represents a Packet VirtualNetwork
+// VirtualNetwork is a managed resource that represents an Equinix Metal VirtualNetwork
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.id"
@@ -62,8 +62,8 @@ type VirtualNetworkList struct {
 	Items           []VirtualNetwork `json:"items"`
 }
 
-// VirtualNetworkParameters define the desired state of a Packet Virtual Network.
-// https://www.packet.com/developers/api/vlans/#create-an-virtual-network
+// VirtualNetworkParameters define the desired state of an Equinix Metal Virtual Network.
+// https://metal.equinix.com/developers/api/vlans/#create-an-virtual-network
 //
 // Reference values are used for optional parameters to determine if
 // LateInitialization should update the parameter after creation.
@@ -77,7 +77,7 @@ type VirtualNetworkParameters struct {
 }
 
 // VirtualNetworkObservation is used to reflect in the Kubernetes API, the observed
-// state of the VirtualNetwork resource from the Packet API.
+// state of the VirtualNetwork resource from the Equinix Metal API.
 type VirtualNetworkObservation struct {
 	ID           string       `json:"id"`
 	Href         string       `json:"href,omitempty"`

@@ -33,7 +33,7 @@ import (
 
 func main() {
 	var (
-		app        = kingpin.New(filepath.Base(os.Args[0]), "Packet support for Crossplane.").DefaultEnvars()
+		app        = kingpin.New(filepath.Base(os.Args[0]), "Equinix Metal support for Crossplane.").DefaultEnvars()
 		debug      = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
 		syncPeriod = app.Flag("sync", "Controller manager sync period such as 300ms, 1.5h, or 2h45m").Short('s').Default("1h").Duration()
 	)

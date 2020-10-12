@@ -121,9 +121,9 @@ dev: $(KIND) $(KUBECTL)
 	@$(KUBECTL) cluster-info --context kind-provider-packet-dev
 	@$(INFO) Installing Crossplane CRDs
 	@$(KUBECTL) apply -k https://github.com/crossplane/crossplane//cluster?ref=master
-	@$(INFO) Installing Provider Packet CRDs
+	@$(INFO) Installing Provider Equinix Metal CRDs
 	@$(KUBECTL) apply -f $(CRD_DIR) -R
-	@$(INFO) Starting Provider Packet controllers
+	@$(INFO) Starting Provider Equinix Metal controllers
 	@$(GO) run cmd/provider/main.go --debug
 
 dev-clean: $(KIND) $(KUBECTL)

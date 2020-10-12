@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package ports contains Packet ports API versions
+// Package ports contains Equinix Metal ports API versions
 package ports

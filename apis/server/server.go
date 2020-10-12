@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package server contains Packet server API versions
+// Package server contains Equinix Metal server API versions
 package server

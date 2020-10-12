@@ -30,8 +30,8 @@ const (
 	errUnmarshalDate = "cannot unmarshal date"
 )
 
-// Client implements the Packet API methods needed to interact with VirtualNetworks for
-// the Packet Crossplane Provider
+// Client implements the Equinix Metal API methods needed to interact with VirtualNetworks for
+// the Equinix Metal Crossplane Provider
 type Client interface {
 	List(projectID string, listOpt *packngo.ListOptions) (*packngo.VirtualNetworkListResponse, *packngo.Response, error)
 	Create(*packngo.VirtualNetworkCreateRequest) (*packngo.VirtualNetwork, *packngo.Response, error)
@@ -49,7 +49,7 @@ type ClientWithDefaults interface {
 	clients.DefaultGetter
 }
 
-// CredentialedClient is a credentialed client to Packet VirtualNetwork services
+// CredentialedClient is a credentialed client to Equinix Metal VirtualNetwork services
 type CredentialedClient struct {
 	Client
 	*clients.Credentials
@@ -57,8 +57,8 @@ type CredentialedClient struct {
 
 var _ ClientWithDefaults = &CredentialedClient{}
 
-// NewClient returns a Client implementing the Packet API methods needed to
-// interact with VirtualNetworks for the Packet Crossplane Provider
+// NewClient returns a Client implementing the Equinix Metal API methods needed to
+// interact with VirtualNetworks for the Equinix Metal Crossplane Provider
 func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
 	client, err := clients.NewClient(ctx, credentials)
 	if err != nil {
@@ -118,7 +118,7 @@ func LateInitialize(in *v1alpha1.VirtualNetworkParameters, vlan *packngo.Virtual
 }
 
 // IsUpToDate returns true if the supplied Kubernetes resource does not differ
-// from the supplied Packet resource. It considers only fields that can be
+// from the supplied Equinix Metal resource. It considers only fields that can be
 // modified in place without deleting and recreating the instance, which are
 // immutable.
 func IsUpToDate(d *v1alpha1.VirtualNetwork, p *packngo.VirtualNetwork) bool {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains vlan Packet resources.
+// Package v1alpha1 contains vlan Equinix Metal resources.
 // +kubebuilder:object:generate=true
 // +groupName=vlan.packet.crossplane.io
 // +versionName=v1alpha1
