@@ -74,10 +74,6 @@ func withConditions(c ...runtimev1alpha1.Condition) deviceModifier {
 	return func(i *v1alpha2.Device) { i.Status.SetConditions(c...) }
 }
 
-func withBindingPhase(p runtimev1alpha1.BindingPhase) deviceModifier {
-	return func(i *v1alpha2.Device) { i.Status.SetBindingPhase(p) }
-}
-
 func withProvisionPer(p float32) deviceModifier {
 	return func(i *v1alpha2.Device) {
 		i.Status.AtProvider.ProvisionPercentage = apiresource.MustParse(fmt.Sprintf("%.6f", p))
@@ -122,7 +118,7 @@ func device(im ...deviceModifier) *v1alpha2.Device {
 		},
 		Spec: v1alpha2.DeviceSpec{
 			ResourceSpec: runtimev1alpha1.ResourceSpec{
-				ProviderReference: &corev1.ObjectReference{Name: providerName},
+				ProviderReference: &runtimev1alpha1.Reference{Name: providerName},
 				WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
 					Namespace: namespace,
 					Name:      connectionSecretName,
@@ -325,7 +321,6 @@ func TestObserve(t *testing.T) {
 				mg: device(
 					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
-					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),
@@ -362,7 +357,6 @@ func TestObserve(t *testing.T) {
 				mg: device(
 					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
-					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),

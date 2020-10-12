@@ -45,14 +45,6 @@ var (
 	DeviceGroupVersionKind = SchemeGroupVersion.WithKind(DeviceKind)
 )
 
-// DeviceClass type metadata.
-var (
-	DeviceClassKind             = reflect.TypeOf(DeviceClass{}).Name()
-	DeviceClassKindAPIVersion   = DeviceClassKind + "." + SchemeGroupVersion.String()
-	DeviceClassGroupVersionKind = SchemeGroupVersion.WithKind(DeviceClassKind)
-)
-
 func init() {
 	SchemeBuilder.Register(&Device{}, &DeviceList{})
-	SchemeBuilder.Register(&DeviceClass{}, &DeviceClassList{})
 }

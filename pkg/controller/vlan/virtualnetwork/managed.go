@@ -83,8 +83,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 
 	p := &packetv1alpha2.Provider{}
-	n := meta.NamespacedNameOf(g.Spec.ProviderReference)
-	if err := c.kube.Get(ctx, n, p); err != nil {
+	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderReference.Name}, p); err != nil {
 		return nil, errors.Wrap(err, errGetProvider)
 	}
 
@@ -93,7 +92,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 
 	s := &corev1.Secret{}
-	n = types.NamespacedName{Namespace: p.Spec.CredentialsSecretRef.Namespace, Name: p.Spec.CredentialsSecretRef.Name}
+	n := types.NamespacedName{Namespace: p.Spec.CredentialsSecretRef.Namespace, Name: p.Spec.CredentialsSecretRef.Name}
 	if err := c.kube.Get(ctx, n, s); err != nil {
 		return nil, errors.Wrap(err, errGetProviderSecret)
 	}
@@ -140,7 +139,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	v.Status.SetConditions(runtimev1alpha1.Available())
-	resource.SetBindable(v)
 
 	o := managed.ExternalObservation{
 		ResourceExists:   true,
