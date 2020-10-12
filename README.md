@@ -22,11 +22,11 @@ For getting started guides, installation, deployment, and administration, see th
 
 * Kubernetes cluster
   * For example Minikube, minimum version v0.28+
-* Helm, minimum version v2.9.1+.
+* Helm, minimum version v3.0.0+.
 
 ## Installing Crossplane
 
-For the most up to date, detailed, instructions, check [Crossplane's documentation](https://crossplane.io/docs/v0.12/getting-started/install-configure.html).
+For the most up to date, detailed, instructions, check [Crossplane's documentation](https://crossplane.io/docs/v0.13/getting-started/install-configure.html).
 
 The following instructions are provided for convenience.
 
@@ -39,15 +39,13 @@ helm install crossplane --namespace crossplane-system crossplane-alpha/crossplan
 ### Install the Crossplane CLI
 
 ```console
-curl -sL https://raw.githubusercontent.com/crossplane/crossplane-cli/master/bootstrap.sh | bash
+curl -sL https://raw.githubusercontent.com/crossplane/crossplane/release-0.13/install.sh | sh
 ```
 
 ## Install the Equinix Metal Provider
 
 ```console
-kubectl crossplane package install --cluster \
-  --namespace crossplane-system \
-  packethost/crossplane-provider-packet:v0.0.2 provider-packet
+kubectl crossplane install provider equinix/crossplane-provider-equinix-metal
 ```
 
 The following commands will require your [Equinix Metal API key and a project ID](https://metal.equinix.com/developers/docs/). Entering your API key and project ID when prompted:
