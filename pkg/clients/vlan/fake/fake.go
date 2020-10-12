@@ -19,7 +19,7 @@ package fake
 import (
 	"github.com/packethost/packngo"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/clients/vlan"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/vlan"
 )
 
 var _ vlan.ClientWithDefaults = &MockClient{}

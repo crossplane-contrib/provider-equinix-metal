@@ -24,7 +24,7 @@ import (
 
 	"github.com/packethost/packngo"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/version"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/version"
 )
 
 // PacketClient is a structure that embeds Credentials for the purposes of

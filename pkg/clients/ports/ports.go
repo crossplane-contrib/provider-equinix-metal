@@ -21,7 +21,7 @@ import (
 
 	"github.com/packethost/packngo"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/clients"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 )
 
 // Client implements the Equinix Metal API methods needed to interact with Ports for

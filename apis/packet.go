@@ -20,10 +20,10 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	portsv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/ports/v1alpha1"
-	serverv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
-	vlanv1alpha1 "github.com/packethost/crossplane-provider-packet/apis/vlan/v1alpha1"
+	portsv1alpha1 "github.com/packethost/crossplane-provider-equinix-metal/apis/ports/v1alpha1"
+	serverv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	vlanv1alpha1 "github.com/packethost/crossplane-provider-equinix-metal/apis/vlan/v1alpha1"
 )
 
 func init() {

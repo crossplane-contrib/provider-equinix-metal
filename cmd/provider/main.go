@@ -27,8 +27,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	crossplaneapis "github.com/crossplane/crossplane/apis"
 
-	"github.com/packethost/crossplane-provider-packet/apis"
-	"github.com/packethost/crossplane-provider-packet/pkg/controller"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/controller"
 )
 
 func main() {

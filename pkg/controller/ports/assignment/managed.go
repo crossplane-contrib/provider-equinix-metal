@@ -27,10 +27,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/crossplane-provider-packet/apis/ports/v1alpha1"
-	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
-	packetclient "github.com/packethost/crossplane-provider-packet/pkg/clients"
-	portsclient "github.com/packethost/crossplane-provider-packet/pkg/clients/ports"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/ports/v1alpha1"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
+	portsclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/ports"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"

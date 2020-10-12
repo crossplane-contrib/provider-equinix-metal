@@ -19,7 +19,7 @@ package fake
 import (
 	"github.com/packethost/packngo"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/clients/ports"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/ports"
 )
 
 var _ ports.ClientWithDefaults = &MockClient{}

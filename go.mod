@@ -1,4 +1,4 @@
-module github.com/packethost/crossplane-provider-packet
+module github.com/packethost/crossplane-provider-equinix-metal
 
 go 1.13
 

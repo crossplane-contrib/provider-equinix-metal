@@ -163,7 +163,7 @@ crossplane-provider-packet is a community driven project and we welcome contribu
 
 ## Report a Bug
 
-For filing bugs, suggesting improvements, or requesting new features, please open an [issue](https://github.com/packethost/crossplane-provider-packet/issues).
+For filing bugs, suggesting improvements, or requesting new features, please open an [issue](https://github.com/packethost/crossplane-provider-equinix-metal/issues).
 
 ## Contact
 

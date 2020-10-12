@@ -30,8 +30,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
+	packettest "github.com/packethost/crossplane-provider-equinix-metal/pkg/test"
 )
 
 var _ claimbinding.ManagedConfigurator = claimbinding.ManagedConfiguratorFn(ConfigureDevice)
