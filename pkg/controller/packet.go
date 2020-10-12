@@ -31,9 +31,6 @@ import (
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		assignment.SetupAssignment,
-		device.SetupDeviceClaimScheduling,
-		device.SetupDeviceClaimDefaulting,
-		device.SetupDeviceClaimBinding,
 		device.SetupDevice,
 		virtualnetwork.SetupVirtualNetwork,
 	} {
