@@ -1,6 +1,6 @@
 version: "2"
 domain: packet.crossplane.io
-repo: github.com/packethost/crossplane-provider-packet
+repo: github.com/packethost/crossplane-provider-equinix-metal
 resources:
 - group: server
   version: v1alpha2

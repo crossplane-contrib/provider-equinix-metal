@@ -1,7 +1,7 @@
 # ====================================================================================
 # Setup Project
 
-PROJECT_NAME := crossplane-provider-packet
+PROJECT_NAME := crossplane-provider-equinix-metal
 PROJECT_REPO := github.com/packethost/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
@@ -48,15 +48,10 @@ API_DIR=./apis/...
 -include build/makelib/k8s_tools.mk
 
 # ====================================================================================
-# Setup Packages
+# Setup Images
 
-PACKAGE=package
-export PACKAGE
-PACKAGE_REGISTRY=$(PACKAGE)/.registry
-PACKAGE_REGISTRY_SOURCE=config/package/manifests
-
-DOCKER_REGISTRY = packethost
-IMAGES = crossplane-provider-packet
+DOCKER_REGISTRY = equinix
+IMAGES = crossplane-provider-equinix-metal crossplane-provider-equinix-metal-controller
 -include build/makelib/image.mk
 
 # ====================================================================================
@@ -79,6 +74,14 @@ cobertura:
 	@cat $(GO_TEST_OUTPUT)/coverage.txt | \
 		grep -v zz_generated.deepcopy | \
 		$(GOCOVER_COBERTURA) > $(GO_TEST_OUTPUT)/cobertura-coverage.xml
+
+crds.clean:
+	@$(INFO) cleaning generated CRDs
+	@find package/crds -name *.yaml -exec sed -i.sed -e '1,2d' {} \; || $(FAIL)
+	@find package/crds -name *.yaml.sed -delete || $(FAIL)
+	@$(OK) cleaned generated CRDs
+
+generate: crds.clean
 
 # Ensure a PR is ready for review.
 reviewable: generate lint
@@ -130,41 +133,7 @@ dev-clean: $(KIND) $(KUBECTL)
 	@$(INFO) Deleting kind cluster
 	@$(KIND) delete cluster --name=provider-packet-dev
 
-# ====================================================================================
-# Package related targets
-
-# Initialize the package folder
-$(PACKAGE_REGISTRY):
-	@mkdir -p $(PACKAGE_REGISTRY)/resources
-	@touch $(PACKAGE_REGISTRY)/app.yaml $(PACKAGE_REGISTRY)/install.yaml
-
-build.artifacts: build-package
-
-build-package: $(PACKAGE_REGISTRY)
-# Copy CRDs over
-#
-# The reason this looks complicated is because it is
-# preserving the original crd filenames and changing
-# *.yaml to *.crd.yaml.
-#
-# An alternate and simpler-looking approach would
-# be to cat all of the files into a single crd.yaml,
-# but then we couldn't use per CRD metadata files.
-	@$(INFO) building package in $(PACKAGE)
-	@find $(CRD_DIR) -type f -name '*.yaml' | \
-		while read filename ; do mkdir -p $(PACKAGE_REGISTRY)/resources/$$(basename $${filename%_*});\
-		concise=$${filename#*_}; \
-		cat $$filename > \
-		$(PACKAGE_REGISTRY)/resources/$$( basename $${filename%_*} )/$$( basename $${concise/.yaml/.crd.yaml} ) \
-		; done
-	@cp -r $(PACKAGE_REGISTRY_SOURCE)/* $(PACKAGE_REGISTRY)
-
-clean: clean-package
-
-clean-package:
-	@rm -rf $(PACKAGE)
-
-.PHONY: cobertura submodules fallthrough test-integration run clean-package build-package go-integration dev dev-clean
+.PHONY: cobertura submodules fallthrough test-integration run go-integration dev dev-clean crds.clean
 
 # ====================================================================================
 # Special Targets
@@ -175,8 +144,6 @@ Crossplane Targets:
     reviewable            Ensure a PR is ready for review.
     submodules            Update the submodules, such as the common build scripts.
     run                   Run crossplane locally, out-of-cluster. Useful for development.
-    build-package   Builds the package contents in the package directory (./$(PACKAGE))
-    clean-package   Cleans out the generated package directory (./$(PACKAGE))
 
 endef
 # The reason CROSSPLANE_MAKE_HELP is used instead of CROSSPLANE_HELP is because the crossplane
@@ -189,17 +156,3 @@ crossplane.help:
 help-special: crossplane.help
 
 .PHONY: crossplane.help help-special
-
-# target for resolving angryjet dependency
-# TODO(hasheddan): move this to golang.mk in build submodule
-CROSSPLANETOOLS_ANGRYJET := $(TOOLS_HOST_DIR)/angryjet
-export CROSSPLANETOOLS_ANGRYJET
-
-$(CROSSPLANETOOLS_ANGRYJET):
-	@$(INFO) installing Crossplane AngryJet
-	@mkdir -p $(TOOLS_HOST_DIR)/tmp-angryjet || $(FAIL)
-	@GO111MODULE=off GOPATH=$(TOOLS_HOST_DIR)/tmp-angryjet GOBIN=$(TOOLS_HOST_DIR) $(GOHOST) get github.com/crossplane/crossplane-tools/cmd/angryjet || rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet|| $(FAIL)
-	@rm -fr $(TOOLS_HOST_DIR)/tmp-angryjet
-	@$(OK) installing Crossplane AngryJet
-
-go.generate: $(CROSSPLANETOOLS_ANGRYJET)

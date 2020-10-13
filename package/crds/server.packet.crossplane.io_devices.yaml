@@ -1,0 +1,251 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: devices.server.packet.crossplane.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=='Ready')].status
+    name: READY
+    type: string
+  - JSONPath: .status.conditions[?(@.type=='Synced')].status
+    name: SYNCED
+    type: string
+  - JSONPath: .status.atProvider.state
+    name: STATE
+    type: string
+  - JSONPath: .status.atProvider.id
+    name: ID
+    type: string
+  - JSONPath: .spec.forProvider.hostname
+    name: HOSTNAME
+    type: string
+  - JSONPath: .status.atProvider.facility
+    name: FACILITY
+    type: string
+  - JSONPath: .status.atProvider.ipv4
+    name: IPV4
+    type: string
+  - JSONPath: .spec.reclaimPolicy
+    name: RECLAIM-POLICY
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
+  group: server.packet.crossplane.io
+  names:
+    categories:
+    - crossplane
+    - managed
+    - packet
+    kind: Device
+    listKind: DeviceList
+    plural: devices
+    singular: device
+  scope: Cluster
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: Device is a managed resource that represents an Equinix Metal Device
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DeviceSpec defines the desired state of Device
+          properties:
+            deletionPolicy:
+              description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource. The "Delete" policy is the default when no policy is specified.
+              enum:
+              - Orphan
+              - Delete
+              type: string
+            forProvider:
+              description: "DeviceParameters define the desired state of an Equinix Metal device. https://metal.equinix.com/developers/api/#devices \n Reference values are used for optional parameters to determine if LateInitialization should update the parameter after creation."
+              properties:
+                alwaysPXE:
+                  type: boolean
+                billingCycle:
+                  type: string
+                customData:
+                  type: string
+                description:
+                  type: string
+                facility:
+                  type: string
+                features:
+                  additionalProperties:
+                    type: string
+                  description: "Features can be used to require or prefer devices with optional features: \n features: - tpm: required - tpm: preferred"
+                  type: object
+                hardwareReservationID:
+                  type: string
+                hostname:
+                  type: string
+                ipAddresses:
+                  items:
+                    properties:
+                      address_family:
+                        type: integer
+                      public:
+                        type: boolean
+                    required:
+                    - address_family
+                    - public
+                    type: object
+                  type: array
+                ipxeScriptUrl:
+                  type: string
+                locked:
+                  type: boolean
+                networkType:
+                  enum:
+                  - hybrid
+                  - layer2-individual
+                  - layer2-bonded
+                  - layer3
+                  type: string
+                operatingSystem:
+                  type: string
+                plan:
+                  type: string
+                projectSSHKeys:
+                  items:
+                    type: string
+                  type: array
+                publicIPv4SubnetSize:
+                  type: integer
+                tags:
+                  items:
+                    type: string
+                  type: array
+                userSSHKeys:
+                  items:
+                    type: string
+                  type: array
+                userdata:
+                  type: string
+              required:
+              - facility
+              - operatingSystem
+              - plan
+              type: object
+            providerConfigRef:
+              description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
+              properties:
+                name:
+                  description: Name of the referenced object.
+                  type: string
+              required:
+              - name
+              type: object
+            providerRef:
+              description: 'ProviderReference specifies the provider that will be used to create, observe, update, and delete this managed resource. Deprecated: Please use ProviderConfigReference, i.e. `providerConfigRef`'
+              properties:
+                name:
+                  description: Name of the referenced object.
+                  type: string
+              required:
+              - name
+              type: object
+            writeConnectionSecretToRef:
+              description: WriteConnectionSecretToReference specifies the namespace and name of a Secret to which any connection details for this managed resource should be written. Connection details frequently include the endpoint, username, and password required to connect to the managed resource.
+              properties:
+                name:
+                  description: Name of the secret.
+                  type: string
+                namespace:
+                  description: Namespace of the secret.
+                  type: string
+              required:
+              - name
+              - namespace
+              type: object
+          required:
+          - forProvider
+          type: object
+        status:
+          description: DeviceStatus defines the observed state of Device
+          properties:
+            atProvider:
+              description: DeviceObservation is used to reflect in the Kubernetes API, the observed state of the Device resource from the Equinix Metal API.
+              properties:
+                createdAt:
+                  format: date-time
+                  type: string
+                facility:
+                  description: Facility is where the device is deployed. This field may differ from spec.forProvider.facility when the "any" value was used.
+                  type: string
+                href:
+                  type: string
+                id:
+                  type: string
+                ipv4:
+                  type: string
+                locked:
+                  type: boolean
+                provisionPercentage:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                state:
+                  type: string
+                updatedAt:
+                  format: date-time
+                  type: string
+              required:
+              - facility
+              - id
+              - locked
+              type: object
+            conditions:
+              description: Conditions of the resource.
+              items:
+                description: A Condition that may apply to a resource.
+                properties:
+                  lastTransitionTime:
+                    description: LastTransitionTime is the last time this condition transitioned from one status to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A Message containing details about this condition's last transition from one status to another, if any.
+                    type: string
+                  reason:
+                    description: A Reason for this condition's last transition from one status to another.
+                    type: string
+                  status:
+                    description: Status of this condition; is it currently True, False, or Unknown?
+                    type: string
+                  type:
+                    description: Type of this condition. At most one of each condition type may apply to a resource at any point in time.
+                    type: string
+                required:
+                - lastTransitionTime
+                - reason
+                - status
+                - type
+                type: object
+              type: array
+          type: object
+      type: object
+  version: v1alpha2
+  versions:
+  - name: v1alpha2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

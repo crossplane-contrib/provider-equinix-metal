@@ -32,11 +32,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
-	devicesclient "github.com/packethost/crossplane-provider-packet/pkg/clients/device"
-	"github.com/packethost/crossplane-provider-packet/pkg/clients/device/fake"
-	packettest "github.com/packethost/crossplane-provider-packet/pkg/test"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device/fake"
+	packettest "github.com/packethost/crossplane-provider-equinix-metal/pkg/test"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -72,10 +72,6 @@ type deviceModifier func(*v1alpha2.Device)
 
 func withConditions(c ...runtimev1alpha1.Condition) deviceModifier {
 	return func(i *v1alpha2.Device) { i.Status.SetConditions(c...) }
-}
-
-func withBindingPhase(p runtimev1alpha1.BindingPhase) deviceModifier {
-	return func(i *v1alpha2.Device) { i.Status.SetBindingPhase(p) }
 }
 
 func withProvisionPer(p float32) deviceModifier {
@@ -122,7 +118,7 @@ func device(im ...deviceModifier) *v1alpha2.Device {
 		},
 		Spec: v1alpha2.DeviceSpec{
 			ResourceSpec: runtimev1alpha1.ResourceSpec{
-				ProviderReference: &corev1.ObjectReference{Name: providerName},
+				ProviderReference: &runtimev1alpha1.Reference{Name: providerName},
 				WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
 					Namespace: namespace,
 					Name:      connectionSecretName,
@@ -325,7 +321,6 @@ func TestObserve(t *testing.T) {
 				mg: device(
 					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
-					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),
@@ -362,7 +357,6 @@ func TestObserve(t *testing.T) {
 				mg: device(
 					withInitializerParams(initializerParams{}),
 					withConditions(runtimev1alpha1.Available()),
-					withBindingPhase(runtimev1alpha1.BindingPhaseUnbound),
 					withProvisionPer(float32(100)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),

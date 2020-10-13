@@ -214,33 +214,3 @@ type DeviceObservation struct {
 	// User string is omitted (written to Credentials)
 	// RootPassword string is omitted (written to Credentials)
 }
-
-// DeviceClassSpecTemplate is a template for the spec of a dynamically provisioned Device.
-type DeviceClassSpecTemplate struct {
-	runtimev1alpha1.ClassSpecTemplate `json:",inline"`
-	ForProvider                       DeviceParameters `json:"forProvider,omitempty"`
-}
-
-// +kubebuilder:object:root=true
-
-// A DeviceClass is a resource class. It defines the desired
-// spec of resource claims that use it to dynamically provision a managed
-// resource.
-// +kubebuilder:resource:scope=Cluster
-type DeviceClass struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// SpecTemplate is a template for the spec of a dynamically provisioned
-	// DeviceSpec.
-	SpecTemplate DeviceClassSpecTemplate `json:"specTemplate"`
-}
-
-// +kubebuilder:object:root=true
-
-// DeviceClassList contains a list of device resource classes.
-type DeviceClassList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []DeviceClass `json:"items"`
-}

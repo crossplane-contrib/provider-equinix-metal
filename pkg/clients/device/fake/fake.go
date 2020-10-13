@@ -19,7 +19,7 @@ package fake
 import (
 	"github.com/packethost/packngo"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/clients/device"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 )
 
 var _ device.ClientWithDefaults = &MockClient{}

@@ -28,8 +28,8 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	"github.com/packethost/crossplane-provider-packet/pkg/clients"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 )
 
 const (
@@ -201,7 +201,7 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 	// in.CustomData = device.CustomData
 
 	// TODO(displague) Description is not yet supported
-	//in.Description = device.Description
+	// in.Description = device.Description
 
 	if in.Tags == nil {
 		in.Tags = device.Tags

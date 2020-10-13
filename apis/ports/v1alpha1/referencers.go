@@ -23,8 +23,8 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
 
-	"github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	"github.com/packethost/crossplane-provider-packet/apis/vlan/v1alpha1"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/vlan/v1alpha1"
 )
 
 // ResolveReferences of this Assignment

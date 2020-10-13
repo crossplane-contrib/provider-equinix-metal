@@ -17,39 +17,29 @@ limitations under the License.
 
 package v1alpha2
 
-import (
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-)
-
-// GetBindingPhase of this Device.
-func (mg *Device) GetBindingPhase() runtimev1alpha1.BindingPhase {
-	return mg.Status.GetBindingPhase()
-}
-
-// GetClaimReference of this Device.
-func (mg *Device) GetClaimReference() *corev1.ObjectReference {
-	return mg.Spec.ClaimReference
-}
-
-// GetClassReference of this Device.
-func (mg *Device) GetClassReference() *corev1.ObjectReference {
-	return mg.Spec.ClassReference
-}
+import runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 
 // GetCondition of this Device.
 func (mg *Device) GetCondition(ct runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
-// GetProviderReference of this Device.
-func (mg *Device) GetProviderReference() *corev1.ObjectReference {
-	return mg.Spec.ProviderReference
+// GetDeletionPolicy of this Device.
+func (mg *Device) GetDeletionPolicy() runtimev1alpha1.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
 }
 
-// GetReclaimPolicy of this Device.
-func (mg *Device) GetReclaimPolicy() runtimev1alpha1.ReclaimPolicy {
-	return mg.Spec.ReclaimPolicy
+// GetProviderConfigReference of this Device.
+func (mg *Device) GetProviderConfigReference() *runtimev1alpha1.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+/*
+GetProviderReference of this Device.
+Deprecated: Use GetProviderConfigReference.
+*/
+func (mg *Device) GetProviderReference() *runtimev1alpha1.Reference {
+	return mg.Spec.ProviderReference
 }
 
 // GetWriteConnectionSecretToReference of this Device.
@@ -57,34 +47,27 @@ func (mg *Device) GetWriteConnectionSecretToReference() *runtimev1alpha1.SecretR
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
-// SetBindingPhase of this Device.
-func (mg *Device) SetBindingPhase(p runtimev1alpha1.BindingPhase) {
-	mg.Status.SetBindingPhase(p)
-}
-
-// SetClaimReference of this Device.
-func (mg *Device) SetClaimReference(r *corev1.ObjectReference) {
-	mg.Spec.ClaimReference = r
-}
-
-// SetClassReference of this Device.
-func (mg *Device) SetClassReference(r *corev1.ObjectReference) {
-	mg.Spec.ClassReference = r
-}
-
 // SetConditions of this Device.
 func (mg *Device) SetConditions(c ...runtimev1alpha1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
-// SetProviderReference of this Device.
-func (mg *Device) SetProviderReference(r *corev1.ObjectReference) {
-	mg.Spec.ProviderReference = r
+// SetDeletionPolicy of this Device.
+func (mg *Device) SetDeletionPolicy(r runtimev1alpha1.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
 }
 
-// SetReclaimPolicy of this Device.
-func (mg *Device) SetReclaimPolicy(r runtimev1alpha1.ReclaimPolicy) {
-	mg.Spec.ReclaimPolicy = r
+// SetProviderConfigReference of this Device.
+func (mg *Device) SetProviderConfigReference(r *runtimev1alpha1.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+/*
+SetProviderReference of this Device.
+Deprecated: Use SetProviderConfigReference.
+*/
+func (mg *Device) SetProviderReference(r *runtimev1alpha1.Reference) {
+	mg.Spec.ProviderReference = r
 }
 
 // SetWriteConnectionSecretToReference of this Device.

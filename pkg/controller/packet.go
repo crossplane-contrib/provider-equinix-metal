@@ -21,9 +21,9 @@ import (
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 
-	"github.com/packethost/crossplane-provider-packet/pkg/controller/ports/assignment"
-	"github.com/packethost/crossplane-provider-packet/pkg/controller/server/device"
-	"github.com/packethost/crossplane-provider-packet/pkg/controller/vlan/virtualnetwork"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/controller/ports/assignment"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/controller/server/device"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/controller/vlan/virtualnetwork"
 )
 
 // Setup creates all Equinix Metal controllers with the supplied logger and adds them to
@@ -31,9 +31,6 @@ import (
 func Setup(mgr ctrl.Manager, l logging.Logger) error {
 	for _, setup := range []func(ctrl.Manager, logging.Logger) error{
 		assignment.SetupAssignment,
-		device.SetupDeviceClaimScheduling,
-		device.SetupDeviceClaimDefaulting,
-		device.SetupDeviceClaimBinding,
 		device.SetupDevice,
 		virtualnetwork.SetupVirtualNetwork,
 	} {

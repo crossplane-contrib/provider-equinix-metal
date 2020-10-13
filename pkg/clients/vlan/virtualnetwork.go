@@ -22,8 +22,8 @@ import (
 	"github.com/packethost/packngo"
 	"github.com/pkg/errors"
 
-	"github.com/packethost/crossplane-provider-packet/apis/vlan/v1alpha1"
-	"github.com/packethost/crossplane-provider-packet/pkg/clients"
+	"github.com/packethost/crossplane-provider-equinix-metal/apis/vlan/v1alpha1"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 )
 
 const (

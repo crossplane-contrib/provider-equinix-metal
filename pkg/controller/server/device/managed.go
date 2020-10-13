@@ -26,10 +26,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1alpha2 "github.com/packethost/crossplane-provider-packet/apis/server/v1alpha2"
-	packetv1alpha2 "github.com/packethost/crossplane-provider-packet/apis/v1alpha2"
-	packetclient "github.com/packethost/crossplane-provider-packet/pkg/clients"
-	devicesclient "github.com/packethost/crossplane-provider-packet/pkg/clients/device"
+	v1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
+	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
+	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
@@ -83,8 +83,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 
 	p := &packetv1alpha2.Provider{}
-	n := meta.NamespacedNameOf(g.Spec.ProviderReference)
-	if err := c.kube.Get(ctx, n, p); err != nil {
+	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderReference.Name}, p); err != nil {
 		return nil, errors.Wrap(err, errGetProvider)
 	}
 
@@ -93,7 +92,7 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 	}
 
 	s := &corev1.Secret{}
-	n = types.NamespacedName{Namespace: p.Spec.CredentialsSecretRef.Namespace, Name: p.Spec.CredentialsSecretRef.Name}
+	n := types.NamespacedName{Namespace: p.Spec.CredentialsSecretRef.Namespace, Name: p.Spec.CredentialsSecretRef.Name}
 	if err := c.kube.Get(ctx, n, s); err != nil {
 		return nil, errors.Wrap(err, errGetProviderSecret)
 	}
@@ -143,7 +142,6 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	switch d.Status.AtProvider.State {
 	case v1alpha2.StateActive:
 		d.Status.SetConditions(runtimev1alpha1.Available())
-		resource.SetBindable(d)
 	case v1alpha2.StateProvisioning:
 		d.Status.SetConditions(runtimev1alpha1.Creating())
 	case v1alpha2.StateQueued,
