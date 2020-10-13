@@ -5,7 +5,6 @@ metadata:
   namespace: app-project1-dev
 spec:
   forProvider:
-    projectID: 93125c2a-8b78-4d4f-a3c4-7367d6b7cca8
     hostname: crossplane
     plan: c1.small.x86
     facility: any
@@ -15,4 +14,6 @@ spec:
     hardware_reservation_id: next_available
   providerRef:
     name: example-provider-packet
-  reclaimPolicy: Delete
+  writeConnectionSecretToRef:
+    name: devicea-conn
+    namespace: crossplane-system

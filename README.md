@@ -110,7 +110,6 @@ spec:
   writeConnectionSecretToRef:
     name: devices-creds
     namespace: crossplane-system
-  reclaimPolicy: Delete
 ```
 
 ```bash
