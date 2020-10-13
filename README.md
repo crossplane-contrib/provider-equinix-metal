@@ -1,6 +1,7 @@
 # Crossplane Equinix Metal Provider
 
 ![](https://img.shields.io/badge/Stability-Maintained-green.svg)
+![](https://img.shields.io/badge/Stability-Maintained-green.svg)
 
 ## Overview
 
@@ -150,7 +151,7 @@ secret/devices-creds deleted
 
 This Crossplane provider is alpha quality, not officially supported, and not intended for production use.
 
-Equinix Metal `Devices` can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volume, and SpotMarketRequests are not currently planned.  If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
+Equinix Metal devices, virtual networks, and ports can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volumes are not currently planned. If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
 
 ## Contributing
 
