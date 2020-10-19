@@ -1,11 +1,15 @@
 name: golangci-lint
 on:
   push:
+    paths-ignore:
+      - '**.md'
     tags:
       - v*
     branches:
       - master
   pull_request:
+    paths-ignore:
+      - '**.md'
 jobs:
   golangci:
     name: lint
@@ -34,4 +38,4 @@ jobs:
       - uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go }}
-      - run: go test -v ./...
+      - run: make test
