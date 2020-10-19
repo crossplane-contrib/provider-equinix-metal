@@ -26,7 +26,4 @@ jobs:
         with:
           release: 'crossplane'
           namespace: 'crossplane-system'
-          chart: 'crossplane-alpha/crossplane'
-          token: '${{ github.token }}'
-          repo: 'https://charts.crossplane.io/alpha'
-          repo-alias: 'crossplane-alpha'
+          chart: 'https://charts.crossplane.io/master/crossplane-0.13.0.tgz'
