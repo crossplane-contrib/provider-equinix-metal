@@ -3,27 +3,25 @@ name: Install Provider
 on: pull_request
 
 jobs:
-  lint-test:
+  install-provider:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Helm
-        run: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Fetch history
         run: git fetch --prune --unshallow
 
-      - name: Build
-        run: make
-
       - name: Create kind cluster
         uses: helm/kind-action@v1.0.0
 
-      - name: Namespace
-        run: kubectl create namespace crossplane-system
+      - name: Build
+        run: make build.all
 
-      - name: Install Crossplane
-        run: helm install --namespace crossplane-system crossplane https://charts.crossplane.io/master/crossplane-0.13.0.tgz
+      - name: Test
+        run: make test
+
+      - name: E2E
+        run: make e2e USE_HELM3=true
+
 
