@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
-	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
 	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device/fake"
 	packettest "github.com/packethost/crossplane-provider-equinix-metal/pkg/test"
@@ -118,7 +118,7 @@ func device(im ...deviceModifier) *v1alpha2.Device {
 		},
 		Spec: v1alpha2.DeviceSpec{
 			ResourceSpec: runtimev1alpha1.ResourceSpec{
-				ProviderReference: &runtimev1alpha1.Reference{Name: providerName},
+				ProviderConfigReference: &runtimev1alpha1.Reference{Name: providerName},
 				WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
 					Namespace: namespace,
 					Name:      connectionSecretName,
@@ -145,16 +145,18 @@ var _ managed.ExternalClient = &external{}
 var _ managed.ExternalConnecter = &connecter{}
 
 func TestConnect(t *testing.T) {
-	provider := packetv1alpha2.Provider{
+	provider := packetv1beta1.ProviderConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: providerName},
-		Spec: packetv1alpha2.ProviderSpec{
-			ProviderSpec: runtimev1alpha1.ProviderSpec{
-				CredentialsSecretRef: &runtimev1alpha1.SecretKeySelector{
-					SecretReference: runtimev1alpha1.SecretReference{
-						Namespace: namespace,
-						Name:      providerSecretName,
+		Spec: packetv1beta1.ProviderConfigSpec{
+			ProviderConfigSpec: runtimev1alpha1.ProviderConfigSpec{
+				Credentials: runtimev1alpha1.ProviderCredentials{
+					SecretRef: &runtimev1alpha1.SecretKeySelector{
+						SecretReference: runtimev1alpha1.SecretReference{
+							Namespace: namespace,
+							Name:      providerSecretName,
+						},
+						Key: providerSecretKey,
 					},
-					Key: providerSecretKey,
 				},
 			},
 		},
@@ -187,12 +189,16 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha2.Provider) = provider
+						*obj.(*packetv1beta1.ProviderConfig) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						*obj.(*corev1.Secret) = secret
 					}
 					return nil
 				}},
+				usage: resource.NewProviderConfigUsageTracker(&test.MockClient{
+					MockGet:    test.NewMockGetFn(nil),
+					MockUpdate: test.NewMockUpdateFn(nil),
+				}, &packetv1beta1.ProviderConfigUsage{}),
 				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) { return nil, nil },
 			},
 			args: args{
@@ -213,24 +219,32 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					return errorBoom
 				}},
+				usage: resource.NewProviderConfigUsageTracker(&test.MockClient{
+					MockGet:    test.NewMockGetFn(nil),
+					MockUpdate: test.NewMockUpdateFn(nil),
+				}, &packetv1beta1.ProviderConfigUsage{}),
 			},
 			args: args{ctx: context.Background(), mg: device()},
-			want: want{err: errors.Wrap(errorBoom, errGetProvider)},
+			want: want{err: errors.Wrap(errorBoom, errGetProviderConfig)},
 		},
 		"FailedToGetProviderSecret": {
 			conn: &connecter{
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha2.Provider) = provider
+						*obj.(*packetv1beta1.ProviderConfig) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						return errorBoom
 					}
 					return nil
 				}},
+				usage: resource.NewProviderConfigUsageTracker(&test.MockClient{
+					MockGet:    test.NewMockGetFn(nil),
+					MockUpdate: test.NewMockUpdateFn(nil),
+				}, &packetv1beta1.ProviderConfigUsage{}),
 			},
 			args: args{ctx: context.Background(), mg: device()},
-			want: want{err: errors.Wrap(errorBoom, errGetProviderSecret)},
+			want: want{err: errors.Wrap(errorBoom, errGetProviderConfigSecret)},
 		},
 		"ProviderSecretNil": {
 			conn: &connecter{
@@ -238,13 +252,17 @@ func TestConnect(t *testing.T) {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						nilSecretProvider := provider
-						nilSecretProvider.SetCredentialsSecretReference(nil)
-						*obj.(*packetv1alpha2.Provider) = nilSecretProvider
+						nilSecretProvider.Spec.Credentials.SecretRef = nil
+						*obj.(*packetv1beta1.ProviderConfig) = nilSecretProvider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						return errorBoom
 					}
 					return nil
 				}},
+				usage: resource.NewProviderConfigUsageTracker(&test.MockClient{
+					MockGet:    test.NewMockGetFn(nil),
+					MockUpdate: test.NewMockUpdateFn(nil),
+				}, &packetv1beta1.ProviderConfigUsage{}),
 			},
 			args: args{ctx: context.Background(), mg: device()},
 			want: want{err: errors.New(errProviderSecretNil)},
@@ -254,12 +272,16 @@ func TestConnect(t *testing.T) {
 				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
-						*obj.(*packetv1alpha2.Provider) = provider
+						*obj.(*packetv1beta1.ProviderConfig) = provider
 					case client.ObjectKey{Namespace: namespace, Name: providerSecretName}:
 						*obj.(*corev1.Secret) = secret
 					}
 					return nil
 				}},
+				usage: resource.NewProviderConfigUsageTracker(&test.MockClient{
+					MockGet:    test.NewMockGetFn(nil),
+					MockUpdate: test.NewMockUpdateFn(nil),
+				}, &packetv1beta1.ProviderConfigUsage{}),
 				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) {
 					return nil, errorBoom
 				},
