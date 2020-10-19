@@ -72,16 +72,18 @@ Get the project id from the Equinix Metal Portal or using the Equinix Metal CLI 
 
 ```bash
 cat << EOS | kubectl apply -f -
-apiVersion: packet.crossplane.io/v1alpha2
-kind: Provider
+apiVersion: packet.crossplane.io/v1beta1
+kind: ProviderConfig
 metadata:
-  name: packet-provider
+  name: default
 spec:
   projectID: $PROJECT_ID
-  credentialsSecretRef:
-    namespace: crossplane-system
-    name: packet-creds
-    key: key
+  credentials:
+    secretRef:
+      source: Secret
+      namespace: crossplane-system
+      name: packet-creds
+      key: key
 EOS
 ```
 
@@ -106,8 +108,6 @@ spec:
     tags:
     - crossplane
     - development
-  providerRef:
-    name: packet-provider
   writeConnectionSecretToRef:
     name: devices-creds
     namespace: crossplane-system
