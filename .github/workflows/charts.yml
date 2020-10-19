@@ -24,6 +24,7 @@ jobs:
       - name: Install Crossplane
         uses: 'deliverybot/helm@v1'
         with:
+          helm: helm3
           release: 'crossplane'
           namespace: 'crossplane-system'
           chart: 'https://charts.crossplane.io/master/crossplane-0.13.0.tgz'
