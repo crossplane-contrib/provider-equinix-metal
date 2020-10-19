@@ -1,4 +1,4 @@
-name: Lint and Test Charts
+name: Install Provider
 
 on: pull_request
 
@@ -6,25 +6,24 @@ jobs:
   lint-test:
     runs-on: ubuntu-latest
     steps:
+      - name: Install Helm
+        run: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: Fetch history
         run: git fetch --prune --unshallow
 
-      - name: Create kind cluster
-        uses: helm/kind-action@v1.0.0
-
       - name: Build
         run: make
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.0.0
 
       - name: Namespace
         run: kubectl create namespace crossplane-system
 
       - name: Install Crossplane
-        uses: 'deliverybot/helm@v1'
-        with:
-          helm: helm3
-          release: 'crossplane'
-          namespace: 'crossplane-system'
-          chart: 'https://charts.crossplane.io/master/crossplane-0.13.0.tgz'
+        run: helm install --namespace crossplane-system crossplane https://charts.crossplane.io/master/crossplane-0.13.0.tgz
+
