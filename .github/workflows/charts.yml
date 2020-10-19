@@ -1,0 +1,32 @@
+name: Lint and Test Charts
+
+on: pull_request
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Fetch history
+        run: git fetch --prune --unshallow
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.0.0
+
+      - name: Build
+        run: make
+
+      - name: Namespace
+        run: kubectl create namespace crossplane-system
+
+      - name: Install Crossplane
+        uses: 'deliverybot/helm@v1'
+        with:
+          release: 'crossplane'
+          namespace: 'crossplane-system'
+          chart: 'crossplane-alpha/crossplane'
+          token: '${{ github.token }}'
+          repo: 'https://charts.crossplane.io/alpha'
+          repo-alias: 'crossplane-alpha'
