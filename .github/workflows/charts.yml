@@ -6,6 +6,12 @@ jobs:
   install-provider:
     runs-on: ubuntu-latest
     steps:
+      - name: Install QEMU
+        run: DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends binfmt-support qemu-user-static
+
+      - name: Register QEMU with Docker
+        run: docker run --rm --privileged hypriot/qemu-register
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
