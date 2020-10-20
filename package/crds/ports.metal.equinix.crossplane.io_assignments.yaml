@@ -27,7 +27,7 @@ spec:
     categories:
     - crossplane
     - managed
-    - packet
+    - equinix
     kind: Assignment
     listKind: AssignmentList
     plural: assignments

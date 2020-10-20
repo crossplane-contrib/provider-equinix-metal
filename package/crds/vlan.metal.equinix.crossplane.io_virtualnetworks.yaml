@@ -33,7 +33,7 @@ spec:
     categories:
     - crossplane
     - managed
-    - packet
+    - equinix
     kind: VirtualNetwork
     listKind: VirtualNetworkList
     plural: virtualnetworks

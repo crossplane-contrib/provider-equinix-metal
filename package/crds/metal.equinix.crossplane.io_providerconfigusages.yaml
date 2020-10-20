@@ -21,6 +21,9 @@ spec:
     type: string
   group: metal.equinix.crossplane.io
   names:
+    categories:
+    - crossplane
+    - equinix
     kind: ProviderConfigUsage
     listKind: ProviderConfigUsageList
     plural: providerconfigusages

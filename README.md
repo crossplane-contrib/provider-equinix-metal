@@ -122,7 +122,7 @@ secret/devices-creds created
 To view the device in the cluster:
 
 ```bash
-$ kubectl get packet -o wide
+$ kubectl get equinix -o wide
 NAME                                            PROJECT-ID                             AGE   SECRET-NAME
 provider.metal.equinix.crossplane.io/packet-provider   0ac84673-b679-40c1-9de9-8a8792675515   38m   packet-creds
 

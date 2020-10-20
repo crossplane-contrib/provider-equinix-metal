@@ -39,7 +39,7 @@ spec:
     categories:
     - crossplane
     - managed
-    - packet
+    - equinix
     kind: Device
     listKind: DeviceList
     plural: devices
