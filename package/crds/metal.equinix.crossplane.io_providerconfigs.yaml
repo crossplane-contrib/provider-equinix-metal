@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: providerconfigs.packet.crossplane.io
+  name: providerconfigs.metal.equinix.crossplane.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .metadata.creationTimestamp
@@ -14,7 +14,7 @@ spec:
     name: SECRET-NAME
     priority: 1
     type: string
-  group: packet.crossplane.io
+  group: metal.equinix.crossplane.io
   names:
     kind: ProviderConfig
     listKind: ProviderConfigList

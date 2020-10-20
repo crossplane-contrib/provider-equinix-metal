@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: virtualnetworks.vlan.packet.crossplane.io
+  name: virtualnetworks.vlan.metal.equinix.crossplane.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.conditions[?(@.type=='Ready')].status
@@ -28,7 +28,7 @@ spec:
   - JSONPath: .metadata.creationTimestamp
     name: AGE
     type: date
-  group: vlan.packet.crossplane.io
+  group: vlan.metal.equinix.crossplane.io
   names:
     categories:
     - crossplane

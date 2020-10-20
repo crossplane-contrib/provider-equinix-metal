@@ -16,6 +16,6 @@ limitations under the License.
 
 // Package v1alpha1 contains vlan Equinix Metal resources.
 // +kubebuilder:object:generate=true
-// +groupName=vlan.packet.crossplane.io
+// +groupName=vlan.metal.equinix.crossplane.io
 // +versionName=v1alpha1
 package v1alpha1

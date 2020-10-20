@@ -49,8 +49,8 @@ const (
 	namespace  = "cool-namespace"
 	deviceName = "my-cool-device"
 
-	providerName       = "cool-packet"
-	providerSecretName = "cool-packet-secret"
+	providerName       = "cool-equinix-metal"
+	providerSecretName = "cool-equinix-metal-secret"
 	providerSecretKey  = "credentials"
 	providerSecretData = "definitelyjson"
 

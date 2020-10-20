@@ -25,7 +25,7 @@ import (
 
 // Equinix Metal type metadata.
 const (
-	Group   = "ports.packet.crossplane.io"
+	Group   = "ports.metal.equinix.crossplane.io"
 	Version = "v1alpha1"
 )
 

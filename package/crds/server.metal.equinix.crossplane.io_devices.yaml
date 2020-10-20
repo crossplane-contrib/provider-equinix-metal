@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: devices.server.packet.crossplane.io
+  name: devices.server.metal.equinix.crossplane.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.conditions[?(@.type=='Ready')].status
@@ -34,7 +34,7 @@ spec:
   - JSONPath: .metadata.creationTimestamp
     name: AGE
     type: date
-  group: server.packet.crossplane.io
+  group: server.metal.equinix.crossplane.io
   names:
     categories:
     - crossplane

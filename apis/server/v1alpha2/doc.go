@@ -16,6 +16,6 @@ limitations under the License.
 
 // Package v1alpha2 contains core Equinix Metal resources.
 // +kubebuilder:object:generate=true
-// +groupName=server.packet.crossplane.io
+// +groupName=server.metal.equinix.crossplane.io
 // +versionName=v1alpha2
 package v1alpha2
