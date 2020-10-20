@@ -35,6 +35,8 @@ jobs:
         go: [ '1.14' ]
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go }}
