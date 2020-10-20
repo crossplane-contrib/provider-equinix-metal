@@ -12,8 +12,6 @@ spec:
     operatingSystem: centos_7
     billingCycle: hourly
     hardware_reservation_id: next_available
-  providerRef:
-    name: example-provider-packet
   writeConnectionSecretToRef:
     name: devicea-conn
     namespace: crossplane-system

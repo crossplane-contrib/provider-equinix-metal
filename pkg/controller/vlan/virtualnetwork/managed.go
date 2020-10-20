@@ -26,7 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
 	"github.com/packethost/crossplane-provider-equinix-metal/apis/vlan/v1alpha1"
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	vlanclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/vlan"
@@ -41,16 +41,17 @@ import (
 
 // Error strings.
 const (
-	errManagedUpdateFailed  = "cannot update VirtualNetwork custom resource"
-	errProviderSecretNil    = "cannot find Secret reference on Provider"
-	errGetProvider          = "cannot get Provider"
-	errGetProviderSecret    = "cannot get Provider Secret"
-	errGenObservation       = "cannot generate observation"
-	errNewClient            = "cannot create new VirtualNetwork client"
-	errNotVirtualNetwork    = "managed resource is not a VirtualNetwork"
-	errGetVirtualNetwork    = "cannot get VirtualNetwork"
-	errCreateVirtualNetwork = "cannot create VirtualNetwork"
-	errDeleteVirtualNetwork = "cannot delete VirtualNetwork"
+	errManagedUpdateFailed     = "cannot update VirtualNetwork custom resource"
+	errProviderSecretNil       = "cannot find Secret reference on Provider"
+	errGetProviderConfig       = "cannot get ProviderConfig"
+	errTrackPCUsage            = "cannot track ProviderConfig usage"
+	errGetProviderConfigSecret = "cannot get ProviderConfig Secret"
+	errGenObservation          = "cannot generate observation"
+	errNewClient               = "cannot create new VirtualNetwork client"
+	errNotVirtualNetwork       = "managed resource is not a VirtualNetwork"
+	errGetVirtualNetwork       = "cannot get VirtualNetwork"
+	errCreateVirtualNetwork    = "cannot create VirtualNetwork"
+	errDeleteVirtualNetwork    = "cannot delete VirtualNetwork"
 )
 
 // SetupVirtualNetwork adds a controller that reconciles VirtualNetworks
@@ -59,7 +60,10 @@ func SetupVirtualNetwork(mgr ctrl.Manager, l logging.Logger) error {
 
 	r := managed.NewReconciler(mgr,
 		resource.ManagedKind(v1alpha1.VirtualNetworkGroupVersionKind),
-		managed.WithExternalConnecter(&connecter{kube: mgr.GetClient()}),
+		managed.WithExternalConnecter(&connecter{
+			kube:  mgr.GetClient(),
+			usage: resource.NewProviderConfigUsageTracker(mgr.GetClient(), &packetv1beta1.ProviderConfigUsage{}),
+		}),
 		managed.WithConnectionPublishers(),
 		managed.WithLogger(l.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -73,6 +77,7 @@ func SetupVirtualNetwork(mgr ctrl.Manager, l logging.Logger) error {
 
 type connecter struct {
 	kube        client.Client
+	usage       resource.Tracker
 	newClientFn func(ctx context.Context, credentials []byte, projectID string) (vlanclient.ClientWithDefaults, error)
 }
 
@@ -82,25 +87,30 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.New(errNotVirtualNetwork)
 	}
 
-	p := &packetv1alpha2.Provider{}
-	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderReference.Name}, p); err != nil {
-		return nil, errors.Wrap(err, errGetProvider)
+	if err := c.usage.Track(ctx, mg); err != nil {
+		return nil, errors.Wrap(err, errTrackPCUsage)
 	}
 
-	if p.GetCredentialsSecretReference() == nil {
+	p := &packetv1beta1.ProviderConfig{}
+	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderConfigReference.Name}, p); err != nil {
+		return nil, errors.Wrap(err, errGetProviderConfig)
+	}
+
+	ref := p.Spec.Credentials.SecretRef
+	if ref == nil {
 		return nil, errors.New(errProviderSecretNil)
 	}
 
 	s := &corev1.Secret{}
-	n := types.NamespacedName{Namespace: p.Spec.CredentialsSecretRef.Namespace, Name: p.Spec.CredentialsSecretRef.Name}
+	n := types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}
 	if err := c.kube.Get(ctx, n, s); err != nil {
-		return nil, errors.Wrap(err, errGetProviderSecret)
+		return nil, errors.Wrap(err, errGetProviderConfigSecret)
 	}
 	newClientFn := vlanclient.NewClient
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
-	client, err := newClientFn(ctx, s.Data[p.Spec.CredentialsSecretRef.Key], p.Spec.ProjectID)
+	client, err := newClientFn(ctx, s.Data[ref.Key], p.Spec.ProjectID)
 
 	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }

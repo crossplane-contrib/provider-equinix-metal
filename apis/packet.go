@@ -22,14 +22,14 @@ import (
 
 	portsv1alpha1 "github.com/packethost/crossplane-provider-equinix-metal/apis/ports/v1alpha1"
 	serverv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
-	packetv1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1alpha2"
+	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
 	vlanv1alpha1 "github.com/packethost/crossplane-provider-equinix-metal/apis/vlan/v1alpha1"
 )
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
-		packetv1alpha2.SchemeBuilder.AddToScheme,
+		packetv1beta1.SchemeBuilder.AddToScheme,
 		portsv1alpha1.SchemeBuilder.AddToScheme,
 		serverv1alpha2.SchemeBuilder.AddToScheme,
 		vlanv1alpha1.SchemeBuilder.AddToScheme,
