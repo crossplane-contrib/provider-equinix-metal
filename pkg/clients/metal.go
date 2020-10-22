@@ -27,18 +27,18 @@ import (
 	"github.com/packethost/crossplane-provider-equinix-metal/pkg/version"
 )
 
-// PacketClient is a structure that embeds Credentials for the purposes of
+// Client is a structure that embeds Credentials for the purposes of
 // defaulting to those credential supplied values during Equinix Metal API usage. This
 // allows for the Device resource to not require a ProjectID, for example, since
 // the provider was configured with a ProjectID.
-type PacketClient struct {
+type Client struct {
 	*Credentials
 
 	Client *packngo.Client
 }
 
 // NewClient returns an Equinix Metal Client configured with credentials
-func NewClient(ctx context.Context, credentials []byte) (*PacketClient, error) {
+func NewClient(ctx context.Context, credentials []byte) (*Client, error) {
 	config := &Credentials{}
 	if err := json.Unmarshal(credentials, config); err != nil {
 		return nil, err
@@ -49,9 +49,9 @@ func NewClient(ctx context.Context, credentials []byte) (*PacketClient, error) {
 		return nil, fmt.Errorf("Invalid APIKey in credentials")
 	}
 	apiClient := packngo.NewClientWithAuth("crossplane", apiKey, nil)
-	apiClient.UserAgent = fmt.Sprintf("crossplane-provider-packet/%s %s", version.Version, apiClient.UserAgent)
+	apiClient.UserAgent = fmt.Sprintf("crossplane-provider-equinix-metal/%s %s", version.Version, apiClient.UserAgent)
 
-	client := &PacketClient{
+	client := &Client{
 		Client:      apiClient,
 		Credentials: config,
 	}

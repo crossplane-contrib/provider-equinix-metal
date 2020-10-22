@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: providerconfigusages.packet.crossplane.io
+  name: providerconfigusages.metal.equinix.com
 spec:
   additionalPrinterColumns:
   - JSONPath: .metadata.creationTimestamp
@@ -19,8 +19,11 @@ spec:
   - JSONPath: .resourceRef.name
     name: RESOURCE-NAME
     type: string
-  group: packet.crossplane.io
+  group: metal.equinix.com
   names:
+    categories:
+    - crossplane
+    - equinix
     kind: ProviderConfigUsage
     listKind: ProviderConfigUsageList
     plural: providerconfigusages

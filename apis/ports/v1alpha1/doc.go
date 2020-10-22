@@ -16,6 +16,6 @@ limitations under the License.
 
 // Package v1alpha1 contains ports Equinix Metal resources.
 // +kubebuilder:object:generate=true
-// +groupName=ports.packet.crossplane.io
+// +groupName=ports.metal.equinix.com
 // +versionName=v1alpha1
 package v1alpha1

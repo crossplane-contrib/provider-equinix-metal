@@ -1,5 +1,5 @@
 version: "2"
-domain: packet.crossplane.io
+domain: metal.equinix.com
 repo: github.com/packethost/crossplane-provider-equinix-metal
 resources:
 - group: server

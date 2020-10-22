@@ -16,6 +16,6 @@ limitations under the License.
 
 // Package v1beta1 contains core Equinix Metal resources.
 // +kubebuilder:object:generate=true
-// +groupName=packet.crossplane.io
+// +groupName=metal.equinix.com
 // +versionName=v1beta1
 package v1beta1

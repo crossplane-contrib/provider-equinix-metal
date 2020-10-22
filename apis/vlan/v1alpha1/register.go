@@ -25,7 +25,7 @@ import (
 
 // Equinix Metal type metadata.
 const (
-	Group   = "vlan.packet.crossplane.io"
+	Group   = "vlan.metal.equinix.com"
 	Version = "v1alpha1"
 )
 

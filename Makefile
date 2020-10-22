@@ -120,8 +120,8 @@ run: go.build
 
 dev: $(KIND) $(KUBECTL)
 	@$(INFO) Creating kind cluster
-	@$(KIND) create cluster --name=provider-packet-dev
-	@$(KUBECTL) cluster-info --context kind-provider-packet-dev
+	@$(KIND) create cluster --name=provider-equinix-metal-dev
+	@$(KUBECTL) cluster-info --context kind-provider-equinix-metal-dev
 	@$(INFO) Installing Crossplane CRDs
 	@$(KUBECTL) apply -k https://github.com/crossplane/crossplane//cluster?ref=master
 	@$(INFO) Installing Provider Equinix Metal CRDs
@@ -131,7 +131,7 @@ dev: $(KIND) $(KUBECTL)
 
 dev-clean: $(KIND) $(KUBECTL)
 	@$(INFO) Deleting kind cluster
-	@$(KIND) delete cluster --name=provider-packet-dev
+	@$(KIND) delete cluster --name=provider-equinix-metal-dev
 
 .PHONY: cobertura submodules fallthrough test-integration run go-integration dev dev-clean crds.clean
 
