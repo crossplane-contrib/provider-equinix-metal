@@ -72,7 +72,7 @@ Get the project id from the Equinix Metal Portal or using the Equinix Metal CLI 
 
 ```bash
 cat << EOS | kubectl apply -f -
-apiVersion: metal.equinix.crossplane.io/v1beta1
+apiVersion: metal.equinix.com/v1beta1
 kind: ProviderConfig
 metadata:
   name: default
@@ -92,7 +92,7 @@ EOS
 Save the following as `device.yaml`:
 
 ```yaml
-apiVersion: server.metal.equinix.crossplane.io/v1alpha2
+apiVersion: server.metal.equinix.com/v1alpha2
 kind: Device
 metadata:
   name: devices
@@ -115,7 +115,7 @@ spec:
 
 ```bash
 $ kubectl create -f device.yaml
-device.server.metal.equinix.crossplane.io/devices created
+device.server.metal.equinix.com/devices created
 secret/devices-creds created
 ```
 
@@ -124,10 +124,10 @@ To view the device in the cluster:
 ```bash
 $ kubectl get equinix -o wide
 NAME                                            PROJECT-ID                             AGE   SECRET-NAME
-provider.metal.equinix.crossplane.io/packet-provider   0ac84673-b679-40c1-9de9-8a8792675515   38m   packet-creds
+provider.metal.equinix.com/packet-provider   0ac84673-b679-40c1-9de9-8a8792675515   38m   packet-creds
 
 NAME                                         READY   SYNCED   STATE    ID                                     HOSTNAME     FACILITY   IPV4            RECLAIM-POLICY   AGE
-device.server.metal.equinix.crossplane.io/devices   True    True     active   1c73767a-e16a-485c-89b4-4b553e1458b3   crossplane   sjc1       139.178.88.35   Delete           19m
+device.server.metal.equinix.com/devices   True    True     active   1c73767a-e16a-485c-89b4-4b553e1458b3   crossplane   sjc1       139.178.88.35   Delete           19m
 ```
 
 SSH Connection credentials (including IP address, username, and password) can be found in the provider managed secret defined by `writeConnectionSecretToRef`.
@@ -143,7 +143,7 @@ To delete the device:
 
 ```bash
 $ kubectl delete -f device.yaml
-device.server.metal.equinix.crossplane.io/devices deleted
+device.server.metal.equinix.com/devices deleted
 secret/devices-creds deleted
 ```
 

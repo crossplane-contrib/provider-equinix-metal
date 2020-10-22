@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: providerconfigusages.metal.equinix.crossplane.io
+  name: providerconfigusages.metal.equinix.com
 spec:
   additionalPrinterColumns:
   - JSONPath: .metadata.creationTimestamp
@@ -19,7 +19,7 @@ spec:
   - JSONPath: .resourceRef.name
     name: RESOURCE-NAME
     type: string
-  group: metal.equinix.crossplane.io
+  group: metal.equinix.com
   names:
     categories:
     - crossplane

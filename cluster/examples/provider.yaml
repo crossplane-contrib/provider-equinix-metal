@@ -8,7 +8,7 @@ type: Opaque
 data:
   credentials: BASE64ENCODED_PACKET_PROVIDER_CREDS
 ---
-apiVersion: metal.equinix.crossplane.io/v1beta1
+apiVersion: metal.equinix.com/v1beta1
 kind: ProviderConfig
 metadata:
   name: default

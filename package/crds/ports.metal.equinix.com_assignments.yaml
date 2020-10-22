@@ -4,7 +4,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: assignments.ports.metal.equinix.crossplane.io
+  name: assignments.ports.metal.equinix.com
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.conditions[?(@.type=='Ready')].status
@@ -22,7 +22,7 @@ spec:
   - JSONPath: .metadata.creationTimestamp
     name: AGE
     type: date
-  group: ports.metal.equinix.crossplane.io
+  group: ports.metal.equinix.com
   names:
     categories:
     - crossplane

@@ -25,7 +25,7 @@ import (
 
 // Equinix Metal type metadata.
 const (
-	Group   = "metal.equinix.crossplane.io"
+	Group   = "metal.equinix.com"
 	Version = "v1beta1"
 )
 
