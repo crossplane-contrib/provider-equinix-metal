@@ -28,7 +28,7 @@ var _ device.ClientWithDefaults = &MockClient{}
 type MockClient struct {
 	MockCreate func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
 	MockUpdate func(deviceID string, createRequest *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
-	MockDelete func(deviceID string) (*packngo.Response, error)
+	MockDelete func(deviceID string, force bool) (*packngo.Response, error)
 	MockGet    func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
 
 	MockDeviceToNetworkType func(deviceID string, networkType string) (*packngo.Device, error)
@@ -49,8 +49,8 @@ func (c *MockClient) Update(deviceID string, createRequest *packngo.DeviceUpdate
 }
 
 // Delete calls the MockClient's MockDelete function.
-func (c *MockClient) Delete(deviceID string) (*packngo.Response, error) {
-	return c.MockDelete(deviceID)
+func (c *MockClient) Delete(deviceID string, force bool) (*packngo.Response, error) {
+	return c.MockDelete(deviceID, false)
 }
 
 // Get calls the MockClient's MockGet function.

@@ -325,14 +325,14 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateActive,
-								ProvisionPer: float32(100),
-								AlwaysPXE:    *alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
+						d := &packngo.Device{
+							State:        v1alpha2.StateActive,
+							ProvisionPer: float32(100),
+							AlwaysPXE:    *alwaysPXE,
+						}
+						// TODO(displague) MOCK THIS
+						client.DevicePorts.Convert(d, networkType)
+						return d, nil, nil
 					}},
 			},
 			args: args{
@@ -360,14 +360,14 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateActive,
-								ProvisionPer: float32(100),
-								AlwaysPXE:    !*alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
+						d := &packngo.Device{
+							State:        v1alpha2.StateActive,
+							ProvisionPer: float32(100),
+							AlwaysPXE:    !*alwaysPXE,
+						}
+						// TODO(displague) MOCK THIS
+						client.DevicePorts.Convert(d, networkType)
+						return d, nil, nil
 					},
 				},
 			},
@@ -396,14 +396,14 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateProvisioning,
-								ProvisionPer: float32(50),
-								AlwaysPXE:    *alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
+						d := &packngo.Device{
+							State:        v1alpha2.StateProvisioning,
+							ProvisionPer: float32(50),
+							AlwaysPXE:    *alwaysPXE,
+						}
+						// TODO(displague) MOCK THIS
+						client.DevicePorts.Convert(d, networkType)
+						return d, nil, nil
 					}},
 			},
 			args: args{
@@ -432,14 +432,14 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateQueued,
-								ProvisionPer: float32(50),
-								AlwaysPXE:    *alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
+						d := &packngo.Device{
+							State:        v1alpha2.StateQueued,
+							ProvisionPer: float32(50),
+							AlwaysPXE:    *alwaysPXE,
+						}
+						// TODO(displague) MOCK THIS
+						client.DevicePorts.Convert(d, networkType)
+						return d, nil, nil
 					}},
 			},
 			args: args{
@@ -546,11 +546,12 @@ func TestCreate(t *testing.T) {
 			client: &external{client: &fake.MockClient{
 				MockGetProjectID: projectIDFromCredentials,
 				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							ID: deviceName,
-						},
-					}, nil, nil
+					d := &packngo.Device{
+						ID: deviceName,
+					}
+					// TODO(displague) MOCK THIS
+					client.DevicePorts.Convert(d, networkType)
+					return d, nil, nil
 				}},
 				kube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(nil),
@@ -658,10 +659,12 @@ func TestUpdate(t *testing.T) {
 					return &packngo.Device{}, nil
 				},
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw:   packngo.DeviceRaw{},
+					d := &packngo.Device{
 						NetworkType: "other-type",
-					}, nil, nil
+					}
+					// TODO(displague) MOCK THIS (change other-type to something valid but not the desired value)
+					client.DevicePorts.Convert(d, "other-type")
+					return d, nil, nil
 				},
 			}},
 			args: args{
@@ -678,11 +681,11 @@ func TestUpdate(t *testing.T) {
 					return &packngo.Device{}, nil, nil
 				},
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							AlwaysPXE: false,
-						},
-					}, nil, nil
+					d := &packngo.Device{
+						AlwaysPXE: false,
+					}
+
+					return d, nil, nil
 				},
 			}},
 			args: args{
@@ -761,7 +764,7 @@ func TestDelete(t *testing.T) {
 	}{
 		"DeletedInstance": {
 			client: &external{client: &fake.MockClient{
-				MockDelete: func(deviceID string) (*packngo.Response, error) {
+				MockDelete: func(deviceID string, force bool) (*packngo.Response, error) {
 					return nil, nil
 				}},
 			},
@@ -786,7 +789,7 @@ func TestDelete(t *testing.T) {
 		},
 		"FailedToDeleteInstance": {
 			client: &external{client: &fake.MockClient{
-				MockDelete: func(deviceID string) (*packngo.Response, error) {
+				MockDelete: func(deviceID string, force bool) (*packngo.Response, error) {
 					return nil, errorBoom
 				},
 			}},

@@ -228,6 +228,6 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 	d.SetConditions(runtimev1alpha1.Deleting())
 
-	_, err := e.client.Delete(meta.GetExternalName(d))
+	_, err := e.client.Delete(meta.GetExternalName(d), false)
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteDevice)
 }
