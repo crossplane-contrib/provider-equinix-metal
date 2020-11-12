@@ -1,7 +1,34 @@
 apiVersion: meta.pkg.crossplane.io/v1alpha1
 kind: Provider
 metadata:
-  name: equinix-metal
+  name: provider-equinix-metal
+  annotations:
+    company: Equinix Metal
+    maintainer: Equinix Metal Maintainers <support@equinixmetal.com>
+    source: github.com/packethost/crossplane-provider-equinix-metal
+    license: Apache-2.0
+
+    descriptionShort: |
+      The Equinix Metal Crossplane provider enables bare metal infrastructure
+      management for Equinix Metal.
+     
+    description: |
+      The Equinix Metal Crossplane provider adds support for managing Equinix
+      Metal resources in Kubernetes.
+    
+    readme: |
+      `provider-equinix-metal` is the Crossplane infrastructure provider for
+      [Equinix Metal](https://metal.equinix.com/).
+
+      Available resources and their fields can be found in the [CRD
+      Docs](https://doc.crds.dev/github.com/packethost/crossplane-provider-equinix-metal).
+
+      If you encounter an issue please reach out on the #equinix-metal channel
+      in [slack.crossplane.io](https://slack.crossplane.io) and create an issue
+      in the
+      [packethost/crossplane-provider-equinix-metal](https://github.com/packethost/crossplane-provider-equinix-metal)
+      repo.
+
 spec:
   controller:
     image: equinix/crossplane-provider-equinix-metal-controller:VERSION
