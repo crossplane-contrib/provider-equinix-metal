@@ -79,8 +79,8 @@ metadata:
 spec:
   projectID: $PROJECT_ID
   credentials:
+    source: Secret
     secretRef:
-      source: Secret
       namespace: crossplane-system
       name: packet-creds
       key: key
