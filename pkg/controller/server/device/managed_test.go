@@ -72,11 +72,11 @@ var (
 	// NetworkType is computed from port, bonding, and IP configuration
 	// test values are provided for easy mocking
 	mockNetworkTypeConfigs = map[string]struct {
-		Ports   []packngo.Port
-		Network []*packngo.IPAddressAssignment
+		NetworkPorts []packngo.Port
+		Network      []*packngo.IPAddressAssignment
 	}{
 		packngo.NetworkTypeL2Bonded: {
-			Ports: []packngo.Port{{
+			NetworkPorts: []packngo.Port{{
 				Name:        "bond0",
 				Type:        "NetworkBondPort",
 				NetworkType: networkType,
@@ -96,7 +96,7 @@ var (
 		},
 
 		packngo.NetworkTypeL3: {
-			Ports: []packngo.Port{{
+			NetworkPorts: []packngo.Port{{
 				Name:        "bond0",
 				Type:        "NetworkBondPort",
 				NetworkType: networkType,
@@ -116,7 +116,7 @@ var (
 		},
 
 		packngo.NetworkTypeHybrid: {
-			Ports: []packngo.Port{{
+			NetworkPorts: []packngo.Port{{
 				Name:        "bond0",
 				Type:        "NetworkBondPort",
 				NetworkType: networkType,
@@ -410,9 +410,6 @@ func TestObserve(t *testing.T) {
 						}
 						return d, nil, nil
 					},
-					MockConvertDevice: func(d *packngo.Device, networkType string) error {
-						return nil
-					},
 				},
 			},
 			args: args{
@@ -447,9 +444,6 @@ func TestObserve(t *testing.T) {
 						}
 						return d, nil, nil
 					},
-					MockConvertDevice: func(d *packngo.Device, networkType string) error {
-						return nil
-					},
 				},
 			},
 			args: args{
@@ -483,9 +477,6 @@ func TestObserve(t *testing.T) {
 							AlwaysPXE:    *alwaysPXE,
 						}
 						return d, nil, nil
-					},
-					MockConvertDevice: func(d *packngo.Device, networkType string) error {
-						return nil
 					},
 					MockDeviceNetworkType: func(_ string) (string, error) {
 						return networkType, nil
@@ -525,9 +516,6 @@ func TestObserve(t *testing.T) {
 						}
 
 						return d, nil, nil
-					},
-					MockConvertDevice: func(d *packngo.Device, networkType string) error {
-						return nil
 					},
 				},
 			},
@@ -642,9 +630,6 @@ func TestCreate(t *testing.T) {
 
 						return d, nil, nil
 					},
-					MockConvertDevice: func(d *packngo.Device, networkType string) error {
-						return nil
-					},
 				},
 				kube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(nil),
@@ -748,26 +733,16 @@ func TestUpdate(t *testing.T) {
 		},
 		"UpdatedInstanceNetworkType": {
 			client: &external{client: &fake.MockClient{
-				MockDeviceToNetworkType: func(deviceID string, networkType string) (*packngo.Device, error) {
-					return &packngo.Device{}, nil
-				},
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
 					d := &packngo.Device{}
+					target := packngo.NetworkTypeHybrid
+					d.Network = mockNetworkTypeConfigs[target].Network
+					d.NetworkPorts = mockNetworkTypeConfigs[target].NetworkPorts
+
 					return d, nil, nil
 				},
-				MockUpdate: func(_ string, _ *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{}, &packngo.Response{}, nil
-				},
-				MockConvertDevice: func(d *packngo.Device, networkType string) error {
-					d.NetworkPorts = mockNetworkTypeConfigs[packngo.NetworkTypeHybrid].Ports
-					d.Network = mockNetworkTypeConfigs[packngo.NetworkTypeHybrid].Network
-
-					return nil
-				},
-				MockDeviceNetworkType: func(_ string) (string, error) {
-					// mock something valid but not what ConvertDevice received
-					// Tests should not send try to convert to this type
-					return packngo.NetworkTypeL2Bonded, nil
+				MockDeviceToNetworkType: func(deviceID string, networkType string) (*packngo.Device, error) {
+					return nil, nil
 				},
 			}},
 			args: args{
