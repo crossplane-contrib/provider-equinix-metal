@@ -50,6 +50,7 @@ type Client interface {
 type PortsClient interface {
 	DeviceToNetworkType(string, string) (*packngo.Device, error)
 	DeviceNetworkType(string) (string, error)
+	ConvertDevice(*packngo.Device, string) error
 }
 
 // build-time test that the interface is implemented

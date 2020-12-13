@@ -91,16 +91,10 @@ spec:
                 hostname:
                   type: string
                 ipAddresses:
+                  description: IPAddresses will be attached to the device. These addresses are drawn from existing reservations.
                   items:
-                    properties:
-                      address_family:
-                        type: integer
-                      public:
-                        type: boolean
-                    required:
-                    - address_family
-                    - public
-                    type: object
+                    $ref: '#/definitions/github.com~1packethost~1packngo~0IPAddressCreateRequest'
+                    description: IPAddress is a packngo.IPAddressCreateRequest used for managing IP addresses at Device, at creation and observer time.
                   type: array
                 ipxeScriptUrl:
                   type: string

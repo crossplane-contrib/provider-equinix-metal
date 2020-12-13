@@ -58,10 +58,88 @@ const (
 )
 
 var (
-	errorBoom   = errors.New("boom")
-	networkType = "cool-type"
-	truthy      = true
-	alwaysPXE   = &truthy
+	errorBoom = errors.New("boom")
+
+	// Use layer2-individual as the default, empty packngo.Device{} will
+	// self-detect as layer2-individual based on port and bonding configuration.
+	// layer3, is the default for real new devices.
+	networkType = packngo.NetworkTypeL2Individual
+
+	truthy    = true
+	alwaysPXE = &truthy
+
+	// mockNetworkTypeConfigs provides easy mocking for NetworkType.
+	// NetworkType is computed from port, bonding, and IP configuration
+	// test values are provided for easy mocking
+	mockNetworkTypeConfigs = map[string]struct {
+		Ports   []packngo.Port
+		Network []*packngo.IPAddressAssignment
+	}{
+		packngo.NetworkTypeL2Bonded: {
+			Ports: []packngo.Port{{
+				Name:        "bond0",
+				Type:        "NetworkBondPort",
+				NetworkType: networkType,
+				Data:        packngo.PortData{Bonded: true},
+			},
+				{
+					Name: "eth0",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: true},
+					Bond: &packngo.BondData{Name: "bond0"},
+				}},
+			Network: []*packngo.IPAddressAssignment{{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Management: false,
+				},
+			}},
+		},
+
+		packngo.NetworkTypeL3: {
+			Ports: []packngo.Port{{
+				Name:        "bond0",
+				Type:        "NetworkBondPort",
+				NetworkType: networkType,
+				Data:        packngo.PortData{Bonded: true},
+			},
+				{
+					Name: "eth0",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: true},
+					Bond: &packngo.BondData{Name: "bond0"},
+				}},
+			Network: []*packngo.IPAddressAssignment{{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Management: true,
+				},
+			}},
+		},
+
+		packngo.NetworkTypeHybrid: {
+			Ports: []packngo.Port{{
+				Name:        "bond0",
+				Type:        "NetworkBondPort",
+				NetworkType: networkType,
+				Data:        packngo.PortData{Bonded: true},
+			},
+				{
+					Name: "eth0",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: true},
+					Bond: &packngo.BondData{Name: "bond0"},
+				},
+				{
+					Name: "eth1",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: false},
+				}},
+			Network: []*packngo.IPAddressAssignment{{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Management: true,
+				},
+			}},
+		},
+	}
 )
 
 type strange struct {
@@ -330,10 +408,12 @@ func TestObserve(t *testing.T) {
 							ProvisionPer: float32(100),
 							AlwaysPXE:    *alwaysPXE,
 						}
-						// TODO(displague) MOCK THIS
-						client.DevicePorts.Convert(d, networkType)
 						return d, nil, nil
-					}},
+					},
+					MockConvertDevice: func(d *packngo.Device, networkType string) error {
+						return nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -365,9 +445,10 @@ func TestObserve(t *testing.T) {
 							ProvisionPer: float32(100),
 							AlwaysPXE:    !*alwaysPXE,
 						}
-						// TODO(displague) MOCK THIS
-						client.DevicePorts.Convert(d, networkType)
 						return d, nil, nil
+					},
+					MockConvertDevice: func(d *packngo.Device, networkType string) error {
+						return nil
 					},
 				},
 			},
@@ -401,10 +482,15 @@ func TestObserve(t *testing.T) {
 							ProvisionPer: float32(50),
 							AlwaysPXE:    *alwaysPXE,
 						}
-						// TODO(displague) MOCK THIS
-						client.DevicePorts.Convert(d, networkType)
 						return d, nil, nil
-					}},
+					},
+					MockConvertDevice: func(d *packngo.Device, networkType string) error {
+						return nil
+					},
+					MockDeviceNetworkType: func(_ string) (string, error) {
+						return networkType, nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -437,10 +523,13 @@ func TestObserve(t *testing.T) {
 							ProvisionPer: float32(50),
 							AlwaysPXE:    *alwaysPXE,
 						}
-						// TODO(displague) MOCK THIS
-						client.DevicePorts.Convert(d, networkType)
+
 						return d, nil, nil
-					}},
+					},
+					MockConvertDevice: func(d *packngo.Device, networkType string) error {
+						return nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -543,16 +632,20 @@ func TestCreate(t *testing.T) {
 		want   want
 	}{
 		"CreatedInstance": {
-			client: &external{client: &fake.MockClient{
-				MockGetProjectID: projectIDFromCredentials,
-				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
-					d := &packngo.Device{
-						ID: deviceName,
-					}
-					// TODO(displague) MOCK THIS
-					client.DevicePorts.Convert(d, networkType)
-					return d, nil, nil
-				}},
+			client: &external{
+				client: &fake.MockClient{
+					MockGetProjectID: projectIDFromCredentials,
+					MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
+						d := &packngo.Device{
+							ID: deviceName,
+						}
+
+						return d, nil, nil
+					},
+					MockConvertDevice: func(d *packngo.Device, networkType string) error {
+						return nil
+					},
+				},
 				kube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
@@ -659,12 +752,22 @@ func TestUpdate(t *testing.T) {
 					return &packngo.Device{}, nil
 				},
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					d := &packngo.Device{
-						NetworkType: "other-type",
-					}
-					// TODO(displague) MOCK THIS (change other-type to something valid but not the desired value)
-					client.DevicePorts.Convert(d, "other-type")
+					d := &packngo.Device{}
 					return d, nil, nil
+				},
+				MockUpdate: func(_ string, _ *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error) {
+					return &packngo.Device{}, &packngo.Response{}, nil
+				},
+				MockConvertDevice: func(d *packngo.Device, networkType string) error {
+					d.NetworkPorts = mockNetworkTypeConfigs[packngo.NetworkTypeHybrid].Ports
+					d.Network = mockNetworkTypeConfigs[packngo.NetworkTypeHybrid].Network
+
+					return nil
+				},
+				MockDeviceNetworkType: func(_ string) (string, error) {
+					// mock something valid but not what ConvertDevice received
+					// Tests should not send try to convert to this type
+					return packngo.NetworkTypeL2Bonded, nil
 				},
 			}},
 			args: args{

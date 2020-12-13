@@ -97,6 +97,10 @@ type DeviceList struct {
 	Items           []Device `json:"items"`
 }
 
+// IPAddress is a packngo.IPAddressCreateRequest used for managing IP addresses
+// at Device, at creation and observer time.
+type IPAddress packngo.IPAddressCreateRequest
+
 // DeviceParameters define the desired state of an Equinix Metal device.
 // https://metal.equinix.com/developers/api/#devices
 //
@@ -171,9 +175,11 @@ type DeviceParameters struct {
 	// +optional
 	Features map[string]string `json:"features,omitempty"`
 
-	// +immutable
-	// +optional
-	IPAddresses []packngo.IPAddressCreateRequest `json:"ipAddresses,omitempty"`
+	// IPAddresses will be attached to the device. These addresses are drawn
+	// from existing reservations.
+	//
+	// +immutable +optional
+	IPAddresses []IPAddress `json:"ipAddresses,omitempty"`
 }
 
 // DeviceObservation is used to reflect in the Kubernetes API, the observed
