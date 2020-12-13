@@ -91,10 +91,24 @@ spec:
                 hostname:
                   type: string
                 ipAddresses:
-                  description: IPAddresses will be attached to the device. These addresses are drawn from existing reservations.
+                  description: IPAddresses will be attached to the device. These addresses can be drawn from existing reservations.
                   items:
-                    $ref: '#/definitions/github.com~1packethost~1packngo~0IPAddressCreateRequest'
                     description: IPAddress is a packngo.IPAddressCreateRequest used for managing IP addresses at Device, at creation and observer time.
+                    properties:
+                      address_family:
+                        type: integer
+                      cidr:
+                        type: integer
+                      ip_reservations:
+                        items:
+                          type: string
+                        type: array
+                      public:
+                        type: boolean
+                    required:
+                    - address_family
+                    - public
+                    type: object
                   type: array
                 ipxeScriptUrl:
                   type: string

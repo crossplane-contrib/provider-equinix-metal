@@ -18,7 +18,6 @@ package v1alpha2
 
 import (
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
-	"github.com/packethost/packngo"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -99,7 +98,12 @@ type DeviceList struct {
 
 // IPAddress is a packngo.IPAddressCreateRequest used for managing IP addresses
 // at Device, at creation and observer time.
-type IPAddress packngo.IPAddressCreateRequest
+type IPAddress struct {
+	AddressFamily int      `json:"address_family"`
+	Public        bool     `json:"public"`
+	CIDR          int      `json:"cidr,omitempty"`
+	Reservations  []string `json:"ip_reservations,omitempty"`
+}
 
 // DeviceParameters define the desired state of an Equinix Metal device.
 // https://metal.equinix.com/developers/api/#devices
@@ -175,7 +179,7 @@ type DeviceParameters struct {
 	// +optional
 	Features map[string]string `json:"features,omitempty"`
 
-	// IPAddresses will be attached to the device. These addresses are drawn
+	// IPAddresses will be attached to the device. These addresses can be drawn
 	// from existing reservations.
 	//
 	// +immutable +optional

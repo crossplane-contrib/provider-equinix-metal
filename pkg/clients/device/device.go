@@ -92,6 +92,16 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 
 // CreateFromDevice return packngo.DeviceCreateRequest created from Kubernetes
 func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreateRequest {
+	ips := []packngo.IPAddressCreateRequest{}
+	for _, ip := range d.Spec.ForProvider.IPAddresses {
+		ips = append(ips, packngo.IPAddressCreateRequest{
+			AddressFamily: ip.AddressFamily,
+			Public:        ip.Public,
+			CIDR:          ip.CIDR,
+			Reservations:  ip.Reservations,
+		})
+	}
+
 	return &packngo.DeviceCreateRequest{
 		Hostname:     emptyIfNil(d.Spec.ForProvider.Hostname),
 		Plan:         d.Spec.ForProvider.Plan,
@@ -101,6 +111,7 @@ func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreat
 		ProjectID:    projectID,
 		UserData:     emptyIfNil(d.Spec.ForProvider.UserData),
 		Tags:         d.Spec.ForProvider.Tags,
+		IPAddresses:  ips,
 	}
 }
 
