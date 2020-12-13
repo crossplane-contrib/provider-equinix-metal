@@ -1,11 +1,14 @@
 # Crossplane Equinix Metal Provider
 
-![](https://img.shields.io/badge/Stability-Maintained-green.svg)
+[![GitHub release](https://img.shields.io/github/release/packethost/crossplane-provider-equinix-metal/all.svg?style=flat-square)](https://github.com/packethost/crossplane-provider-equinix-metal/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/packethost/crossplane-provider-equinix-metal)](https://goreportcard.com/report/github.com/packethost/crossplane-provider-equinix-metal)
+[![Slack](https://slack.equinixmetal.com/badge.svg)](https://slack.equinixmetal.com)
+[![Twitter Follow](https://img.shields.io/twitter/follow/packethost.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=equinixmetal)
 ![](https://img.shields.io/badge/Stability-Maintained-green.svg)
 
 ## Overview
 
-[From Crossplane's Provider documentation](https://crossplane.io/docs/v0.12/introduction/providers.html):
+[From Crossplane's Provider documentation](https://crossplane.io/docs/v0.14/introduction/providers.html):
 
 > Providers extend Crossplane to enable infrastructure resource provisioning. In order to provision a resource, a Custom Resource Definition(CRD) needs to be registered in your Kubernetes cluster and its controller should be watching the Custom Resources those CRDs define. Provider packages contain many Custom Resource Definitions and their controllers.
 
@@ -40,7 +43,7 @@ helm install crossplane --namespace crossplane-system crossplane-alpha/crossplan
 ### Install the Crossplane CLI
 
 ```console
-curl -sL https://raw.githubusercontent.com/crossplane/crossplane/release-0.13/install.sh | sh
+curl -sL https://raw.githubusercontent.com/crossplane/crossplane/release-0.14/install.sh | sh
 ```
 
 ## Install the Equinix Metal Provider
@@ -149,7 +152,7 @@ secret/devices-creds deleted
 
 ## Roadmap and Stability
 
-This Crossplane provider is alpha quality, not officially supported, and not intended for production use.
+This Crossplane provider is alpha quality and not intended for production use.
 
 Equinix Metal devices, virtual networks, and ports can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volumes are not currently planned. If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
 
