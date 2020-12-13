@@ -182,7 +182,8 @@ type DeviceParameters struct {
 	// IPAddresses will be attached to the device. These addresses can be drawn
 	// from existing reservations.
 	//
-	// +immutable +optional
+	// +immutable
+	// +optional
 	IPAddresses []IPAddress `json:"ipAddresses,omitempty"`
 }
 

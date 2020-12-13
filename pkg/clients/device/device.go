@@ -102,22 +102,52 @@ func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreat
 		})
 	}
 
-	return &packngo.DeviceCreateRequest{
-		Hostname:     emptyIfNil(d.Spec.ForProvider.Hostname),
-		Plan:         d.Spec.ForProvider.Plan,
-		Facility:     []string{d.Spec.ForProvider.Facility},
-		OS:           d.Spec.ForProvider.OS,
-		BillingCycle: emptyIfNil(d.Spec.ForProvider.BillingCycle),
-		ProjectID:    projectID,
-		UserData:     emptyIfNil(d.Spec.ForProvider.UserData),
-		Tags:         d.Spec.ForProvider.Tags,
-		IPAddresses:  ips,
+	r := &packngo.DeviceCreateRequest{
+		Hostname:              emptyIfNil(d.Spec.ForProvider.Hostname),
+		Plan:                  d.Spec.ForProvider.Plan,
+		Facility:              []string{d.Spec.ForProvider.Facility},
+		OS:                    d.Spec.ForProvider.OS,
+		BillingCycle:          emptyIfNil(d.Spec.ForProvider.BillingCycle),
+		ProjectID:             projectID,
+		UserData:              emptyIfNil(d.Spec.ForProvider.UserData),
+		Tags:                  d.Spec.ForProvider.Tags,
+		IPAddresses:           ips,
+		CustomData:            emptyIfNil(d.Spec.ForProvider.CustomData),
+		IPXEScriptURL:         emptyIfNil(d.Spec.ForProvider.IPXEScriptURL),
+		PublicIPv4SubnetSize:  zeroIfNil(d.Spec.ForProvider.PublicIPv4SubnetSize),
+		AlwaysPXE:             falseIfNil(d.Spec.ForProvider.AlwaysPXE),
+		HardwareReservationID: emptyIfNil(d.Spec.ForProvider.HardwareReservationID),
+		Features:              d.Spec.ForProvider.Features,
+		UserSSHKeys:           d.Spec.ForProvider.UserSSHKeys,
+		ProjectSSHKeys:        d.Spec.ForProvider.ProjectSSHKeys,
+
+		// TODO:
+		// Storage
+		// SpotInstance
+		// SpotPriceMax
+		// TerminationTime
 	}
+
+	return r
 }
 
 func emptyIfNil(in *string) string {
 	if in == nil {
 		return ""
+	}
+	return *in
+}
+
+func zeroIfNil(in *int) int {
+	if in == nil {
+		return 0
+	}
+	return *in
+}
+
+func falseIfNil(in *bool) bool {
+	if in == nil {
+		return false
 	}
 	return *in
 }
