@@ -41,7 +41,7 @@ const (
 type Client interface {
 	Get(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error)
 	Create(*packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error)
-	Delete(deviceID string) (*packngo.Response, error)
+	Delete(deviceID string, force bool) (*packngo.Response, error)
 	Update(string, *packngo.DeviceUpdateRequest) (*packngo.Device, *packngo.Response, error)
 }
 
@@ -50,6 +50,7 @@ type Client interface {
 type PortsClient interface {
 	DeviceToNetworkType(string, string) (*packngo.Device, error)
 	DeviceNetworkType(string) (string, error)
+	ConvertDevice(*packngo.Device, string) error
 }
 
 // build-time test that the interface is implemented
@@ -91,6 +92,16 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 
 // CreateFromDevice return packngo.DeviceCreateRequest created from Kubernetes
 func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreateRequest {
+	ips := []packngo.IPAddressCreateRequest{}
+	for _, ip := range d.Spec.ForProvider.IPAddresses {
+		ips = append(ips, packngo.IPAddressCreateRequest{
+			AddressFamily: ip.AddressFamily,
+			Public:        ip.Public,
+			CIDR:          ip.CIDR,
+			Reservations:  ip.Reservations,
+		})
+	}
+
 	return &packngo.DeviceCreateRequest{
 		Hostname:     emptyIfNil(d.Spec.ForProvider.Hostname),
 		Plan:         d.Spec.ForProvider.Plan,
@@ -100,6 +111,7 @@ func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreat
 		ProjectID:    projectID,
 		UserData:     emptyIfNil(d.Spec.ForProvider.UserData),
 		Tags:         d.Spec.ForProvider.Tags,
+		IPAddresses:  ips,
 	}
 }
 
@@ -178,7 +190,8 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 		in.Plan = clients.LateInitializeString(in.Plan, &device.Plan.Slug)
 	}
 
-	in.NetworkType = clients.LateInitializeStringPtr(in.NetworkType, &device.NetworkType)
+	networkType := device.GetNetworkType()
+	in.NetworkType = clients.LateInitializeStringPtr(in.NetworkType, &networkType)
 
 	in.Hostname = clients.LateInitializeStringPtr(in.Hostname, &device.Hostname)
 	in.BillingCycle = clients.LateInitializeStringPtr(in.BillingCycle, &device.BillingCycle)
@@ -213,7 +226,8 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 // modified in place without deleting and recreating the instance, which are
 // immutable.
 func IsUpToDate(d *v1alpha2.Device, p *packngo.Device) (upToDate bool, networkTypeUpToDate bool) {
-	networkIsUpToDate := nilOrEqualStr(d.Spec.ForProvider.NetworkType, p.NetworkType)
+	networkType := p.GetNetworkType()
+	networkIsUpToDate := nilOrEqualStr(d.Spec.ForProvider.NetworkType, networkType)
 
 	if !nilOrEqualStr(d.Spec.ForProvider.Hostname, p.Hostname) {
 		return false, networkIsUpToDate

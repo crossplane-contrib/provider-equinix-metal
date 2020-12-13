@@ -58,10 +58,88 @@ const (
 )
 
 var (
-	errorBoom   = errors.New("boom")
-	networkType = "cool-type"
-	truthy      = true
-	alwaysPXE   = &truthy
+	errorBoom = errors.New("boom")
+
+	// Use layer2-individual as the default, empty packngo.Device{} will
+	// self-detect as layer2-individual based on port and bonding configuration.
+	// layer3, is the default for real new devices.
+	networkType = packngo.NetworkTypeL2Individual
+
+	truthy    = true
+	alwaysPXE = &truthy
+
+	// mockNetworkTypeConfigs provides easy mocking for NetworkType.
+	// NetworkType is computed from port, bonding, and IP configuration
+	// test values are provided for easy mocking
+	mockNetworkTypeConfigs = map[string]struct {
+		NetworkPorts []packngo.Port
+		Network      []*packngo.IPAddressAssignment
+	}{
+		packngo.NetworkTypeL2Bonded: {
+			NetworkPorts: []packngo.Port{{
+				Name:        "bond0",
+				Type:        "NetworkBondPort",
+				NetworkType: networkType,
+				Data:        packngo.PortData{Bonded: true},
+			},
+				{
+					Name: "eth0",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: true},
+					Bond: &packngo.BondData{Name: "bond0"},
+				}},
+			Network: []*packngo.IPAddressAssignment{{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Management: false,
+				},
+			}},
+		},
+
+		packngo.NetworkTypeL3: {
+			NetworkPorts: []packngo.Port{{
+				Name:        "bond0",
+				Type:        "NetworkBondPort",
+				NetworkType: networkType,
+				Data:        packngo.PortData{Bonded: true},
+			},
+				{
+					Name: "eth0",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: true},
+					Bond: &packngo.BondData{Name: "bond0"},
+				}},
+			Network: []*packngo.IPAddressAssignment{{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Management: true,
+				},
+			}},
+		},
+
+		packngo.NetworkTypeHybrid: {
+			NetworkPorts: []packngo.Port{{
+				Name:        "bond0",
+				Type:        "NetworkBondPort",
+				NetworkType: networkType,
+				Data:        packngo.PortData{Bonded: true},
+			},
+				{
+					Name: "eth0",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: true},
+					Bond: &packngo.BondData{Name: "bond0"},
+				},
+				{
+					Name: "eth1",
+					Type: "NetworkPort",
+					Data: packngo.PortData{Bonded: false},
+				}},
+			Network: []*packngo.IPAddressAssignment{{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Management: true,
+				},
+			}},
+		},
+	}
 )
 
 type strange struct {
@@ -325,15 +403,14 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateActive,
-								ProvisionPer: float32(100),
-								AlwaysPXE:    *alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
-					}},
+						d := &packngo.Device{
+							State:        v1alpha2.StateActive,
+							ProvisionPer: float32(100),
+							AlwaysPXE:    *alwaysPXE,
+						}
+						return d, nil, nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -360,14 +437,12 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateActive,
-								ProvisionPer: float32(100),
-								AlwaysPXE:    !*alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
+						d := &packngo.Device{
+							State:        v1alpha2.StateActive,
+							ProvisionPer: float32(100),
+							AlwaysPXE:    !*alwaysPXE,
+						}
+						return d, nil, nil
 					},
 				},
 			},
@@ -396,15 +471,17 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateProvisioning,
-								ProvisionPer: float32(50),
-								AlwaysPXE:    *alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
-					}},
+						d := &packngo.Device{
+							State:        v1alpha2.StateProvisioning,
+							ProvisionPer: float32(50),
+							AlwaysPXE:    *alwaysPXE,
+						}
+						return d, nil, nil
+					},
+					MockDeviceNetworkType: func(_ string) (string, error) {
+						return networkType, nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -432,15 +509,15 @@ func TestObserve(t *testing.T) {
 				},
 				client: &fake.MockClient{
 					MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-						return &packngo.Device{
-							DeviceRaw: packngo.DeviceRaw{
-								State:        v1alpha2.StateQueued,
-								ProvisionPer: float32(50),
-								AlwaysPXE:    *alwaysPXE,
-							},
-							NetworkType: networkType,
-						}, nil, nil
-					}},
+						d := &packngo.Device{
+							State:        v1alpha2.StateQueued,
+							ProvisionPer: float32(50),
+							AlwaysPXE:    *alwaysPXE,
+						}
+
+						return d, nil, nil
+					},
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -543,15 +620,17 @@ func TestCreate(t *testing.T) {
 		want   want
 	}{
 		"CreatedInstance": {
-			client: &external{client: &fake.MockClient{
-				MockGetProjectID: projectIDFromCredentials,
-				MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
+			client: &external{
+				client: &fake.MockClient{
+					MockGetProjectID: projectIDFromCredentials,
+					MockCreate: func(createRequest *packngo.DeviceCreateRequest) (*packngo.Device, *packngo.Response, error) {
+						d := &packngo.Device{
 							ID: deviceName,
-						},
-					}, nil, nil
-				}},
+						}
+
+						return d, nil, nil
+					},
+				},
 				kube: &test.MockClient{
 					MockUpdate: test.NewMockUpdateFn(nil),
 				},
@@ -654,14 +733,16 @@ func TestUpdate(t *testing.T) {
 		},
 		"UpdatedInstanceNetworkType": {
 			client: &external{client: &fake.MockClient{
-				MockDeviceToNetworkType: func(deviceID string, networkType string) (*packngo.Device, error) {
-					return &packngo.Device{}, nil
-				},
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw:   packngo.DeviceRaw{},
-						NetworkType: "other-type",
-					}, nil, nil
+					d := &packngo.Device{}
+					target := packngo.NetworkTypeHybrid
+					d.Network = mockNetworkTypeConfigs[target].Network
+					d.NetworkPorts = mockNetworkTypeConfigs[target].NetworkPorts
+
+					return d, nil, nil
+				},
+				MockDeviceToNetworkType: func(deviceID string, networkType string) (*packngo.Device, error) {
+					return nil, nil
 				},
 			}},
 			args: args{
@@ -678,11 +759,11 @@ func TestUpdate(t *testing.T) {
 					return &packngo.Device{}, nil, nil
 				},
 				MockGet: func(deviceID string, getOpt *packngo.GetOptions) (*packngo.Device, *packngo.Response, error) {
-					return &packngo.Device{
-						DeviceRaw: packngo.DeviceRaw{
-							AlwaysPXE: false,
-						},
-					}, nil, nil
+					d := &packngo.Device{
+						AlwaysPXE: false,
+					}
+
+					return d, nil, nil
 				},
 			}},
 			args: args{
@@ -761,7 +842,7 @@ func TestDelete(t *testing.T) {
 	}{
 		"DeletedInstance": {
 			client: &external{client: &fake.MockClient{
-				MockDelete: func(deviceID string) (*packngo.Response, error) {
+				MockDelete: func(deviceID string, force bool) (*packngo.Response, error) {
 					return nil, nil
 				}},
 			},
@@ -786,7 +867,7 @@ func TestDelete(t *testing.T) {
 		},
 		"FailedToDeleteInstance": {
 			client: &external{client: &fake.MockClient{
-				MockDelete: func(deviceID string) (*packngo.Response, error) {
+				MockDelete: func(deviceID string, force bool) (*packngo.Response, error) {
 					return nil, errorBoom
 				},
 			}},

@@ -91,10 +91,18 @@ spec:
                 hostname:
                   type: string
                 ipAddresses:
+                  description: IPAddresses will be attached to the device. These addresses can be drawn from existing reservations.
                   items:
+                    description: IPAddress is a packngo.IPAddressCreateRequest used for managing IP addresses at Device, at creation and observer time.
                     properties:
                       address_family:
                         type: integer
+                      cidr:
+                        type: integer
+                      ip_reservations:
+                        items:
+                          type: string
+                        type: array
                       public:
                         type: boolean
                     required:
