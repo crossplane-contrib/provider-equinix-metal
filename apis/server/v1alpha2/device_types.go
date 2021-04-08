@@ -105,6 +105,19 @@ type IPAddress struct {
 	Reservations  []string `json:"ip_reservations,omitempty"`
 }
 
+// NamespacedName represents a namespaced object name
+type NamespacedName struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+// DataKeySelector defines required spec to access a key of a configmap or secret
+type DataKeySelector struct {
+	NamespacedName `json:",inline,omitempty"`
+	Key            string `json:"key,omitempty"`
+	Optional       bool   `json:"optional,omitempty"`
+}
+
 // DeviceParameters define the desired state of an Equinix Metal device.
 // https://metal.equinix.com/developers/api/#devices
 //
@@ -116,8 +129,10 @@ type DeviceParameters struct {
 	Plan string `json:"plan"`
 
 	// +immutable
-	// +required
-	Facility string `json:"facility"`
+	Facility string `json:"facility,omitempty"`
+
+	// +immutable
+	Metro string `json:"metro,omitempty"`
 
 	// +immutable
 	// +required
@@ -134,6 +149,9 @@ type DeviceParameters struct {
 
 	// +optional
 	UserData *string `json:"userdata,omitempty"`
+
+	// +optional
+	UserDataRef *DataKeySelector `json:"userdataRef,omitempty"`
 
 	// +optional
 	Tags []string `json:"tags,omitempty"`
@@ -196,6 +214,7 @@ type DeviceObservation struct {
 	// Facility is where the device is deployed. This field may differ from
 	// spec.forProvider.facility when the "any" value was used.
 	Facility            string            `json:"facility"`
+	Metro               string            `json:"metro,omitempty"`
 	State               string            `json:"state,omitempty"`
 	ProvisionPercentage resource.Quantity `json:"provisionPercentage,omitempty"`
 	IPv4                string            `json:"ipv4,omitempty"`

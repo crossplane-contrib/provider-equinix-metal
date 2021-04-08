@@ -116,6 +116,8 @@ spec:
                   type: string
                 locked:
                   type: boolean
+                metro:
+                  type: string
                 networkType:
                   enum:
                   - hybrid
@@ -143,8 +145,22 @@ spec:
                   type: array
                 userdata:
                   type: string
+                userdataRef:
+                  description: DataKeySelector defines required spec to access a key of a configmap or secret
+                  properties:
+                    key:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    optional:
+                      type: boolean
+                  required:
+                  - name
+                  - namespace
+                  type: object
               required:
-              - facility
               - operatingSystem
               - plan
               type: object
@@ -202,6 +218,8 @@ spec:
                   type: string
                 locked:
                   type: boolean
+                metro:
+                  type: string
                 provisionPercentage:
                   anyOf:
                   - type: integer
