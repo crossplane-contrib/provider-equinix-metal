@@ -150,6 +150,11 @@ spec:
                   properties:
                     key:
                       type: string
+                    kind:
+                      enum:
+                      - Secret
+                      - ConfigMap
+                      type: string
                     name:
                       type: string
                     namespace:
@@ -157,6 +162,7 @@ spec:
                     optional:
                       type: boolean
                   required:
+                  - kind
                   - name
                   - namespace
                   type: object

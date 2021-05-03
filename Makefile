@@ -99,7 +99,7 @@ submodules:
 #	$(GO_OUT_DIR)/$(PROJECT_NAME) --debug
 run: $(KUBECTL) generate
 	@$(INFO) Running Crossplane locally out-of-cluster . . .
-	@$(KUBECTL) apply -f package/crds/ -R
+	@$(KUBECTL) apply -f $(CRD_DIR) -R
 	go run cmd/provider/main.go -d
 
 dev: $(KIND) $(KUBECTL)

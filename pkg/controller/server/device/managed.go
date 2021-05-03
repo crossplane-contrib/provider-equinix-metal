@@ -18,12 +18,11 @@ package device
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,6 +53,8 @@ const (
 	errCreateDevice            = "cannot create Device"
 	errUpdateDevice            = "cannot modify Device"
 	errDeleteDevice            = "cannot delete Device"
+
+	userdataMapKey = "cloud-init"
 )
 
 // SetupDevice adds a controller that reconciles Devices
@@ -164,9 +165,52 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	return o, nil
 }
 
-// isErrorNotFound is true when the error is a Kubernetes Not Found error
-func isErrorNotFound(err error) bool {
-	return kerrors.IsNotFound(errors.Cause(err))
+// resolveUserDataRefs returns a userdata string fetched from the referenced userdata resource
+// TODO(displague) use reference.NewAPIResolver
+func (e *external) resolveUserDataRefs(ctx context.Context, d *v1alpha2.Device) (string, error) {
+	errGetUserDataRef := "cannot get required resource for UserDataRef"
+	errInvalidRefKind := "invalid resource kind"
+	errRefKeyNotFoundFmt := "could not find UserDataRef key %q"
+
+	ref := d.Spec.ForProvider.UserDataRef
+	var userdata string
+	var ok bool
+	nsn := types.NamespacedName{
+		Name:      ref.Name,
+		Namespace: ref.Namespace,
+	}
+	key := ref.Key
+	if key == "" {
+		key = userdataMapKey
+	}
+
+	switch ref.Kind {
+	case "ConfigMap":
+		resource := &corev1.ConfigMap{}
+		err := e.kube.Get(ctx, nsn, resource)
+		if err != nil && !ref.Optional {
+			return "", errors.Wrap(err, errGetUserDataRef)
+		}
+
+		userdata, ok = resource.Data[key]
+	case "Secret":
+		resource := &corev1.Secret{}
+		err := e.kube.Get(ctx, nsn, resource)
+		if err != nil && !ref.Optional {
+			return "", errors.Wrap(err, errGetUserDataRef)
+		}
+		var bytes []byte
+		bytes, ok = resource.Data[key]
+		userdata = string(bytes)
+	default:
+		return "", errors.Wrap(errors.New(errGetUserDataRef), errInvalidRefKind)
+	}
+
+	if !ok && !ref.Optional {
+		err := errors.Wrap(fmt.Errorf(errGetUserDataRef), fmt.Sprintf(errRefKeyNotFoundFmt, key))
+		return "", err
+	}
+	return userdata, nil
 }
 
 func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
@@ -177,37 +221,17 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	d.Status.SetConditions(xpv1.Creating())
 
-	// TODO(displague) clean up this hack to demonstrate userdataRef
-	if d.Spec.ForProvider.UserDataRef != nil {
-		configMapKey := "cloud-init"
-		errGetUserDataRef := "cannot get required ConfigMap for UserDataRef"
+	createDev := d.DeepCopy()
 
-		ref := d.Spec.ForProvider.UserDataRef
-		cm := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ref.Name,
-				Namespace: ref.Namespace,
-			},
+	if d.Spec.ForProvider.UserDataRef != nil {
+		userdata, err := e.resolveUserDataRefs(ctx, d)
+		if err != nil {
+			return managed.ExternalCreation{}, err
 		}
-		nsn := types.NamespacedName{
-			Name:      cm.GetName(),
-			Namespace: cm.GetNamespace(),
-		}
-		if err := e.kube.Get(ctx, nsn, cm); err != nil {
-			if !ref.Optional {
-				return managed.ExternalCreation{}, errors.Wrap(err, errGetUserDataRef)
-			}
-		}
-		key := ref.Key
-		if key == "" {
-			// TODO(displague) use default key, or use first key in configmap?
-			key = configMapKey
-		}
-		userdata := cm.Data[key]
-		d.Spec.ForProvider.UserData = &userdata
+		createDev.Spec.ForProvider.UserData = &userdata
 	}
 
-	create := devicesclient.CreateFromDevice(d, e.client.GetProjectID(packetclient.CredentialProjectID))
+	create := devicesclient.CreateFromDevice(createDev, e.client.GetProjectID(packetclient.CredentialProjectID))
 	device, _, err := e.client.Create(create)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateDevice)
@@ -242,6 +266,8 @@ func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 	}
 	_, _, err = e.client.Update(meta.GetExternalName(d), devicesclient.NewUpdateDeviceRequest(d))
+
+	// TODO(displague): use "reinstall" action if userdata changed, after updating the resource
 
 	return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateDevice)
 }

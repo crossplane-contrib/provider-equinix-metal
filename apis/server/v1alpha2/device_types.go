@@ -114,8 +114,10 @@ type NamespacedName struct {
 // DataKeySelector defines required spec to access a key of a configmap or secret
 type DataKeySelector struct {
 	NamespacedName `json:",inline,omitempty"`
-	Key            string `json:"key,omitempty"`
-	Optional       bool   `json:"optional,omitempty"`
+	// +kubebuilder:validation:Enum=Secret;ConfigMap
+	Kind     string `json:"kind"`
+	Key      string `json:"key,omitempty"`
+	Optional bool   `json:"optional,omitempty"`
 }
 
 // DeviceParameters define the desired state of an Equinix Metal device.
