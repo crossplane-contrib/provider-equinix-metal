@@ -55,7 +55,7 @@ type PortsClient interface {
 
 // build-time test that the interface is implemented
 var _ Client = (&packngo.Client{}).Devices
-var _ PortsClient = (&packngo.Client{}).DevicePorts
+var _ PortsClient = (&packngo.Client{}).DevicePorts //nolint:staticcheck
 
 // ClientWithDefaults is an interface that provides Device services and
 // provides default values for common properties
@@ -83,7 +83,7 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 	}
 	deviceClient := CredentialedClient{
 		Client:      client.Client.Devices,
-		PortsClient: client.Client.DevicePorts,
+		PortsClient: client.Client.DevicePorts, //nolint:staticcheck
 		Credentials: client.Credentials,
 	}
 	deviceClient.SetProjectID(projectID)
