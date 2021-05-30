@@ -32,7 +32,7 @@ import (
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	portsclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/ports"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -143,7 +143,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	for _, net := range port.AttachedVirtualNetworks {
 		if strings.TrimPrefix(net.Href, "/virtual-networks/") == a.Spec.ForProvider.VirtualNetworkID {
-			a.Status.SetConditions(runtimev1alpha1.Available())
+			a.Status.SetConditions(xpv1.Available())
 			o.ResourceExists = true
 		}
 	}
@@ -157,7 +157,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errNotAssignment)
 	}
-	a.Status.SetConditions(runtimev1alpha1.Creating())
+	a.Status.SetConditions(xpv1.Creating())
 	_, _, err := e.client.Assign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
 	return managed.ExternalCreation{}, errors.Wrap(err, errCreateAssignment)
 }
@@ -172,7 +172,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotAssignment)
 	}
-	a.SetConditions(runtimev1alpha1.Deleting())
+	a.SetConditions(xpv1.Deleting())
 	_, _, err := e.client.Unassign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteAssignment)
 }

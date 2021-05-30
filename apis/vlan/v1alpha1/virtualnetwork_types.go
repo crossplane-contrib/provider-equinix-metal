@@ -17,20 +17,20 @@ limitations under the License.
 package v1alpha1
 
 import (
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // VirtualNetworkSpec defines the desired state of VirtualNetwork
 type VirtualNetworkSpec struct {
-	runtimev1alpha1.ResourceSpec `json:",inline"`
-	ForProvider                  VirtualNetworkParameters `json:"forProvider"`
+	xpv1.ResourceSpec `json:",inline"`
+	ForProvider       VirtualNetworkParameters `json:"forProvider"`
 }
 
 // VirtualNetworkStatus defines the observed state of VirtualNetwork
 type VirtualNetworkStatus struct {
-	runtimev1alpha1.ResourceStatus `json:",inline"`
-	AtProvider                     VirtualNetworkObservation `json:"atProvider,omitempty"`
+	xpv1.ResourceStatus `json:",inline"`
+	AtProvider          VirtualNetworkObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true

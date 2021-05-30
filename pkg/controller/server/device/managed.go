@@ -31,7 +31,7 @@ import (
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -151,16 +151,16 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Set Device status and bindable
 	switch d.Status.AtProvider.State {
 	case v1alpha2.StateActive:
-		d.Status.SetConditions(runtimev1alpha1.Available())
+		d.Status.SetConditions(xpv1.Available())
 	case v1alpha2.StateProvisioning:
-		d.Status.SetConditions(runtimev1alpha1.Creating())
+		d.Status.SetConditions(xpv1.Creating())
 	case v1alpha2.StateQueued,
 		v1alpha2.StateDeprovisioning,
 		v1alpha2.StateFailed,
 		v1alpha2.StateInactive,
 		v1alpha2.StatePoweringOff,
 		v1alpha2.StateReinstalling:
-		d.Status.SetConditions(runtimev1alpha1.Unavailable())
+		d.Status.SetConditions(xpv1.Unavailable())
 	}
 
 	upToDate, networkTypeUpToDate := devicesclient.IsUpToDate(d, device)
@@ -180,7 +180,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotDevice)
 	}
 
-	d.Status.SetConditions(runtimev1alpha1.Creating())
+	d.Status.SetConditions(xpv1.Creating())
 
 	create := devicesclient.CreateFromDevice(d, e.client.GetProjectID(packetclient.CredentialProjectID))
 	device, _, err := e.client.Create(create)
@@ -226,7 +226,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotDevice)
 	}
-	d.SetConditions(runtimev1alpha1.Deleting())
+	d.SetConditions(xpv1.Deleting())
 
 	_, err := e.client.Delete(meta.GetExternalName(d), false)
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteDevice)

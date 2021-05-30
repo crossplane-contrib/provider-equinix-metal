@@ -29,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
@@ -38,7 +37,7 @@ import (
 	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device/fake"
 	packettest "github.com/packethost/crossplane-provider-equinix-metal/pkg/test"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -148,7 +147,7 @@ type strange struct {
 
 type deviceModifier func(*v1alpha2.Device)
 
-func withConditions(c ...runtimev1alpha1.Condition) deviceModifier {
+func withConditions(c ...xpv1.Condition) deviceModifier {
 	return func(i *v1alpha2.Device) { i.Status.SetConditions(c...) }
 }
 
@@ -195,9 +194,9 @@ func device(im ...deviceModifier) *v1alpha2.Device {
 			},
 		},
 		Spec: v1alpha2.DeviceSpec{
-			ResourceSpec: runtimev1alpha1.ResourceSpec{
-				ProviderConfigReference: &runtimev1alpha1.Reference{Name: providerName},
-				WriteConnectionSecretToReference: &runtimev1alpha1.SecretReference{
+			ResourceSpec: xpv1.ResourceSpec{
+				ProviderConfigReference: &xpv1.Reference{Name: providerName},
+				WriteConnectionSecretToReference: &xpv1.SecretReference{
 					Namespace: namespace,
 					Name:      connectionSecretName,
 				},
@@ -226,10 +225,10 @@ func TestConnect(t *testing.T) {
 	provider := packetv1beta1.ProviderConfig{
 		ObjectMeta: metav1.ObjectMeta{Name: providerName},
 		Spec: packetv1beta1.ProviderConfigSpec{
-			ProviderConfigSpec: runtimev1alpha1.ProviderConfigSpec{
-				Credentials: runtimev1alpha1.ProviderCredentials{
-					SecretRef: &runtimev1alpha1.SecretKeySelector{
-						SecretReference: runtimev1alpha1.SecretReference{
+			Credentials: packetv1beta1.ProviderCredentials{
+				CommonCredentialSelectors: xpv1.CommonCredentialSelectors{
+					SecretRef: &xpv1.SecretKeySelector{
+						SecretReference: xpv1.SecretReference{
 							Namespace: namespace,
 							Name:      providerSecretName,
 						},
@@ -264,7 +263,7 @@ func TestConnect(t *testing.T) {
 	}{
 		"Connected": {
 			conn: &connecter{
-				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						*obj.(*packetv1beta1.ProviderConfig) = provider
@@ -294,7 +293,7 @@ func TestConnect(t *testing.T) {
 		},
 		"FailedToGetProvider": {
 			conn: &connecter{
-				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 					return errorBoom
 				}},
 				usage: resource.NewProviderConfigUsageTracker(&test.MockClient{
@@ -307,7 +306,7 @@ func TestConnect(t *testing.T) {
 		},
 		"FailedToGetProviderSecret": {
 			conn: &connecter{
-				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						*obj.(*packetv1beta1.ProviderConfig) = provider
@@ -326,7 +325,7 @@ func TestConnect(t *testing.T) {
 		},
 		"ProviderSecretNil": {
 			conn: &connecter{
-				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						nilSecretProvider := provider
@@ -347,7 +346,7 @@ func TestConnect(t *testing.T) {
 		},
 		"FailedToCreateDevice": {
 			conn: &connecter{
-				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj runtime.Object) error {
+				kube: &test.MockClient{MockGet: func(_ context.Context, key client.ObjectKey, obj client.Object) error {
 					switch key {
 					case client.ObjectKey{Name: providerName}:
 						*obj.(*packetv1beta1.ProviderConfig) = provider
@@ -419,7 +418,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				mg: device(
 					withInitializerParams(initializerParams{}),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 					withProvisionPer(float32(100)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),
@@ -453,7 +452,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				mg: device(
 					withInitializerParams(initializerParams{}),
-					withConditions(runtimev1alpha1.Available()),
+					withConditions(xpv1.Available()),
 					withProvisionPer(float32(100)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateActive)),
@@ -490,7 +489,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				mg: device(
 					withInitializerParams(initializerParams{}),
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 					withProvisionPer(float32(50)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateProvisioning),
@@ -526,7 +525,7 @@ func TestObserve(t *testing.T) {
 			want: want{
 				mg: device(
 					withInitializerParams(initializerParams{}),
-					withConditions(runtimev1alpha1.Unavailable()),
+					withConditions(xpv1.Unavailable()),
 					withProvisionPer(float32(50)),
 					withNetworkType(&networkType),
 					withState(v1alpha2.StateQueued)),
@@ -641,7 +640,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				mg: device(
-					withConditions(runtimev1alpha1.Creating()),
+					withConditions(xpv1.Creating()),
 					withID(deviceName),
 				),
 				creation: managed.ExternalCreation{
@@ -673,7 +672,7 @@ func TestCreate(t *testing.T) {
 				mg:  device(),
 			},
 			want: want{
-				mg:  device(withConditions(runtimev1alpha1.Creating())),
+				mg:  device(withConditions(xpv1.Creating())),
 				err: errors.Wrap(errorBoom, errCreateDevice),
 			},
 		},
@@ -851,7 +850,7 @@ func TestDelete(t *testing.T) {
 				mg:  device(),
 			},
 			want: want{
-				mg: device(withConditions(runtimev1alpha1.Deleting())),
+				mg: device(withConditions(xpv1.Deleting())),
 			},
 		},
 		"NotDeviceInstance": {
@@ -877,7 +876,7 @@ func TestDelete(t *testing.T) {
 				mg:  device(),
 			},
 			want: want{
-				mg:  device(withConditions(runtimev1alpha1.Deleting())),
+				mg:  device(withConditions(xpv1.Deleting())),
 				err: errors.Wrap(errorBoom, errDeleteDevice),
 			},
 		},

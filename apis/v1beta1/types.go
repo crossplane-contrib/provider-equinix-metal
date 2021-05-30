@@ -17,13 +17,14 @@ limitations under the License.
 package v1beta1
 
 import (
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // A ProviderConfigSpec defines the desired state of a ProviderConfig.
 type ProviderConfigSpec struct {
-	runtimev1alpha1.ProviderConfigSpec `json:",inline"`
+	// Credentials required to authenticate to this provider.
+	Credentials ProviderCredentials `json:"credentials"`
 
 	// ProjectID is the Project ID (UUID) of this Equinix Metal Provider. If this is
 	// not specified it must be included in the Provider secret (JSON field
@@ -32,9 +33,18 @@ type ProviderConfigSpec struct {
 	ProjectID string `json:"projectID"`
 }
 
+// ProviderCredentials required to authenticate.
+type ProviderCredentials struct {
+	// Source of the provider credentials.
+	// +kubebuilder:validation:Enum=None;Secret;Environment;Filesystem
+	Source xpv1.CredentialsSource `json:"source"`
+
+	xpv1.CommonCredentialSelectors `json:",inline"`
+}
+
 // A ProviderConfigStatus reflects the observed state of a ProviderConfig.
 type ProviderConfigStatus struct {
-	runtimev1alpha1.ProviderConfigStatus `json:",inline"`
+	xpv1.ProviderConfigStatus `json:",inline"`
 }
 
 // +kubebuilder:object:root=true
@@ -73,7 +83,7 @@ type ProviderConfigUsage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	runtimev1alpha1.ProviderConfigUsage `json:",inline"`
+	xpv1.ProviderConfigUsage `json:",inline"`
 }
 
 // +kubebuilder:object:root=true

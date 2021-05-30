@@ -24,7 +24,7 @@ import (
 	"github.com/packethost/packngo"
 	"github.com/pkg/errors"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
@@ -166,10 +166,10 @@ func GetConnectionDetails(device *packngo.Device) managed.ConnectionDetails {
 	port := "22" // ssh
 
 	return managed.ConnectionDetails{
-		runtimev1alpha1.ResourceCredentialsSecretEndpointKey: []byte(device.GetNetworkInfo().PublicIPv4),
-		runtimev1alpha1.ResourceCredentialsSecretUserKey:     []byte(user),
-		runtimev1alpha1.ResourceCredentialsSecretPasswordKey: []byte(device.RootPassword),
-		runtimev1alpha1.ResourceCredentialsSecretPortKey:     []byte(port),
+		xpv1.ResourceCredentialsSecretEndpointKey: []byte(device.GetNetworkInfo().PublicIPv4),
+		xpv1.ResourceCredentialsSecretUserKey:     []byte(user),
+		xpv1.ResourceCredentialsSecretPasswordKey: []byte(device.RootPassword),
+		xpv1.ResourceCredentialsSecretPortKey:     []byte(port),
 	}
 }
 

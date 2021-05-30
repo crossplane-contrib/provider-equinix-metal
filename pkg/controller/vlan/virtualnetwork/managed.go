@@ -31,7 +31,7 @@ import (
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	vlanclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/vlan"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -148,7 +148,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGenObservation)
 	}
 
-	v.Status.SetConditions(runtimev1alpha1.Available())
+	v.Status.SetConditions(xpv1.Available())
 
 	o := managed.ExternalObservation{
 		ResourceExists:   true,
@@ -164,7 +164,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotVirtualNetwork)
 	}
 
-	v.Status.SetConditions(runtimev1alpha1.Creating())
+	v.Status.SetConditions(xpv1.Creating())
 
 	create := vlanclient.CreateFromVirtualNetwork(v, e.client.GetProjectID(packetclient.CredentialProjectID))
 	vlan, _, err := e.client.Create(create)
@@ -191,7 +191,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotVirtualNetwork)
 	}
-	v.SetConditions(runtimev1alpha1.Deleting())
+	v.SetConditions(xpv1.Deleting())
 
 	_, err := e.client.Delete(meta.GetExternalName(v))
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteVirtualNetwork)
