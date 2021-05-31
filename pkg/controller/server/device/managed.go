@@ -21,13 +21,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
 	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 
@@ -42,8 +41,6 @@ import (
 // Error strings.
 const (
 	errManagedUpdateFailed     = "cannot update Device custom resource"
-	errProviderSecretNil       = "cannot find Secret reference on Provider"
-	errGetProviderConfig       = "cannot get ProviderConfig"
 	errTrackPCUsage            = "cannot track ProviderConfig usage"
 	errGetProviderConfigSecret = "cannot get ProviderConfig Secret"
 	errGenObservation          = "cannot generate observation"
@@ -78,12 +75,11 @@ func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
 type connecter struct {
 	kube        client.Client
 	usage       resource.Tracker
-	newClientFn func(ctx context.Context, credentials []byte, projectID string) (devicesclient.ClientWithDefaults, error)
+	newClientFn func(ctx context.Context, config *clients.Credentials) (devicesclient.ClientWithDefaults, error)
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	g, ok := mg.(*v1alpha2.Device)
-	if !ok {
+	if _, ok := mg.(*v1alpha2.Device); !ok {
 		return nil, errors.New(errNotDevice)
 	}
 
@@ -91,26 +87,16 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errTrackPCUsage)
 	}
 
-	p := &packetv1beta1.ProviderConfig{}
-	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderConfigReference.Name}, p); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfig)
-	}
-
-	ref := p.Spec.Credentials.SecretRef
-	if ref == nil {
-		return nil, errors.New(errProviderSecretNil)
-	}
-
-	s := &corev1.Secret{}
-	n := types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}
-	if err := c.kube.Get(ctx, n, s); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfigSecret)
-	}
 	newClientFn := devicesclient.NewClient
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
-	client, err := newClientFn(ctx, s.Data[ref.Key], p.Spec.ProjectID)
+
+	cfg, err := clients.GetAuthInfo(ctx, c.kube, mg)
+	if err != nil {
+		return nil, errors.Wrap(err, errGetProviderConfigSecret)
+	}
+	client, err := newClientFn(ctx, cfg)
 
 	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }

@@ -33,6 +33,7 @@ import (
 
 	"github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
 	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device/fake"
 	packettest "github.com/packethost/crossplane-provider-equinix-metal/pkg/test"
@@ -51,7 +52,7 @@ const (
 	providerName       = "cool-equinix-metal"
 	providerSecretName = "cool-equinix-metal-secret"
 	providerSecretKey  = "credentials"
-	providerSecretData = "definitelyjson"
+	providerSecretData = "{\"definitely\":\"json\"}"
 
 	connectionSecretName = "cool-connection-secret"
 )
@@ -226,6 +227,7 @@ func TestConnect(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: providerName},
 		Spec: packetv1beta1.ProviderConfigSpec{
 			Credentials: packetv1beta1.ProviderCredentials{
+				Source: xpv1.CredentialsSourceSecret,
 				CommonCredentialSelectors: xpv1.CommonCredentialSelectors{
 					SecretRef: &xpv1.SecretKeySelector{
 						SecretReference: xpv1.SecretReference{
@@ -256,6 +258,16 @@ func TestConnect(t *testing.T) {
 		err error
 	}
 
+	// copied from crossplane-runtime providerconfig.go
+	const (
+		errSecretKeyNotSpecified   = "cannot extract from secret key when none specified"
+		errGetCredentialsSecret    = "cannot get credentials secret"
+		errGetCredentials          = "cannot get credentials"
+		errGetProviderConfigSecret = "cannot get ProviderConfig Secret"
+		errGetProviderConfigUsage  = "cannot apply ProviderConfigUsage"
+		errGetObject               = "cannot get object"
+	)
+
 	cases := map[string]struct {
 		conn managed.ExternalConnecter
 		args args
@@ -276,7 +288,9 @@ func TestConnect(t *testing.T) {
 					MockGet:    test.NewMockGetFn(nil),
 					MockUpdate: test.NewMockUpdateFn(nil),
 				}, &packetv1beta1.ProviderConfigUsage{}),
-				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) { return nil, nil },
+				newClientFn: func(_ context.Context, _ *clients.Credentials) (devicesclient.ClientWithDefaults, error) {
+					return nil, nil
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -302,7 +316,9 @@ func TestConnect(t *testing.T) {
 				}, &packetv1beta1.ProviderConfigUsage{}),
 			},
 			args: args{ctx: context.Background(), mg: device()},
-			want: want{err: errors.Wrap(errorBoom, errGetProviderConfig)},
+			want: want{err: errors.Wrap(
+				errors.Wrap(errors.Wrap(errorBoom, errGetObject), errGetProviderConfigUsage), errGetProviderConfigSecret,
+			)},
 		},
 		"FailedToGetProviderSecret": {
 			conn: &connecter{
@@ -321,7 +337,9 @@ func TestConnect(t *testing.T) {
 				}, &packetv1beta1.ProviderConfigUsage{}),
 			},
 			args: args{ctx: context.Background(), mg: device()},
-			want: want{err: errors.Wrap(errorBoom, errGetProviderConfigSecret)},
+			want: want{err: errors.Wrap(
+				errors.Wrap(errors.Wrap(errorBoom, errGetCredentialsSecret), errGetCredentials), errGetProviderConfigSecret,
+			)},
 		},
 		"ProviderSecretNil": {
 			conn: &connecter{
@@ -342,7 +360,9 @@ func TestConnect(t *testing.T) {
 				}, &packetv1beta1.ProviderConfigUsage{}),
 			},
 			args: args{ctx: context.Background(), mg: device()},
-			want: want{err: errors.New(errProviderSecretNil)},
+			want: want{err: errors.Wrap(
+				errors.Wrap(errors.New(errSecretKeyNotSpecified), errGetCredentials), errGetProviderConfigSecret,
+			)},
 		},
 		"FailedToCreateDevice": {
 			conn: &connecter{
@@ -359,7 +379,7 @@ func TestConnect(t *testing.T) {
 					MockGet:    test.NewMockGetFn(nil),
 					MockUpdate: test.NewMockUpdateFn(nil),
 				}, &packetv1beta1.ProviderConfigUsage{}),
-				newClientFn: func(_ context.Context, _ []byte, _ string) (devicesclient.ClientWithDefaults, error) {
+				newClientFn: func(_ context.Context, _ *clients.Credentials) (devicesclient.ClientWithDefaults, error) {
 					return nil, errorBoom
 				},
 			},

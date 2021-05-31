@@ -74,10 +74,10 @@ type CredentialedClient struct {
 
 var _ ClientWithDefaults = &CredentialedClient{}
 
-// NewClient returns a Client implementing the Equinix Metal API methods needed to
-// interact with Devices for the Equinix Metal Crossplane Provider
-func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
-	client, err := clients.NewClient(ctx, credentials)
+// NewClient returns a Client implementing the Equinix Metal API methods needed
+// to interact with Devices for the Equinix Metal Crossplane Provider
+func NewClient(ctx context.Context, config *clients.Credentials) (ClientWithDefaults, error) {
+	client, err := clients.NewClient(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 		PortsClient: client.Client.DevicePorts, //nolint:staticcheck
 		Credentials: client.Credentials,
 	}
-	deviceClient.SetProjectID(projectID)
+	deviceClient.SetProjectID(config.ProjectID)
 	return deviceClient, nil
 }
 
