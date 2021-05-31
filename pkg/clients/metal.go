@@ -108,7 +108,7 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 
 // IsNotFound returns true if error is not found
 func IsNotFound(err error) bool {
-	if e, ok := err.(*packngo.ErrorResponse); ok {
+	if e, ok := err.(*packngo.ErrorResponse); ok && e.Response != nil {
 		return e.Response.StatusCode == http.StatusNotFound
 	}
 	return false
