@@ -35,14 +35,6 @@ GO111MODULE = on
 -include build/makelib/golang.mk
 
 # ====================================================================================
-# Setup Kubebuilder
-
-CRD_DIR=config/crd
-API_DIR=./apis/...
-
--include build/makelib/kubebuilder.mk
-
-# ====================================================================================
 # Setup Kubernetes tools
 
 -include build/makelib/k8s_tools.mk
@@ -75,10 +67,11 @@ cobertura:
 		grep -v zz_generated.deepcopy | \
 		$(GOCOVER_COBERTURA) > $(GO_TEST_OUTPUT)/cobertura-coverage.xml
 
+CRD_DIR=package/crds
 crds.clean:
 	@$(INFO) cleaning generated CRDs
-	@find package/crds -name *.yaml -exec sed -i.sed -e '1,2d' {} \; || $(FAIL)
-	@find package/crds -name *.yaml.sed -delete || $(FAIL)
+	@find $(CRD_DIR) -name *.yaml -exec sed -i.sed -e '1,2d' {} \; || $(FAIL)
+	@find $(CRD_DIR) -name *.yaml.sed -delete || $(FAIL)
 	@$(OK) cleaned generated CRDs
 
 generate: crds.clean
@@ -97,13 +90,10 @@ check-diff: reviewable
 e2e.run: test-integration
 
 # Run integration tests.
-test-integration: $(KIND) $(KUBECTL) $(HELM)
+test-integration: $(KIND) $(KUBECTL) $(HELM3)
 	@$(INFO) running integration tests using kind $(KIND_VERSION)
 	@$(ROOT_DIR)/cluster/local/integration_tests.sh || $(FAIL)
 	@$(OK) integration tests passed
-
-go-integration:
-	GO_TEST_FLAGS="-timeout 1h -v" GO_TAGS=integration $(MAKE) go.test.integration
 
 # Update the submodules, such as the common build scripts.
 submodules:
@@ -133,7 +123,10 @@ dev-clean: $(KIND) $(KUBECTL)
 	@$(INFO) Deleting kind cluster
 	@$(KIND) delete cluster --name=provider-equinix-metal-dev
 
-.PHONY: cobertura submodules fallthrough test-integration run go-integration dev dev-clean crds.clean
+manifests:
+	@$(INFO) Deprecated. Run make generate instead.
+
+.PHONY: cobertura reviewable submodules fallthrough test-integration run crds.clean manifests dev dev-clean
 
 # ====================================================================================
 # Special Targets
