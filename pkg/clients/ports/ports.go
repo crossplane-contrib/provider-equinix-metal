@@ -33,7 +33,7 @@ type Client interface {
 }
 
 // build-time test that the interface is implemented
-var _ Client = (&packngo.Client{}).DevicePorts
+var _ Client = (&packngo.Client{}).DevicePorts //nolint:staticcheck
 
 // ClientWithDefaults is an interface that provides Port services and
 // provides default values for common properties
@@ -52,15 +52,15 @@ var _ ClientWithDefaults = &CredentialedClient{}
 
 // NewClient returns a Client implementing the Equinix Metal API methods needed to
 // interact with Ports for the Equinix Metal Crossplane Provider
-func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
-	client, err := clients.NewClient(ctx, credentials)
+func NewClient(ctx context.Context, config *clients.Credentials) (ClientWithDefaults, error) {
+	client, err := clients.NewClient(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 	portsClient := CredentialedClient{
-		Client:      client.Client.DevicePorts,
+		Client:      client.Client.DevicePorts, //nolint:staticcheck
 		Credentials: client.Credentials,
 	}
-	portsClient.SetProjectID(projectID)
+	portsClient.SetProjectID(config.ProjectID)
 	return portsClient, nil
 }

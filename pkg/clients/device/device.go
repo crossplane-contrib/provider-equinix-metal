@@ -24,7 +24,7 @@ import (
 	"github.com/packethost/packngo"
 	"github.com/pkg/errors"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
@@ -55,7 +55,7 @@ type PortsClient interface {
 
 // build-time test that the interface is implemented
 var _ Client = (&packngo.Client{}).Devices
-var _ PortsClient = (&packngo.Client{}).DevicePorts
+var _ PortsClient = (&packngo.Client{}).DevicePorts //nolint:staticcheck
 
 // ClientWithDefaults is an interface that provides Device services and
 // provides default values for common properties
@@ -74,19 +74,19 @@ type CredentialedClient struct {
 
 var _ ClientWithDefaults = &CredentialedClient{}
 
-// NewClient returns a Client implementing the Equinix Metal API methods needed to
-// interact with Devices for the Equinix Metal Crossplane Provider
-func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
-	client, err := clients.NewClient(ctx, credentials)
+// NewClient returns a Client implementing the Equinix Metal API methods needed
+// to interact with Devices for the Equinix Metal Crossplane Provider
+func NewClient(ctx context.Context, config *clients.Credentials) (ClientWithDefaults, error) {
+	client, err := clients.NewClient(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 	deviceClient := CredentialedClient{
 		Client:      client.Client.Devices,
-		PortsClient: client.Client.DevicePorts,
+		PortsClient: client.Client.DevicePorts, //nolint:staticcheck
 		Credentials: client.Credentials,
 	}
-	deviceClient.SetProjectID(projectID)
+	deviceClient.SetProjectID(config.ProjectID)
 	return deviceClient, nil
 }
 
@@ -166,10 +166,10 @@ func GetConnectionDetails(device *packngo.Device) managed.ConnectionDetails {
 	port := "22" // ssh
 
 	return managed.ConnectionDetails{
-		runtimev1alpha1.ResourceCredentialsSecretEndpointKey: []byte(device.GetNetworkInfo().PublicIPv4),
-		runtimev1alpha1.ResourceCredentialsSecretUserKey:     []byte(user),
-		runtimev1alpha1.ResourceCredentialsSecretPasswordKey: []byte(device.RootPassword),
-		runtimev1alpha1.ResourceCredentialsSecretPortKey:     []byte(port),
+		xpv1.ResourceCredentialsSecretEndpointKey: []byte(device.GetNetworkInfo().PublicIPv4),
+		xpv1.ResourceCredentialsSecretUserKey:     []byte(user),
+		xpv1.ResourceCredentialsSecretPasswordKey: []byte(device.RootPassword),
+		xpv1.ResourceCredentialsSecretPortKey:     []byte(port),
 	}
 }
 

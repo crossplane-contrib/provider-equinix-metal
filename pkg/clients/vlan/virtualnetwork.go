@@ -59,8 +59,8 @@ var _ ClientWithDefaults = &CredentialedClient{}
 
 // NewClient returns a Client implementing the Equinix Metal API methods needed to
 // interact with VirtualNetworks for the Equinix Metal Crossplane Provider
-func NewClient(ctx context.Context, credentials []byte, projectID string) (ClientWithDefaults, error) {
-	client, err := clients.NewClient(ctx, credentials)
+func NewClient(ctx context.Context, config *clients.Credentials) (ClientWithDefaults, error) {
+	client, err := clients.NewClient(ctx, config)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func NewClient(ctx context.Context, credentials []byte, projectID string) (Clien
 		Client:      client.Client.ProjectVirtualNetworks,
 		Credentials: client.Credentials,
 	}
-	vlanClient.SetProjectID(projectID)
+	vlanClient.SetProjectID(config.ProjectID)
 	return vlanClient, nil
 }
 

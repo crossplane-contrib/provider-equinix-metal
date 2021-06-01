@@ -35,14 +35,6 @@ GO111MODULE = on
 -include build/makelib/golang.mk
 
 # ====================================================================================
-# Setup Kubebuilder
-
-CRD_DIR=config/crd
-API_DIR=./apis/...
-
--include build/makelib/kubebuilder.mk
-
-# ====================================================================================
 # Setup Kubernetes tools
 
 -include build/makelib/k8s_tools.mk
@@ -75,35 +67,23 @@ cobertura:
 		grep -v zz_generated.deepcopy | \
 		$(GOCOVER_COBERTURA) > $(GO_TEST_OUTPUT)/cobertura-coverage.xml
 
+CRD_DIR=package/crds
 crds.clean:
 	@$(INFO) cleaning generated CRDs
-	@find package/crds -name *.yaml -exec sed -i.sed -e '1,2d' {} \; || $(FAIL)
-	@find package/crds -name *.yaml.sed -delete || $(FAIL)
+	@find $(CRD_DIR) -name *.yaml -exec sed -i.sed -e '1,2d' {} \; || $(FAIL)
+	@find $(CRD_DIR) -name *.yaml.sed -delete || $(FAIL)
 	@$(OK) cleaned generated CRDs
 
-generate: crds.clean
-
-# Ensure a PR is ready for review.
-reviewable: generate lint
-	@go mod tidy
-
-# Ensure branch is clean.
-check-diff: reviewable
-	@$(INFO) checking that branch is clean
-	@test -z "$$(git status --porcelain)" || $(FAIL)
-	@$(OK) branch is clean
+generate.run: crds.clean
 
 # integration tests
 e2e.run: test-integration
 
 # Run integration tests.
-test-integration: $(KIND) $(KUBECTL) $(HELM)
+test-integration: $(KIND) $(KUBECTL) $(HELM3)
 	@$(INFO) running integration tests using kind $(KIND_VERSION)
 	@$(ROOT_DIR)/cluster/local/integration_tests.sh || $(FAIL)
 	@$(OK) integration tests passed
-
-go-integration:
-	GO_TEST_FLAGS="-timeout 1h -v" GO_TAGS=integration $(MAKE) go.test.integration
 
 # Update the submodules, such as the common build scripts.
 submodules:
@@ -133,7 +113,10 @@ dev-clean: $(KIND) $(KUBECTL)
 	@$(INFO) Deleting kind cluster
 	@$(KIND) delete cluster --name=provider-equinix-metal-dev
 
-.PHONY: cobertura submodules fallthrough test-integration run go-integration dev dev-clean crds.clean
+manifests:
+	@$(INFO) Deprecated. Run make generate instead.
+
+.PHONY: cobertura submodules fallthrough test-integration run crds.clean manifests dev dev-clean
 
 # ====================================================================================
 # Special Targets
@@ -141,7 +124,6 @@ dev-clean: $(KIND) $(KUBECTL)
 define CROSSPLANE_MAKE_HELP
 Crossplane Targets:
     cobertura             Generate a coverage report for cobertura applying exclusions on generated files.
-    reviewable            Ensure a PR is ready for review.
     submodules            Update the submodules, such as the common build scripts.
     run                   Run crossplane locally, out-of-cluster. Useful for development.
 

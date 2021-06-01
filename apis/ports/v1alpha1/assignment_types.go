@@ -17,19 +17,19 @@ limitations under the License.
 package v1alpha1
 
 import (
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AssignmentSpec defines the desired state of Assignment
 type AssignmentSpec struct {
-	runtimev1alpha1.ResourceSpec `json:",inline"`
-	ForProvider                  AssignmentParameters `json:"forProvider"`
+	xpv1.ResourceSpec `json:",inline"`
+	ForProvider       AssignmentParameters `json:"forProvider"`
 }
 
 // AssignmentStatus defines the observed state of Assignment
 type AssignmentStatus struct {
-	runtimev1alpha1.ResourceStatus `json:",inline"`
+	xpv1.ResourceStatus `json:",inline"`
 }
 
 // +kubebuilder:object:root=true
@@ -70,10 +70,10 @@ type AssignmentParameters struct {
 
 	// +optional
 	// +immutable
-	DeviceIDRef *runtimev1alpha1.Reference `json:"deviceIdRef,omitempty"`
+	DeviceIDRef *xpv1.Reference `json:"deviceIdRef,omitempty"`
 
 	// +optional
-	DeviceIDSelector *runtimev1alpha1.Selector `json:"deviceIdSelector,omitempty"`
+	DeviceIDSelector *xpv1.Selector `json:"deviceIdSelector,omitempty"`
 
 	// +immutable
 	Name string `json:"name"`
@@ -83,8 +83,8 @@ type AssignmentParameters struct {
 
 	// +optional
 	// +immutable
-	VirtualNetworkIDRef *runtimev1alpha1.Reference `json:"virtualNetworkIdRef,omitempty"`
+	VirtualNetworkIDRef *xpv1.Reference `json:"virtualNetworkIdRef,omitempty"`
 
 	// +optional
-	VirtualNetworkIDSelector *runtimev1alpha1.Selector `json:"virtualNetworkIdSelector,omitempty"`
+	VirtualNetworkIDSelector *xpv1.Selector `json:"virtualNetworkIdSelector,omitempty"`
 }

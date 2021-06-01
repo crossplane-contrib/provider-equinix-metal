@@ -21,17 +21,16 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha2 "github.com/packethost/crossplane-provider-equinix-metal/apis/server/v1alpha2"
 	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	devicesclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/device"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -42,8 +41,6 @@ import (
 // Error strings.
 const (
 	errManagedUpdateFailed     = "cannot update Device custom resource"
-	errProviderSecretNil       = "cannot find Secret reference on Provider"
-	errGetProviderConfig       = "cannot get ProviderConfig"
 	errTrackPCUsage            = "cannot track ProviderConfig usage"
 	errGetProviderConfigSecret = "cannot get ProviderConfig Secret"
 	errGenObservation          = "cannot generate observation"
@@ -78,12 +75,11 @@ func SetupDevice(mgr ctrl.Manager, l logging.Logger) error {
 type connecter struct {
 	kube        client.Client
 	usage       resource.Tracker
-	newClientFn func(ctx context.Context, credentials []byte, projectID string) (devicesclient.ClientWithDefaults, error)
+	newClientFn func(ctx context.Context, config *clients.Credentials) (devicesclient.ClientWithDefaults, error)
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	g, ok := mg.(*v1alpha2.Device)
-	if !ok {
+	if _, ok := mg.(*v1alpha2.Device); !ok {
 		return nil, errors.New(errNotDevice)
 	}
 
@@ -91,26 +87,16 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errTrackPCUsage)
 	}
 
-	p := &packetv1beta1.ProviderConfig{}
-	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderConfigReference.Name}, p); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfig)
-	}
-
-	ref := p.Spec.Credentials.SecretRef
-	if ref == nil {
-		return nil, errors.New(errProviderSecretNil)
-	}
-
-	s := &corev1.Secret{}
-	n := types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}
-	if err := c.kube.Get(ctx, n, s); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfigSecret)
-	}
 	newClientFn := devicesclient.NewClient
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
-	client, err := newClientFn(ctx, s.Data[ref.Key], p.Spec.ProjectID)
+
+	cfg, err := clients.GetAuthInfo(ctx, c.kube, mg)
+	if err != nil {
+		return nil, errors.Wrap(err, errGetProviderConfigSecret)
+	}
+	client, err := newClientFn(ctx, cfg)
 
 	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }
@@ -151,16 +137,16 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Set Device status and bindable
 	switch d.Status.AtProvider.State {
 	case v1alpha2.StateActive:
-		d.Status.SetConditions(runtimev1alpha1.Available())
+		d.Status.SetConditions(xpv1.Available())
 	case v1alpha2.StateProvisioning:
-		d.Status.SetConditions(runtimev1alpha1.Creating())
+		d.Status.SetConditions(xpv1.Creating())
 	case v1alpha2.StateQueued,
 		v1alpha2.StateDeprovisioning,
 		v1alpha2.StateFailed,
 		v1alpha2.StateInactive,
 		v1alpha2.StatePoweringOff,
 		v1alpha2.StateReinstalling:
-		d.Status.SetConditions(runtimev1alpha1.Unavailable())
+		d.Status.SetConditions(xpv1.Unavailable())
 	}
 
 	upToDate, networkTypeUpToDate := devicesclient.IsUpToDate(d, device)
@@ -180,7 +166,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotDevice)
 	}
 
-	d.Status.SetConditions(runtimev1alpha1.Creating())
+	d.Status.SetConditions(xpv1.Creating())
 
 	create := devicesclient.CreateFromDevice(d, e.client.GetProjectID(packetclient.CredentialProjectID))
 	device, _, err := e.client.Create(create)
@@ -226,7 +212,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotDevice)
 	}
-	d.SetConditions(runtimev1alpha1.Deleting())
+	d.SetConditions(xpv1.Deleting())
 
 	_, err := e.client.Delete(meta.GetExternalName(d), false)
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteDevice)

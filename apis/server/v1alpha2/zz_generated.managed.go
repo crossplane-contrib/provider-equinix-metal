@@ -17,20 +17,20 @@ limitations under the License.
 
 package v1alpha2
 
-import runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 
 // GetCondition of this Device.
-func (mg *Device) GetCondition(ct runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
+func (mg *Device) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return mg.Status.GetCondition(ct)
 }
 
 // GetDeletionPolicy of this Device.
-func (mg *Device) GetDeletionPolicy() runtimev1alpha1.DeletionPolicy {
+func (mg *Device) GetDeletionPolicy() xpv1.DeletionPolicy {
 	return mg.Spec.DeletionPolicy
 }
 
 // GetProviderConfigReference of this Device.
-func (mg *Device) GetProviderConfigReference() *runtimev1alpha1.Reference {
+func (mg *Device) GetProviderConfigReference() *xpv1.Reference {
 	return mg.Spec.ProviderConfigReference
 }
 
@@ -38,27 +38,27 @@ func (mg *Device) GetProviderConfigReference() *runtimev1alpha1.Reference {
 GetProviderReference of this Device.
 Deprecated: Use GetProviderConfigReference.
 */
-func (mg *Device) GetProviderReference() *runtimev1alpha1.Reference {
+func (mg *Device) GetProviderReference() *xpv1.Reference {
 	return mg.Spec.ProviderReference
 }
 
 // GetWriteConnectionSecretToReference of this Device.
-func (mg *Device) GetWriteConnectionSecretToReference() *runtimev1alpha1.SecretReference {
+func (mg *Device) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
 	return mg.Spec.WriteConnectionSecretToReference
 }
 
 // SetConditions of this Device.
-func (mg *Device) SetConditions(c ...runtimev1alpha1.Condition) {
+func (mg *Device) SetConditions(c ...xpv1.Condition) {
 	mg.Status.SetConditions(c...)
 }
 
 // SetDeletionPolicy of this Device.
-func (mg *Device) SetDeletionPolicy(r runtimev1alpha1.DeletionPolicy) {
+func (mg *Device) SetDeletionPolicy(r xpv1.DeletionPolicy) {
 	mg.Spec.DeletionPolicy = r
 }
 
 // SetProviderConfigReference of this Device.
-func (mg *Device) SetProviderConfigReference(r *runtimev1alpha1.Reference) {
+func (mg *Device) SetProviderConfigReference(r *xpv1.Reference) {
 	mg.Spec.ProviderConfigReference = r
 }
 
@@ -66,11 +66,11 @@ func (mg *Device) SetProviderConfigReference(r *runtimev1alpha1.Reference) {
 SetProviderReference of this Device.
 Deprecated: Use SetProviderConfigReference.
 */
-func (mg *Device) SetProviderReference(r *runtimev1alpha1.Reference) {
+func (mg *Device) SetProviderReference(r *xpv1.Reference) {
 	mg.Spec.ProviderReference = r
 }
 
 // SetWriteConnectionSecretToReference of this Device.
-func (mg *Device) SetWriteConnectionSecretToReference(r *runtimev1alpha1.SecretReference) {
+func (mg *Device) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }

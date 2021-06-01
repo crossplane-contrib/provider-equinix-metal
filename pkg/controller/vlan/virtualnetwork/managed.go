@@ -21,17 +21,16 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	packetv1beta1 "github.com/packethost/crossplane-provider-equinix-metal/apis/v1beta1"
 	"github.com/packethost/crossplane-provider-equinix-metal/apis/vlan/v1alpha1"
+	"github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	packetclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients"
 	vlanclient "github.com/packethost/crossplane-provider-equinix-metal/pkg/clients/vlan"
 
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -42,8 +41,6 @@ import (
 // Error strings.
 const (
 	errManagedUpdateFailed     = "cannot update VirtualNetwork custom resource"
-	errProviderSecretNil       = "cannot find Secret reference on Provider"
-	errGetProviderConfig       = "cannot get ProviderConfig"
 	errTrackPCUsage            = "cannot track ProviderConfig usage"
 	errGetProviderConfigSecret = "cannot get ProviderConfig Secret"
 	errGenObservation          = "cannot generate observation"
@@ -78,12 +75,11 @@ func SetupVirtualNetwork(mgr ctrl.Manager, l logging.Logger) error {
 type connecter struct {
 	kube        client.Client
 	usage       resource.Tracker
-	newClientFn func(ctx context.Context, credentials []byte, projectID string) (vlanclient.ClientWithDefaults, error)
+	newClientFn func(ctx context.Context, config *clients.Credentials) (vlanclient.ClientWithDefaults, error)
 }
 
 func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	g, ok := mg.(*v1alpha1.VirtualNetwork)
-	if !ok {
+	if _, ok := mg.(*v1alpha1.VirtualNetwork); !ok {
 		return nil, errors.New(errNotVirtualNetwork)
 	}
 
@@ -91,26 +87,15 @@ func (c *connecter) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errTrackPCUsage)
 	}
 
-	p := &packetv1beta1.ProviderConfig{}
-	if err := c.kube.Get(ctx, types.NamespacedName{Name: g.Spec.ProviderConfigReference.Name}, p); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfig)
-	}
-
-	ref := p.Spec.Credentials.SecretRef
-	if ref == nil {
-		return nil, errors.New(errProviderSecretNil)
-	}
-
-	s := &corev1.Secret{}
-	n := types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}
-	if err := c.kube.Get(ctx, n, s); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfigSecret)
-	}
 	newClientFn := vlanclient.NewClient
 	if c.newClientFn != nil {
 		newClientFn = c.newClientFn
 	}
-	client, err := newClientFn(ctx, s.Data[ref.Key], p.Spec.ProjectID)
+	cfg, err := clients.GetAuthInfo(ctx, c.kube, mg)
+	if err != nil {
+		return nil, errors.Wrap(err, errGetProviderConfigSecret)
+	}
+	client, err := newClientFn(ctx, cfg)
 
 	return &external{kube: c.kube, client: client}, errors.Wrap(err, errNewClient)
 }
@@ -148,7 +133,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGenObservation)
 	}
 
-	v.Status.SetConditions(runtimev1alpha1.Available())
+	v.Status.SetConditions(xpv1.Available())
 
 	o := managed.ExternalObservation{
 		ResourceExists:   true,
@@ -164,7 +149,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotVirtualNetwork)
 	}
 
-	v.Status.SetConditions(runtimev1alpha1.Creating())
+	v.Status.SetConditions(xpv1.Creating())
 
 	create := vlanclient.CreateFromVirtualNetwork(v, e.client.GetProjectID(packetclient.CredentialProjectID))
 	vlan, _, err := e.client.Create(create)
@@ -191,7 +176,7 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	if !ok {
 		return errors.New(errNotVirtualNetwork)
 	}
-	v.SetConditions(runtimev1alpha1.Deleting())
+	v.SetConditions(xpv1.Deleting())
 
 	_, err := e.client.Delete(meta.GetExternalName(v))
 	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteVirtualNetwork)
