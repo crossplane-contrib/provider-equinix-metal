@@ -166,8 +166,8 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 }
 
 // resolveUserDataRefs returns a userdata string fetched from the referenced userdata resource
-// TODO(displague) use reference.NewAPIResolver
-func (e *external) resolveUserDataRefs(ctx context.Context, d *v1alpha2.Device) (string, error) {
+// TODO(displague) use reference.NewAPIResolver when TypedReference is support
+func (e *external) resolveUserDataRefs(ctx context.Context, d *v1alpha2.Device) (string, error) { //nolint:gocyclo
 	errGetUserDataRef := "cannot get required resource for UserDataRef"
 	errInvalidRefKind := "invalid resource kind"
 	errRefKeyNotFoundFmt := "could not find UserDataRef key %q"
