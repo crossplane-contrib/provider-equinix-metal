@@ -93,10 +93,14 @@ submodules:
 # This is for running out-of-cluster locally, and is for convenience. Running
 # this make target will print out the command which was used. For more control,
 # try running the binary directly with different arguments.
-run: go.build
+#run: go.build
+#	@$(INFO) Running Crossplane locally out-of-cluster . . .
+#	@# To see other arguments that can be provided, run the command with --help instead
+#	$(GO_OUT_DIR)/$(PROJECT_NAME) --debug
+run: $(KUBECTL) generate
 	@$(INFO) Running Crossplane locally out-of-cluster . . .
-	@# To see other arguments that can be provided, run the command with --help instead
-	$(GO_OUT_DIR)/$(PROJECT_NAME) --debug
+	@$(KUBECTL) apply -f $(CRD_DIR) -R
+	go run cmd/provider/main.go -d
 
 dev: $(KIND) $(KUBECTL)
 	@$(INFO) Creating kind cluster

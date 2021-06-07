@@ -106,6 +106,7 @@ func CreateFromDevice(d *v1alpha2.Device, projectID string) *packngo.DeviceCreat
 		Hostname:              emptyIfNil(d.Spec.ForProvider.Hostname),
 		Plan:                  d.Spec.ForProvider.Plan,
 		Facility:              []string{d.Spec.ForProvider.Facility},
+		Metro:                 d.Spec.ForProvider.Metro,
 		OS:                    d.Spec.ForProvider.OS,
 		BillingCycle:          emptyIfNil(d.Spec.ForProvider.BillingCycle),
 		ProjectID:             projectID,
@@ -235,6 +236,9 @@ func LateInitialize(in *v1alpha2.DeviceParameters, device *packngo.Device) {
 			in.PublicIPv4SubnetSize = clients.LateInitializeIntPtr(in.PublicIPv4SubnetSize, &n.CIDR)
 		}
 	}
+
+	// We don't LateInitialize metro because facility and metro are incompatible API create options
+	// in.Metro = clients.LateInitializeString(in.Metro, &device.Metro.Code)
 
 	// Facility is required with a supported "any" value
 	// AtProvider.Facility will reflect the Equinix Metal selected
