@@ -10,5 +10,5 @@ spec:
     virtualNetworkIdRef:
       name: xp-vlan
     name: eth1
-  providerRef:
+  providerConfigRef:
     name: equinix-metal-provider

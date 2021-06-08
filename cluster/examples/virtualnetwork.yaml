@@ -7,5 +7,5 @@ spec:
   forProvider:
     description: Example Crossplane provisioned VLAN
     facility: sv15
-  providerRef:
+  providerConfigRef:
     name: equinix-metal-provider

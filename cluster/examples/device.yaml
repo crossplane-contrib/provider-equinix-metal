@@ -15,7 +15,7 @@ spec:
     networkType: hybrid
     tags:
     - crossplane
-  providerRef:
+  providerConfigRef:
     name: equinix-metal-provider
   writeConnectionSecretToRef:
     name: crossplane-example
