@@ -74,7 +74,7 @@ crds.clean:
 	@find $(CRD_DIR) -name *.yaml.sed -delete || $(FAIL)
 	@$(OK) cleaned generated CRDs
 
-generate.run: crds.clean
+generate.done: crds.clean
 
 # integration tests
 e2e.run: test-integration
