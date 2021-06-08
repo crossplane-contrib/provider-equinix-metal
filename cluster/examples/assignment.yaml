@@ -1,0 +1,14 @@
+---
+apiVersion: ports.metal.equinix.com/v1alpha1
+kind: Assignment
+metadata:
+  name: crossplane-example-eth1-xp-vlan
+spec:
+  forProvider:
+    deviceIdRef:
+      name: crossplane-example
+    virtualNetworkIdRef:
+      name: xp-vlan
+    name: eth1
+  providerConfigRef:
+    name: equinix-metal-provider

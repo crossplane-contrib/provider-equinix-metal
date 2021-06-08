@@ -1,0 +1,11 @@
+---
+apiVersion: vlan.metal.equinix.com/v1alpha1
+kind: VirtualNetwork
+metadata:
+  name: xp-vlan
+spec:
+  forProvider:
+    description: Example Crossplane provisioned VLAN
+    facility: sv15
+  providerConfigRef:
+    name: equinix-metal-provider
