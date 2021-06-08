@@ -1,17 +1,23 @@
+---
 apiVersion: server.metal.equinix.com/v1alpha2
 kind: Device
 metadata:
-  name: devicea
-  namespace: app-project1-dev
+  name: crossplane-example
 spec:
   forProvider:
-    hostname: crossplane
-    plan: c1.small.x86
-    facility: any
-    locked: false
-    operatingSystem: centos_7
+    hostname: crossplane-example
+    plan: c3.small.x86
+    facility: sv15
+    operatingSystem: ubuntu_20_04
     billingCycle: hourly
     hardware_reservation_id: next_available
+    locked: false
+    networkType: hybrid
+    tags:
+    - crossplane
+  providerRef:
+    name: equinix-metal-provider
   writeConnectionSecretToRef:
-    name: devicea-conn
+    name: crossplane-example
     namespace: crossplane-system
+  reclaimPolicy: Delete
