@@ -1,6 +1,7 @@
 # Crossplane Equinix Metal Provider
 
 [![GitHub release](https://img.shields.io/github/release/packethost/crossplane-provider-equinix-metal/all.svg?style=flat-square)](https://github.com/packethost/crossplane-provider-equinix-metal/releases)
+[![crds.dev](https://img.shields.io/badge/Docs-crds.dev-blue)](https://doc.crds.dev/github.com/packethost/crossplane-provider-equinix-metal)
 [![Go Report Card](https://goreportcard.com/badge/github.com/packethost/crossplane-provider-equinix-metal)](https://goreportcard.com/report/github.com/packethost/crossplane-provider-equinix-metal)
 [![Slack](https://slack.equinixmetal.com/badge.svg)](https://slack.equinixmetal.com)
 [![Twitter Follow](https://img.shields.io/twitter/follow/packethost.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=equinixmetal)
@@ -8,9 +9,9 @@
 
 ## Overview
 
-[From Crossplane's Provider documentation](https://crossplane.io/docs/v0.14/introduction/providers.html):
+[From Crossplane's Provider documentation](https://crossplane.io/docs/v1.2/concepts/providers.html):
 
-> Providers extend Crossplane to enable infrastructure resource provisioning. In order to provision a resource, a Custom Resource Definition(CRD) needs to be registered in your Kubernetes cluster and its controller should be watching the Custom Resources those CRDs define. Provider packages contain many Custom Resource Definitions and their controllers.
+> Providers extend Crossplane to enable infrastructure resource provisioning. In order to provision a resource, a Custom Resource Definition (CRD) needs to be registered in your Kubernetes cluster and its controller should be watching the Custom Resources those CRDs define. Provider packages contain many Custom Resource Definitions and their controllers.
 
 This is the Crossplane Provider package for [Equinix Metal](https://metal.equinix.com)
 infrastructure. The provider that is built from this repository can be installed
@@ -30,55 +31,84 @@ For getting started guides, installation, deployment, and administration, see th
 
 ## Installing Crossplane
 
-For the most up to date, detailed, instructions, check [Crossplane's documentation](https://crossplane.io/docs/v0.13/getting-started/install-configure.html).
+For the most up to date, detailed, instructions, check [Crossplane's documentation](https://crossplane.io/docs/v1.2/getting-started/install-configure.html#install-crossplane).
 
 The following instructions are provided for convenience.
 
 ```console
 kubectl create namespace crossplane-system
-helm repo add crossplane-alpha https://charts.crossplane.io/alpha
-helm install crossplane --namespace crossplane-system crossplane-alpha/crossplane
+helm repo add crossplane-stable https://charts.crossplane.io/stable
+helm repo update
+helm install crossplane --namespace crossplane-system crossplane-stable/crossplane --version 1.2.2
 ```
 
 ### Install the Crossplane CLI
 
+Fetch the CLI and follow the commands provided in the output:
+
 ```console
-curl -sL https://raw.githubusercontent.com/crossplane/crossplane/release-0.14/install.sh | sh
+$ curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
+kubectl plugin downloaded successfully! Run the following commands to finish installing it:
+
+sudo mv kubectl-crossplane $HOME/.local/bin
+kubectl crossplane --help
+
+Visit https://crossplane.io to get started. 🚀
+Have a nice day! 👋
+```
+
+```sh
+sudo mv kubectl-crossplane $HOME/.local/bin
 ```
 
 ## Install the Equinix Metal Provider
 
+For the most up to date version and install notes, see <https://cloud.upbound.io/registry/equinix/provider-equinix-metal>.
+
 ```console
-kubectl crossplane install provider equinix/crossplane-provider-equinix-metal
+kubectl crossplane install provider registry.upbound.io/equinix/provider-equinix-metal:v0.0.7
 ```
 
-The following commands will require your [Equinix Metal API key and a project ID](https://metal.equinix.com/developers/docs/). Entering your API key and project ID when prompted:
+After the package has been fetched and installed, you should see that the provider package is ready:
 
 ```console
-read -s -p "API Key: " APIKEY; echo
-read -p "Project ID: " PROJECT_ID; echo
+kubectl get provider -o wide
+NAME                             INSTALLED   HEALTHY   PACKAGE                                                     AGE
+equinix-provider-equinix-metal   True        True      registry.upbound.io/equinix/provider-equinix-metal:v0.0.7   76m
 ```
 
 ### Create a Provider Secret
 
 Create a [Equinix Metal Project and a project level API key](https://metal.equinix.com/developers/docs/).
 
-Create a Kubernetes secret with the API Key and Project ID.
+The following commands will require your [Equinix Metal API key and a project ID](https://metal.equinix.com/developers/docs/). Enter your API key and project ID when prompted:
+
+```console
+read -s -p "API Key: " APIKEY; echo
+read -p "Project ID: " PROJECT_ID; echo
+```
+
+_(The `read` command may need to be modified for shells other than bash.)_
+
+Create a Kubernetes secret called `metal-creds` with the API Key and Project ID stored as JSON in a key called `credentials`.
 
 ```bash
 kubectl create -n crossplane-system secret generic --from-file=credentials=<(echo '{"apiKey":"'$APIKEY'", "projectID":"'$PROJECT_ID'"}') metal-creds
 ```
 
-### Create a Provider record
 
-Get the project id from the Equinix Metal Portal or using the Equinix Metal CLI (`packet project get`). With `PROJECT_ID` in your environemnt, run the command below:
+The secret name and key name are configurable. Whatever names you choose must match the settings in the `ProviderConfig` below.
+
+### Create a Provider Config record
+
+Get the project id from the Equinix Metal Portal or using the Equinix Metal CLI (`packet project get`). With `PROJECT_ID` in your environment, run the command below:
 
 ```bash
 cat << EOS | kubectl apply -f -
 apiVersion: metal.equinix.com/v1beta1
 kind: ProviderConfig
 metadata:
-  name: default
+  name: equinix-metal-provider
 spec:
   projectID: $PROJECT_ID
   credentials:
@@ -90,6 +120,8 @@ spec:
 EOS
 ```
 
+_TIP: If the `ProviderConfig` is given the special name "**default**", Equinix Metal Crossplane resources will choose this configuration making the `providerConfigRef` field optional._
+
 ## Provision an Equinix Metal Device
 
 Save the following as `device.yaml`:
@@ -98,39 +130,50 @@ Save the following as `device.yaml`:
 apiVersion: server.metal.equinix.com/v1alpha2
 kind: Device
 metadata:
-  name: devices
+  name: crossplane-example
 spec:
   forProvider:
-    hostname: crossplane
-    plan: c1.small.x86
-    facility: any
-    operatingSystem: centos_7
+    hostname: crossplane-example
+    plan: c3.small.x86
+    facility: sv15
+    operatingSystem: ubuntu_20_04
     billingCycle: hourly
     hardware_reservation_id: next_available
     locked: false
+    networkType: hybrid
     tags:
     - crossplane
-    - development
+  providerConfigRef:
+    name: equinix-metal-provider
   writeConnectionSecretToRef:
-    name: devices-creds
+    name: crossplane-example
     namespace: crossplane-system
+  reclaimPolicy: Delete
 ```
 
-```bash
+Create the resource:
+
+```sh
 $ kubectl create -f device.yaml
 device.server.metal.equinix.com/devices created
-secret/devices-creds created
 ```
 
-To view the device in the cluster:
+To view the device and other Equinix Metal resources in the cluster:
 
 ```bash
 $ kubectl get equinix -o wide
-NAME                                            PROJECT-ID                             AGE   SECRET-NAME
-provider.metal.equinix.com/packet-provider   0ac84673-b679-40c1-9de9-8a8792675515   38m   metal-creds
+kubectl get provider
+NAME                             INSTALLED   HEALTHY   PACKAGE                                                     AGE
+equinix-provider-equinix-metal   True        True      registry.upbound.io/equinix/provider-equinix-metal:v0.0.7   73m
 
-NAME                                         READY   SYNCED   STATE    ID                                     HOSTNAME     FACILITY   IPV4            RECLAIM-POLICY   AGE
-device.server.metal.equinix.com/devices   True    True     active   1c73767a-e16a-485c-89b4-4b553e1458b3   crossplane   sjc1       139.178.88.35   Delete           19m
+NAME                                                 READY   SYNCED   STATE    ID                                     HOSTNAME             FACILITY   IPV4             RECLAIM-POLICY   AGE
+device.server.metal.equinix.com/crossplane-example   True    True     active   d81d643a-998f-4203-a667-7f9378481b1d   crossplane-example   sv15       139.178.68.111                    53m
+
+NAME                                                                         AGE   CONFIG-NAME              RESOURCE-KIND    RESOURCE-NAME
+providerconfigusage.metal.equinix.com/0a280921-1f3a-48ad-adb2-15ed8e6146f1   53m   equinix-metal-provider   Device           crossplane-example
+
+NAME                                                      AGE   SECRET-NAME
+providerconfig.metal.equinix.com/equinix-metal-provider   69m   
 ```
 
 SSH Connection credentials (including IP address, username, and password) can be found in the provider managed secret defined by `writeConnectionSecretToRef`.
@@ -138,7 +181,7 @@ SSH Connection credentials (including IP address, username, and password) can be
 **Caution** - Secret data is Base64 encoded, access to the namespace where this secret is stored offers `root` access to the provisioned device.
 
 ```bash
-$ kubectl get secret -n crossplane-system devices-creds -o jsonpath='{.data}'; echo
+$ kubectl get secret -n crossplane-system crossplane-example -o jsonpath='{.data}'; echo
 map[endpoint:MTM5LjE3OC44OC41Nw== password:cGFzc3dvcmQ== port:MjI= username:cm9vdA==]
 ```
 
@@ -147,7 +190,6 @@ To delete the device:
 ```bash
 $ kubectl delete -f device.yaml
 device.server.metal.equinix.com/devices deleted
-secret/devices-creds deleted
 ```
 
 ## Roadmap and Stability
@@ -155,6 +197,8 @@ secret/devices-creds deleted
 This Crossplane provider is alpha quality and not intended for production use.
 
 Equinix Metal devices, virtual networks, and ports can be managed through this provider, which provides basic integration.  Advanced features like BGP, VPN, Volumes are not currently planned. If you are interested in these features, please let us know by [opening issues](#report-a-bug) and [reaching out](#contact).
+
+See <https://github.com/packethost/crossplane-provider-equinix-metal/milestones> for project milestones.
 
 ## Contributing
 
