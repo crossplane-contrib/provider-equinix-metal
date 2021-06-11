@@ -76,6 +76,7 @@ func NewClient(ctx context.Context, config *clients.Credentials) (ClientWithDefa
 func CreateFromVirtualNetwork(d *v1alpha1.VirtualNetwork, projectID string) *packngo.VirtualNetworkCreateRequest {
 	return &packngo.VirtualNetworkCreateRequest{
 		Facility:    d.Spec.ForProvider.Facility,
+		Metro:       d.Spec.ForProvider.Metro,
 		Description: emptyIfNil(d.Spec.ForProvider.Description),
 		ProjectID:   projectID,
 	}

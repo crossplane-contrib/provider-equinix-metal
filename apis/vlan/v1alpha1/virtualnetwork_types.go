@@ -39,8 +39,7 @@ type VirtualNetworkStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.id"
-// +kubebuilder:printcolumn:name="HOSTNAME",type="string",JSONPath=".spec.forProvider.hostname"
-// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facility"
+// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facilityCode"
 // +kubebuilder:printcolumn:name="RECLAIM-POLICY",type="string",JSONPath=".spec.reclaimPolicy"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
@@ -69,8 +68,11 @@ type VirtualNetworkList struct {
 // LateInitialization should update the parameter after creation.
 type VirtualNetworkParameters struct {
 	// +immutable
-	// +required
-	Facility string `json:"facility"`
+	// +optional
+	Facility string `json:"facility,omitempty"`
+
+	// +optional
+	Metro string `json:"metro,omitempty"`
 
 	// +optional
 	Description *string `json:"description,omitempty"`
@@ -82,6 +84,6 @@ type VirtualNetworkObservation struct {
 	ID           string       `json:"id"`
 	Href         string       `json:"href,omitempty"`
 	VXLAN        int          `json:"vxlan,omitempty"`
-	FacilityCode string       `json:"facility_code,omitempty"`
+	FacilityCode string       `json:"facilityCode,omitempty"`
 	CreatedAt    *metav1.Time `json:"createdAt,omitempty"`
 }
