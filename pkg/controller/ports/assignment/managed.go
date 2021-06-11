@@ -144,7 +144,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	a.Status.SetConditions(xpv1.Creating())
 	_, _, err := e.client.Assign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
-	return managed.ExternalCreation{}, errors.Wrap(err, errCreateAssignment)
+	return managed.ExternalCreation{}, errors.Wrap(resource.Ignore(packetclient.IsAlreadyDone, err), errCreateAssignment)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -159,5 +159,5 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 	a.SetConditions(xpv1.Deleting())
 	_, _, err := e.client.Unassign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
-	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteAssignment)
+	return errors.Wrap(resource.IgnoreAny(err, packetclient.IsNotFound, packetclient.IsAlreadyDone), errDeleteAssignment)
 }

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/packethost/packngo"
@@ -41,6 +42,11 @@ type Client struct {
 
 	Client *packngo.Client
 }
+
+const (
+	errVirtualNetworkAlreadyContents = " already "
+	errVirtualNetworkAlreadyPrefix   = "Virtual network"
+)
 
 // NewCredentialsFromJSON parses JSON bytes returning an Equinix Metal Credentials configuration
 func NewCredentialsFromJSON(j []byte) (*Credentials, error) {
@@ -110,6 +116,19 @@ func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed
 func IsNotFound(err error) bool {
 	if e, ok := err.(*packngo.ErrorResponse); ok && e.Response != nil {
 		return e.Response.StatusCode == http.StatusNotFound
+	}
+	return false
+}
+
+// IsAlreadyDone returns true if, during VLAN assignment operations, the API
+// returns an error like "422 Virtual network 1182 already assigned" or "422
+// Virtual network 1182 already unassigned"
+func IsAlreadyDone(err error) bool {
+	if e, ok := err.(*packngo.ErrorResponse); ok && e.Response != nil {
+		errsInOne := strings.Join(append(e.Errors, e.SingleError), "")
+		return e.Response.StatusCode == http.StatusUnprocessableEntity &&
+			strings.Contains(errsInOne, errVirtualNetworkAlreadyContents) &&
+			strings.HasPrefix(errsInOne, errVirtualNetworkAlreadyPrefix)
 	}
 	return false
 }
