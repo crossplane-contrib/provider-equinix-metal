@@ -18,7 +18,7 @@ package assignment
 
 import (
 	"context"
-	"strings"
+	"path"
 
 	"github.com/packethost/packngo"
 	"github.com/pkg/errors"
@@ -127,7 +127,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	for _, net := range port.AttachedVirtualNetworks {
-		if strings.TrimPrefix(net.Href, "/virtual-networks/") == a.Spec.ForProvider.VirtualNetworkID {
+		if path.Base(net.Href) == a.Spec.ForProvider.VirtualNetworkID {
 			a.Status.SetConditions(xpv1.Available())
 			o.ResourceExists = true
 		}
