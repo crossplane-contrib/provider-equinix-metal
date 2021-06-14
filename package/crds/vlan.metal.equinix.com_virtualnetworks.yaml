@@ -16,10 +16,7 @@ spec:
   - JSONPath: .status.atProvider.id
     name: ID
     type: string
-  - JSONPath: .spec.forProvider.hostname
-    name: HOSTNAME
-    type: string
-  - JSONPath: .status.atProvider.facility
+  - JSONPath: .status.atProvider.facilityCode
     name: FACILITY
     type: string
   - JSONPath: .spec.reclaimPolicy
@@ -69,8 +66,8 @@ spec:
                   type: string
                 facility:
                   type: string
-              required:
-              - facility
+                metro:
+                  type: string
               type: object
             providerConfigRef:
               description: ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured.
@@ -115,7 +112,7 @@ spec:
                 createdAt:
                   format: date-time
                   type: string
-                facility_code:
+                facilityCode:
                   type: string
                 href:
                   type: string

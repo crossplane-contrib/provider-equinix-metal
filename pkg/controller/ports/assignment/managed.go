@@ -18,7 +18,7 @@ package assignment
 
 import (
 	"context"
-	"strings"
+	"path"
 
 	"github.com/packethost/packngo"
 	"github.com/pkg/errors"
@@ -127,7 +127,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	for _, net := range port.AttachedVirtualNetworks {
-		if strings.TrimPrefix(net.Href, "/virtual-networks/") == a.Spec.ForProvider.VirtualNetworkID {
+		if path.Base(net.Href) == a.Spec.ForProvider.VirtualNetworkID {
 			a.Status.SetConditions(xpv1.Available())
 			o.ResourceExists = true
 		}
@@ -144,7 +144,7 @@ func (e *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 	a.Status.SetConditions(xpv1.Creating())
 	_, _, err := e.client.Assign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
-	return managed.ExternalCreation{}, errors.Wrap(err, errCreateAssignment)
+	return managed.ExternalCreation{}, errors.Wrap(resource.Ignore(packetclient.IsAlreadyDone, err), errCreateAssignment)
 }
 
 func (e *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -159,5 +159,5 @@ func (e *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 	a.SetConditions(xpv1.Deleting())
 	_, _, err := e.client.Unassign(&packngo.PortAssignRequest{PortID: meta.GetExternalName(a), VirtualNetworkID: a.Spec.ForProvider.VirtualNetworkID})
-	return errors.Wrap(resource.Ignore(packetclient.IsNotFound, err), errDeleteAssignment)
+	return errors.Wrap(resource.IgnoreAny(err, packetclient.IsNotFound, packetclient.IsAlreadyDone), errDeleteAssignment)
 }
