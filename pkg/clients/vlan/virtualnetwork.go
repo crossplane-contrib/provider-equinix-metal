@@ -79,6 +79,7 @@ func CreateFromVirtualNetwork(d *v1alpha1.VirtualNetwork, projectID string) *pac
 		Metro:       d.Spec.ForProvider.Metro,
 		Description: emptyIfNil(d.Spec.ForProvider.Description),
 		ProjectID:   projectID,
+		VXLAN:       d.Spec.ForProvider.VXLAN,
 	}
 }
 

@@ -77,6 +77,10 @@ type VirtualNetworkParameters struct {
 	// +optional
 	Metro string `json:"metro,omitempty"`
 
+	// +immutable
+	// +optional
+	VXLAN int `json:"vxlan,omitempty"`
+
 	// +optional
 	Description *string `json:"description,omitempty"`
 }
