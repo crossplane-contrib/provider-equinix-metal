@@ -135,7 +135,7 @@ spec:
   forProvider:
     hostname: crossplane-example
     plan: c3.small.x86
-    facility: sv15
+    metro: sv
     operatingSystem: ubuntu_20_04
     billingCycle: hourly
     locked: false
