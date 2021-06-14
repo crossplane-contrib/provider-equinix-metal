@@ -115,7 +115,7 @@ func (e *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// Observe port
 	port, err := e.client.GetPortByName(a.Spec.ForProvider.DeviceID, a.Spec.ForProvider.Name)
 	if packetclient.IsNotFound(err) {
-		return managed.ExternalObservation{}, errors.New("port does not exist")
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetPort)
