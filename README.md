@@ -138,7 +138,6 @@ spec:
     facility: sv15
     operatingSystem: ubuntu_20_04
     billingCycle: hourly
-    hardware_reservation_id: next_available
     locked: false
     networkType: hybrid
     tags:
