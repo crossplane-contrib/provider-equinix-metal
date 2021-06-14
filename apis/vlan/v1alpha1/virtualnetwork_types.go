@@ -73,6 +73,7 @@ type VirtualNetworkParameters struct {
 	// +optional
 	Facility string `json:"facility,omitempty"`
 
+	// +immutable
 	// +optional
 	Metro string `json:"metro,omitempty"`
 
