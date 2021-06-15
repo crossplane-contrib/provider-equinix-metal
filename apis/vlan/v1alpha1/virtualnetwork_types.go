@@ -39,7 +39,9 @@ type VirtualNetworkStatus struct {
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.id"
-// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facilityCode"
+// +kubebuilder:printcolumn:name="VXLAN",type="string",JSONPath=".status.atProvider.vxlan"
+// +kubebuilder:printcolumn:name="METRO",type="string",JSONPath=".status.atProvider.metro"
+// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facilityCode",priority=1
 // +kubebuilder:printcolumn:name="RECLAIM-POLICY",type="string",JSONPath=".spec.reclaimPolicy"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
@@ -71,8 +73,13 @@ type VirtualNetworkParameters struct {
 	// +optional
 	Facility string `json:"facility,omitempty"`
 
+	// +immutable
 	// +optional
 	Metro string `json:"metro,omitempty"`
+
+	// +immutable
+	// +optional
+	VXLAN int `json:"vxlan,omitempty"`
 
 	// +optional
 	Description *string `json:"description,omitempty"`

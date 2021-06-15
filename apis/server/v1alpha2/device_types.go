@@ -73,7 +73,8 @@ type DeviceStatus struct {
 // +kubebuilder:printcolumn:name="STATE",type="string",JSONPath=".status.atProvider.state"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.id"
 // +kubebuilder:printcolumn:name="HOSTNAME",type="string",JSONPath=".spec.forProvider.hostname"
-// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facility"
+// +kubebuilder:printcolumn:name="METRO",type="string",JSONPath=".status.atProvider.metro"
+// +kubebuilder:printcolumn:name="FACILITY",type="string",JSONPath=".status.atProvider.facility",priority=1
 // +kubebuilder:printcolumn:name="IPV4",type="string",JSONPath=".status.atProvider.ipv4"
 // +kubebuilder:printcolumn:name="RECLAIM-POLICY",type="string",JSONPath=".spec.reclaimPolicy"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
