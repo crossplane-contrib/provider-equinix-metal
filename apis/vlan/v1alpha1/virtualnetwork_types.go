@@ -50,7 +50,7 @@ type VirtualNetwork struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   VirtualNetworkSpec   `json:"spec,omitempty"`
+	Spec   VirtualNetworkSpec   `json:"spec"`
 	Status VirtualNetworkStatus `json:"status,omitempty"`
 }
 

@@ -46,7 +46,7 @@ type Assignment struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AssignmentSpec   `json:"spec,omitempty"`
+	Spec   AssignmentSpec   `json:"spec"`
 	Status AssignmentStatus `json:"status,omitempty"`
 }
 
