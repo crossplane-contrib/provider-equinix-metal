@@ -7,6 +7,8 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/packethost.svg?style=social&label=Follow)](https://twitter.com/intent/follow?screen_name=equinixmetal)
 ![](https://img.shields.io/badge/Stability-Maintained-green.svg)
 
+> [!WARNING]
+> **Deprecated** Use <https://github.com/crossplane-contrib/provider-jet-equinix> instead.
 ## Overview
 
 [From Crossplane's Provider documentation](https://crossplane.io/docs/v1.2/concepts/providers.html):
